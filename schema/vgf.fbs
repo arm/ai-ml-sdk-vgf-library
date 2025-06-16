@@ -1,0 +1,98 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2023-2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+namespace VGF;
+
+table SPIRV {
+    words: [uint32];
+}
+
+union ModuleCode {
+    SPIRV,
+}
+
+enum ModuleType:uint8 {
+    COMPUTE,
+    GRAPH,
+}
+
+table Module {
+    type: ModuleType;
+    name: string;
+    entry_point: string;
+    code: ModuleCode;
+}
+
+table ModuleTable {
+    modules: [Module];
+}
+
+table Description {
+    shape: [int64];
+    strides: [int64];
+}
+
+enum ResourceCategory:uint8 {
+    INPUT,
+    OUTPUT,
+    INTERMEDIATE,
+    CONSTANT,
+}
+
+table ModelResourceTableEntry {
+    vk_descriptor_type: uint32; // make the descriptor type opaque on disk
+    vk_format: uint32; // make the format opaque on disk
+    category: ResourceCategory;
+    description: Description;
+}
+
+table ModelResourceTable {
+    mrt_entry: [ModelResourceTableEntry];
+}
+
+table BindingSlot {
+    binding: uint;
+    mrt_index: uint;
+}
+
+table DescriptorSetInfo {
+    bindings: [BindingSlot];
+}
+
+table PushConstantRange {
+    stage_flags: uint;
+    offset: uint;
+    size: uint;
+}
+
+table SegmentInfo {
+    type: ModuleType;
+    name: string;
+    module_index: uint;
+    set_infos: [DescriptorSetInfo];
+    inputs: [BindingSlot];
+    outputs: [BindingSlot];
+    constants: [uint];
+    dispatch_shape: [uint];
+    push_constant_ranges: [PushConstantRange];
+}
+
+table ModelSequenceTable {
+    segments: [SegmentInfo];
+    inputs: [BindingSlot];
+    outputs: [BindingSlot];
+    input_names: [string];
+    output_names: [string];
+}
+
+table ConstantData {
+    mrt_index: uint;
+    sparsity_dimension: int64;
+    raw: [ubyte] (force_align: 8);
+}
+
+table ConstantSection {
+    data: [ConstantData];
+}

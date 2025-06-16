@@ -1,0 +1,19 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#pragma once
+
+#include <string>
+
+namespace mlsdk::vgf_dump::details {
+
+const std::string version{R""""({
+  "version": "@GIT_REVISION@",
+  "dependencies": [
+    @DEP_GIT_REVISIONS@
+  ]
+})""""};
+
+} // namespace mlsdk::vgf_dump::details
