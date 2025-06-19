@@ -93,12 +93,12 @@ class HeaderDecoder {
     virtual uint64_t GetModuleTableSize() const = 0;
 
     /**
-     * @brief Returns the size of the Module Table in memory
+     * @brief Returns the relative location of the Module Table in memory
      */
     virtual uint64_t GetModuleTableOffset() const = 0;
 
     /**
-     * @brief Returns the relative location of the Module Table in memory
+     * @brief Returns the relative location of the Model Sequence Table in memory
      */
     virtual uint64_t GetModelSequenceTableOffset() const = 0;
 
@@ -108,7 +108,7 @@ class HeaderDecoder {
     virtual uint64_t GetModelSequenceTableSize() const = 0;
 
     /**
-     * @brief Returns the relative location of the Model Sequence Table in memory
+     * @brief Returns the relative location of the Model Resource Table in memory
      */
     virtual uint64_t GetModelResourceTableOffset() const = 0;
 
@@ -207,6 +207,14 @@ class ModuleTableDecoder {
 size_t ModuleTableDecoderSize();
 
 /**
+ * @brief Returns true if input points to a valid Module Table
+ *
+ * @param data
+ * @param size Max count of read bytes
+ */
+bool VerifyModuleTable(const void *data, uint64_t size);
+
+/**
  * @brief Constructs a Module Table decoder
  *
  * @param data
@@ -274,6 +282,14 @@ class ModelResourceTableDecoder {
 size_t ModelResourceTableDecoderSize();
 
 /**
+ * @brief Returns true if input points to a valid Model Resource Table
+ *
+ * @param data
+ * @param size Max count of read bytes
+ */
+bool VerifyModelResourceTable(const void *data, uint64_t size);
+
+/**
  * @brief Constructs a Model Resource Table decoder
  *
  * @param data
@@ -332,6 +348,14 @@ class ConstantDecoder {
  *
  */
 size_t ConstantDecoderSize();
+
+/**
+ * @brief Returns true if input points to a valid Constant section
+ *
+ * @param data
+ * @param size Max count of read bytes
+ */
+bool VerifyConstant(const void *data, uint64_t size);
 
 /**
  * @brief Constructs a Constant section decoder
@@ -547,6 +571,14 @@ class ModelSequenceTableDecoder {
      */
     virtual uint32_t getPushConstRangeSize(PushConstantRangeHandle handle, uint32_t rangeIdx) const = 0;
 };
+
+/**
+ * @brief Returns true if input points to a valid Model Sequence Table
+ *
+ * @param data
+ * @param size Max count of read bytes
+ */
+bool VerifyModelSequenceTable(const void *data, uint64_t size);
 
 /**
  * @brief Constructs a Model Sequence Table decoder

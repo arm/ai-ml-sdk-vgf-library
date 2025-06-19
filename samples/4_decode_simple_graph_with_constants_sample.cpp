@@ -55,6 +55,9 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
         // Make sure nothing went wrong
         assert(vgf_file);
 
+        // Check for valid section
+        assert(vgflib::VerifyModelSequenceTable(model_sequence_table_data.data(), model_sequence_table_data.size()));
+
         // Create the decoder for the Model Sequence Table
         std::unique_ptr<vgflib::ModelSequenceTableDecoder> mst_decoder =
             vgflib::CreateModelSequenceTableDecoder(model_sequence_table_data.data());
@@ -92,6 +95,9 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
         vgf_file.seekg(static_cast<std::streamoff>(header_decoder->GetConstantsOffset()));
         vgf_file.read(constants_data.data(), static_cast<std::streamsize>(constants_data.size()));
         assert(vgf_file);
+
+        // Check for valid section
+        assert(vgflib::VerifyConstant(constants_data.data(), constants_data.size()));
 
         // Create the ConstantsDecoder from the section in memory
         std::unique_ptr<vgflib::ConstantDecoder> constants_decoder =

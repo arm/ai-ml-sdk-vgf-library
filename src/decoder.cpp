@@ -57,6 +57,13 @@ constexpr FourCCValue OldMagicAsFourCC() {
 
     return FourCC(ToChar(v, 0), ToChar(v, 8), ToChar(v, 16), ToChar(v, 24));
 }
+
+template <class T> bool VerifyImpl(const void *data, const uint64_t size) {
+    const auto *obj = flatbuffers::GetRoot<const T>(data);
+    flatbuffers::Verifier verifier(static_cast<const uint8_t *>(data), size);
+    return obj->Verify(verifier);
+}
+
 } // namespace
 
 // Header Decoder
@@ -165,6 +172,11 @@ class ModuleTableDecoderImpl : public ModuleTableDecoder {
 };
 
 size_t ModuleTableDecoderSize() { return sizeof(ModuleTableDecoderImpl); }
+
+bool VerifyModuleTable(const void *data, const uint64_t size) {
+    assert(data != nullptr && "data is null");
+    return VerifyImpl<VGF::ModuleTable>(data, size);
+}
 
 std::unique_ptr<ModuleTableDecoder> CreateModuleTableDecoder(const void *const data) {
     assert(data != nullptr && "data is null");
@@ -337,6 +349,11 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
     const VGF::ModelSequenceTable *_modelSequenceTable;
 };
 
+bool VerifyModelSequenceTable(const void *data, const uint64_t size) {
+    assert(data != nullptr && "data is null");
+    return VerifyImpl<VGF::ModelSequenceTable>(data, size);
+}
+
 std::unique_ptr<ModelSequenceTableDecoder> CreateModelSequenceTableDecoder(const void *const data) {
     assert(data != nullptr && "data is null");
     return std::make_unique<ModelSequenceTableDecoderImpl>(data);
@@ -408,6 +425,11 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
 
 size_t ModelResourceTableDecoderSize() { return sizeof(ModelResourceTableDecoderImpl); }
 
+bool VerifyModelResourceTable(const void *data, const uint64_t size) {
+    assert(data != nullptr && "data is null");
+    return VerifyImpl<VGF::ModelResourceTable>(data, size);
+}
+
 std::unique_ptr<ModelResourceTableDecoder> CreateModelResourceTableDecoder(const void *const data) {
     assert(data != nullptr && "data is null");
     return std::make_unique<ModelResourceTableDecoderImpl>(data);
@@ -456,6 +478,11 @@ class ConstantDecoderImpl : public ConstantDecoder {
 };
 
 size_t ConstantDecoderSize() { return sizeof(ConstantDecoderImpl); }
+
+bool VerifyConstant(const void *data, const uint64_t size) {
+    assert(data != nullptr && "data is null");
+    return VerifyImpl<VGF::ConstantSection>(data, size);
+}
 
 std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *const data) {
     assert(data != nullptr && "data is null");

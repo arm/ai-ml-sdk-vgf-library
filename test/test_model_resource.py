@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 """ Tests for VGF Model Resource. """
@@ -32,6 +32,10 @@ def test_encode_decode_model_resource_table_empty():
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
+    assert vgf.VerifyModelResourceTable(
+        buffer[headerDecoder.GetModelResourceTableOffset() :],
+        headerDecoder.GetModelResourceTableSize(),
+    )
     resTableDecoder = vgf.CreateModelResourceTableDecoder(
         buffer[headerDecoder.GetModelResourceTableOffset() :]
     )
@@ -74,6 +78,10 @@ def test_encode_decode_model_resource_table():
 
     mrtIndex0 = resource0.reference
 
+    assert vgf.VerifyModelResourceTable(
+        buffer[headerDecoder.GetModelResourceTableOffset() :],
+        headerDecoder.GetModelResourceTableSize(),
+    )
     mrtDecoder = vgf.CreateModelResourceTableDecoder(
         buffer[headerDecoder.GetModelResourceTableOffset() :]
     )
@@ -129,6 +137,10 @@ def test_encode_decode_model_resource_table_with_unknown_dimensions():
 
     mrtIndex0 = resource0.reference
 
+    assert vgf.VerifyModelResourceTable(
+        buffer[headerDecoder.GetModelResourceTableOffset() :],
+        headerDecoder.GetModelResourceTableSize(),
+    )
     mrtDecoder = vgf.CreateModelResourceTableDecoder(
         buffer[headerDecoder.GetModelResourceTableOffset() :]
     )
