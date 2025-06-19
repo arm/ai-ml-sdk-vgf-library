@@ -177,6 +177,10 @@ void pyInitModuleTableDecoder(py::module m) {
 
     m.def("ModuleTableDecoderSize", &ModuleTableDecoderSize);
     m.def(
+        "VerifyModuleTable",
+        [](const py::buffer &buffer, uint64_t size) { return VerifyModuleTable(buffer.request().ptr, size); },
+        py::arg("data"), py::arg("size"));
+    m.def(
         "CreateModuleTableDecoder",
         [](const py::buffer &buffer) { return CreateModuleTableDecoder(buffer.request().ptr); }, py::arg("data"));
 }
@@ -344,6 +348,10 @@ void pyInitModelSequenceTableDecoder(py::module m) {
              py::arg("rangeIdx"));
 
     m.def(
+        "VerifyModelSequenceTable",
+        [](const py::buffer &buffer, uint64_t size) { return VerifyModelSequenceTable(buffer.request().ptr, size); },
+        py::arg("data"), py::arg("size"));
+    m.def(
         "CreateModelSequenceTableDecoder",
         [](const py::buffer &buffer) { return CreateModelSequenceTableDecoder(buffer.request().ptr); },
         py::arg("data"));
@@ -400,6 +408,10 @@ void pyInitModelResourceTableDecoder(py::module m) {
 
     m.def("ModelResourceTableDecoderSize", &ModelResourceTableDecoderSize);
     m.def(
+        "VerifyModelResourceTable",
+        [](const py::buffer &buffer, uint64_t size) { return VerifyModelResourceTable(buffer.request().ptr, size); },
+        py::arg("data"), py::arg("size"));
+    m.def(
         "CreateModelResourceTableDecoder",
         [](const py::buffer &buffer) { return CreateModelResourceTableDecoder(buffer.request().ptr); },
         py::arg("data"));
@@ -444,6 +456,10 @@ void pyInitConstantDecoder(py::module m) {
             py::arg("idx"));
 
     m.def("ConstantDecoderSize", &ConstantDecoderSize);
+    m.def(
+        "VerifyConstant",
+        [](const py::buffer &buffer, uint64_t size) { return VerifyConstant(buffer.request().ptr, size); },
+        py::arg("data"), py::arg("size"));
     m.def(
         "CreateConstantDecoder", [](const py::buffer &buffer) { return CreateConstantDecoder(buffer.request().ptr); },
         py::arg("data"));

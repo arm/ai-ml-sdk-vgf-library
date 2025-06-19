@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 """ Tests for VGF Module Table. """
@@ -32,6 +32,10 @@ def test_encode_decode_module_table_empty():
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
+    assert vgf.VerifyModuleTable(
+        buffer[headerDecoder.GetModuleTableOffset() :],
+        headerDecoder.GetModuleTableSize(),
+    )
     moduleDecoder = vgf.CreateModuleTableDecoder(
         buffer[headerDecoder.GetModuleTableOffset() :]
     )
@@ -62,6 +66,10 @@ def test_encode_decode_module_table_single():
 
     moduleIndex = module.reference
 
+    assert vgf.VerifyModuleTable(
+        buffer[headerDecoder.GetModuleTableOffset() :],
+        headerDecoder.GetModuleTableSize(),
+    )
     moduleDecoder = vgf.CreateModuleTableDecoder(
         buffer[headerDecoder.GetModuleTableOffset() :]
     )
@@ -99,6 +107,10 @@ def test_encode_decode_module_table_single_placeholder():
 
     moduleIndex = module.reference
 
+    assert vgf.VerifyModuleTable(
+        buffer[headerDecoder.GetModuleTableOffset() :],
+        headerDecoder.GetModuleTableSize(),
+    )
     moduleDecoder = vgf.CreateModuleTableDecoder(
         buffer[headerDecoder.GetModuleTableOffset() :]
     )

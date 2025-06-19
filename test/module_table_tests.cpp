@@ -32,6 +32,8 @@ TEST(CppModuleTable, Empty) {
     ASSERT_TRUE(headerDecoder->IsValid() == true);
     ASSERT_TRUE(headerDecoder->CheckVersion() == true);
 
+    ASSERT_TRUE(
+        VerifyModuleTable(data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize()));
     std::unique_ptr<ModuleTableDecoder> decoder =
         CreateModuleTableDecoder(data.c_str() + headerDecoder->GetModuleTableOffset());
 
@@ -56,6 +58,8 @@ TEST(CppModuleTable, Single) {
 
     uint32_t moduleIndex = module.reference;
     //! [ModuleTableDecodingSample0 begin]
+    ASSERT_TRUE(VerifyModuleTable(vgf_data.c_str() + headerDecoder->GetModuleTableOffset(),
+                                  headerDecoder->GetModuleTableSize()));
     std::unique_ptr<ModuleTableDecoder> moduleDecoder =
         CreateModuleTableDecoder(vgf_data.c_str() + headerDecoder->GetModuleTableOffset());
 
@@ -94,6 +98,8 @@ TEST(CppModuleTable, Single2) {
     ASSERT_TRUE(headerDecoder->IsValid() == true);
     ASSERT_TRUE(headerDecoder->CheckVersion() == true);
 
+    ASSERT_TRUE(
+        VerifyModuleTable(data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize()));
     std::unique_ptr<ModuleTableDecoder> decoder =
         CreateModuleTableDecoder(data.c_str() + headerDecoder->GetModuleTableOffset());
 
@@ -127,6 +133,7 @@ TEST(CModuleTable, Empty) {
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
     ASSERT_TRUE(moduleSection.size > 0);
     ASSERT_TRUE(moduleSection.offset == HEADER_HEADER_SIZE_VALUE);
+    ASSERT_TRUE(mlsdk_decoder_is_valid_module_table(data.c_str() + moduleSection.offset, moduleSection.size));
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
@@ -159,6 +166,7 @@ TEST(CModuleTable, Single) {
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
     ASSERT_TRUE(moduleSection.size > 0);
     ASSERT_TRUE(moduleSection.offset == HEADER_HEADER_SIZE_VALUE);
+    ASSERT_TRUE(mlsdk_decoder_is_valid_module_table(data.c_str() + moduleSection.offset, moduleSection.size));
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
@@ -197,6 +205,7 @@ TEST(CModuleTable, Single2) {
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
     ASSERT_TRUE(moduleSection.size > 0);
     ASSERT_TRUE(moduleSection.offset == HEADER_HEADER_SIZE_VALUE);
+    ASSERT_TRUE(mlsdk_decoder_is_valid_module_table(data.c_str() + moduleSection.offset, moduleSection.size));
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());

@@ -591,6 +591,15 @@ void mlsdk::vgf_dump::dumpConstant(const std::string &inputFile, const std::stri
 void mlsdk::vgf_dump::dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
     MemoryMap mapped(inputFile);
     const auto headerDecoder = parseHeader(mapped.ptr());
+
+    if (!VerifyConstant(mapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize())) {
+        throw std::runtime_error("Invalid header data");
+    }
+    if (!VerifyModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()),
+                                  headerDecoder->GetModelResourceTableSize())) {
+        throw std::runtime_error("Invalid header data");
+    }
+
     const auto constantDecoder = CreateConstantDecoder(mapped.ptr(headerDecoder->GetConstantsOffset()));
     const auto mrtDecoder = CreateModelResourceTableDecoder(mapped.ptr(headerDecoder->GetModelResourceTableOffset()));
 
@@ -625,6 +634,11 @@ void mlsdk::vgf_dump::getSpirv(const std::string &inputFile, uint32_t index,
                                std::function<void(const uint32_t *, size_t)> callback) {
     MemoryMap mapped(inputFile);
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
+
+    if (!VerifyModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
+        throw std::runtime_error("Invalid module table");
+    }
+
     std::unique_ptr<ModuleTableDecoder> decoder =
         CreateModuleTableDecoder(mapped.ptr(headerDecoder->GetModuleTableOffset()));
 
@@ -643,6 +657,10 @@ void mlsdk::vgf_dump::getConstant(const std::string &inputFile, uint32_t index,
                                   std::function<void(const uint8_t *, size_t)> callback) {
     MemoryMap mapped(inputFile);
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
+
+    if (!VerifyConstant(mapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize())) {
+        throw std::runtime_error("Invalid header data");
+    }
 
     std::unique_ptr<ConstantDecoder> decoder = CreateConstantDecoder(mapped.ptr(headerDecoder->GetConstantsOffset()));
 
@@ -664,6 +682,15 @@ json mlsdk::vgf_dump::getScenario(const std::string &inputFile, bool add_boundar
     std::vector<ScenarioGraphResource> graphResources;
     graphResources.push_back(
         ScenarioGraphResource("vgf_graph_ref", std::filesystem::path(inputFile).filename().string()));
+
+    if (!VerifyModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()),
+                                  headerDecoder->GetModelResourceTableSize())) {
+        throw std::runtime_error("Invalid model resource table");
+    }
+    if (!VerifyModelSequenceTable(mapped.ptr(headerDecoder->GetModelSequenceTableOffset()),
+                                  headerDecoder->GetModelSequenceTableSize())) {
+        throw std::runtime_error("Invalid model sequeqnce table");
+    }
 
     std::unique_ptr<ModelResourceTableDecoder> modelResourceDecoder =
         CreateModelResourceTableDecoder(mapped.ptr(headerDecoder->GetModelResourceTableOffset()));
@@ -719,6 +746,9 @@ json mlsdk::vgf_dump::getScenario(const std::string &inputFile, bool add_boundar
         }
     }
 
+    if (!VerifyModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
+        throw std::runtime_error("Invalid module table");
+    }
     uint32_t shaderIdx = 0;
     std::vector<ScenarioShaderSubstitutions> shader_substitutions;
     std::vector<ScenarioShaderResource> shaderResources;
@@ -767,6 +797,21 @@ json mlsdk::vgf_dump::getFile(const std::string &inputFile) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
     Header header(headerDecoder->GetMajor(), headerDecoder->GetMinor(), headerDecoder->GetPatch());
+
+    if (!VerifyModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
+        throw std::runtime_error("Invalid module table");
+    }
+    if (!VerifyModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()),
+                                  headerDecoder->GetModelResourceTableSize())) {
+        throw std::runtime_error("Invalid model resource table");
+    }
+    if (!VerifyModelSequenceTable(mapped.ptr(headerDecoder->GetModelSequenceTableOffset()),
+                                  headerDecoder->GetModelSequenceTableSize())) {
+        throw std::runtime_error("Invalid model sequence table");
+    }
+    if (!VerifyConstant(mapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize())) {
+        throw std::runtime_error("Invalid constant section");
+    }
 
     std::vector<Module> modules = parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()));
     std::vector<Resource> resources = parseModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()));

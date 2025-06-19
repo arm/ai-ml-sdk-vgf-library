@@ -19,6 +19,15 @@ using namespace mlsdk::vgflib;
 
 const uint16_t pretendVulkanHeaderVersion = 123;
 
+TEST(CppVerify, BadData) {
+
+    uint8_t bad_data[16] = {0xde, 0xad, 0xbe, 0xef, 0xba, 0xad, 0xf0, 0x0d,
+                            0xca, 0xfe, 0xba, 0xbe, 0x00, 0x11, 0x22, 0x33};
+
+    const void *bad_data_ptr = static_cast<const void *>(bad_data);
+    ASSERT_FALSE(VerifyConstant(bad_data_ptr, sizeof(bad_data)));
+}
+
 TEST(CppEncodeDecode, AddConstant) {
     std::stringstream buffer;
 
@@ -37,6 +46,8 @@ TEST(CppEncodeDecode, AddConstant) {
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
     ASSERT_TRUE(headerDecoder->IsValid() == true);
     ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+
+    ASSERT_TRUE(VerifyConstant(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize()));
     std::unique_ptr<ConstantDecoder> decoder =
         CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset());
 
@@ -64,6 +75,8 @@ TEST(CppEncodeDecode, AddNonSparseConstant) {
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
     ASSERT_TRUE(headerDecoder->IsValid() == true);
     ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+
+    ASSERT_TRUE(VerifyConstant(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize()));
     std::unique_ptr<ConstantDecoder> decoder =
         CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset());
 
@@ -85,6 +98,8 @@ TEST(CppEncodeDecode, EmptyConstantSection) {
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
     ASSERT_TRUE(headerDecoder->IsValid() == true);
     ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+
+    ASSERT_TRUE(VerifyConstant(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize()));
     std::unique_ptr<ConstantDecoder> decoder =
         CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset());
 
@@ -127,6 +142,8 @@ TEST(CEncodeDecode, AddConstant) {
     ASSERT_TRUE(modelConstantsSection.size > 0);
     ASSERT_TRUE(modelConstantsSection.offset ==
                 HEADER_HEADER_SIZE_VALUE + moduleSection.size + modelSequenceSection.size + modelResourceSection.size);
+    ASSERT_TRUE(
+        mlsdk_decoder_is_valid_constant_table(data.c_str() + modelConstantsSection.offset, modelConstantsSection.size));
 
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
@@ -180,6 +197,8 @@ TEST(CEncodeDecode, AddNonSparseConstant) {
     ASSERT_TRUE(modelConstantsSection.size > 0);
     ASSERT_TRUE(modelConstantsSection.offset ==
                 HEADER_HEADER_SIZE_VALUE + moduleSection.size + modelSequenceSection.size + modelResourceSection.size);
+    ASSERT_TRUE(
+        mlsdk_decoder_is_valid_constant_table(data.c_str() + modelConstantsSection.offset, modelConstantsSection.size));
 
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
@@ -226,6 +245,8 @@ TEST(CEncodeDecode, EmptyConstantSection) {
     ASSERT_TRUE(modelConstantsSection.size > 0);
     ASSERT_TRUE(modelConstantsSection.offset ==
                 HEADER_HEADER_SIZE_VALUE + moduleSection.size + modelSequenceSection.size + modelResourceSection.size);
+    ASSERT_TRUE(
+        mlsdk_decoder_is_valid_constant_table(data.c_str() + modelConstantsSection.offset, modelConstantsSection.size));
 
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());

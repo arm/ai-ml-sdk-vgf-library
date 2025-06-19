@@ -254,6 +254,15 @@ MLSDKAPI void mlsdk_decoder_get_header_section_info(const mlsdk_decoder_header_d
 MLSDKAPI size_t mlsdk_decoder_module_table_decoder_mem_reqs();
 
 /**
+ * @brief Checks if pointer points to valid module table data
+ *
+ * @param moduleTableData The pointer to the data
+ * @param size The size in bytes of the data
+ * @return True if the data is a valid section, false otherwise
+ */
+MLSDKAPI bool mlsdk_decoder_is_valid_module_table(const void *moduleTableData, uint64_t size);
+
+/**
  * @brief Creates the module table decoder
  *
  * @param moduleTableData The pointer to the module table data
@@ -415,6 +424,15 @@ mlsdk_decoder_get_push_constant_range_size(const mlsdk_decoder_model_sequence_de
 /**********************************************************************************************************************/
 
 /**
+ * @brief Checks if pointer points to valid model sequence data
+ *
+ * @param modelSequenceData The pointer to the data
+ * @param size The size in bytes of the data
+ * @return True if the data is a valid section, false otherwise
+ */
+MLSDKAPI bool mlsdk_decoder_is_valid_model_sequence(const void *modelSequenceData, uint64_t size);
+
+/**
  * @brief Create the model sequence decoder
  *
  * @param modelSequenceData The pointer to the model sequence data
@@ -552,6 +570,7 @@ mlsdk_decoder_binding_slots_handle mlsdk_decoder_model_sequence_get_segment_outp
  * @param modelSequenceDecoder The pointer to the model sequence decoder
  * @return Handle to the binding slots array
  */
+
 MLSDKAPI mlsdk_decoder_binding_slots_handle
 mlsdk_decoder_model_sequence_get_input_binding_slot(mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder);
 /**
@@ -560,6 +579,7 @@ mlsdk_decoder_model_sequence_get_input_binding_slot(mlsdk_decoder_model_sequence
  * @param modelSequenceDecoder The pointer to the model sequence decoder
  * @return Handle to the binding slots array
  */
+
 MLSDKAPI mlsdk_decoder_binding_slots_handle
 mlsdk_decoder_model_sequence_get_output_binding_slot(mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder);
 /**
@@ -567,6 +587,15 @@ mlsdk_decoder_model_sequence_get_output_binding_slot(mlsdk_decoder_model_sequenc
  * @return The size in bytes of the memory needed to create the model resource table decoder
  */
 MLSDKAPI size_t mlsdk_decoder_model_resource_table_decoder_mem_reqs();
+
+/**
+ * @brief Checks if pointer points to valid model resource table data
+ *
+ * @param modelResourceTableData The pointer to the data
+ * @param size The size in bytes of the data
+ * @return True if the data is a valid section, false otherwise
+ */
+MLSDKAPI bool mlsdk_decoder_is_valid_model_resource_table(const void *modelResourceTableData, uint64_t size);
 
 /**
  * @brief Create the model resource table decoder
@@ -641,6 +670,15 @@ MLSDKAPI void mlsdk_decoder_model_resource_table_get_tensor_strides(
     mlsdk_decoder_tensor_dimensions *dimensions);
 
 /**********************************************************************************************************************/
+
+/**
+ * @brief Checks if pointer points to valid constant table data
+ *
+ * @param constantTableData The pointer to the data
+ * @param size The size in bytes of the data
+ * @return True if the data is a valid section, false otherwise
+ */
+MLSDKAPI bool mlsdk_decoder_is_valid_constant_table(const void *constantTableData, uint64_t size);
 
 /**
  * @brief Create the constant table decoder
