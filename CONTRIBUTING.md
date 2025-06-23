@@ -1,13 +1,13 @@
 # Contributor Guide
 
-The VGF Lib project is open for external contributors and welcomes
-contributions. VGF Lib is licensed under the Apache-2.0 and all accepted
+The VGF Library project is open for external contributors and welcomes
+contributions. VGF Library is licensed under the Apache-2.0 and all accepted
 contributions must have the same license.
 
 ## Developer Certificate of Origin (DCO)
 
-Before the VGF Lib project accepts your contribution, you need to certify its
-origin and give us your permission. To manage this process we use Developer
+Before the VGF Library project accepts your contribution, you need to certify
+its origin and give us your permission. To manage this process we use Developer
 Certificate of Origin (DCO) V1.1 (<https://developercertificate.org/>).
 
 To indicate that you agree to the the terms of the DCO, you "sign off" your
@@ -21,7 +21,7 @@ accepted.
 
 ## C++ Coding Style
 
-Changes to VGF Lib should follow the
+Changes to VGF Library should follow the
 [CppCoreGuidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md)
 
 Use clang-format and cppcheck to check your changes. They can be install by

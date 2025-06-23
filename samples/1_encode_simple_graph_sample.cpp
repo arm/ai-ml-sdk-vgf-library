@@ -168,7 +168,7 @@ std::string T1_encode_simple_graph_sample() {
     vgf_file.close();
 
     // Now that the file has been written to disk, you can view the contents via the VGF_dump tool which is a
-    // stand-alone executable and built as part of the VGF library. See: <SDK_ROOT>/format/vgf_dump/
+    // stand-alone executable and built as part of the VGF Library. See: <SDK_ROOT>/format/vgf_dump/
 
     return full_path.string();
 }

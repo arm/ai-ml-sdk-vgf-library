@@ -109,7 +109,7 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
             vgflib::CreateModelResourceTableDecoder(model_resource_table_data.data());
 
         // All the fields are trivially accessed
-        assert(mrt_decoder->size() == 2); // 2 resources, 1 input and 1 output for this use-case
+        assert(mrt_decoder->size() == 2); // 2 resources, 1 input and 1 output for this use case
 
         // Get the input resource fields
         assert(mrt_decoder->getCategory(input_mrt_idx) ==

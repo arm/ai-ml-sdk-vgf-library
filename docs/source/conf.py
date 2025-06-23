@@ -7,8 +7,8 @@ import sys
 
 sys.path.insert(0, os.path.abspath("."))
 
-# VGF Lib project config
-VGF_project = "VGF Library"
+# ML SDK VGF Library project config
+VGF_project = "ML SDK VGF Library"
 copyright = "2022-2025, Arm Limited and/or its affiliates <open-source-office@arm.com>"
 author = "Arm Limited"
 git_repo_tool_url = "https://gerrit.googlesource.com/git-repo"

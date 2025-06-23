@@ -1,7 +1,7 @@
 VGF Dump Tool
 =============
 
-After you have built the VGF Lib, a vgf_dump binary is produced as an artifact. The vgf_dump binary is a tool with multiple functions:
+After you have built the VGF Library, a vgf_dump binary is produced as an artifact. The vgf_dump binary is a tool with multiple functions:
 
 - You can use the vgf_dump tool to inspect the contents of the .vgf files.
 - The tool can dump SPIR-V™ module binary data embedded in the VGF.
@@ -28,7 +28,7 @@ If the `--output <file.npy>` option is provided, the contents will be saved to t
 `--scenario-template`
 ---------------------
 
-This option outputs a template scenario file. The ML SDK Scenario runner uses the template scenario file as an input file. The template scenario file describes what the scenario runner must execute. You must manually edit some file paths in the template scenario file. However, the `--scenario-template` is incompatible with `--dump-spirv` and `--dump-constant` options. For example, after creating a simple VGF file, the `--scenario-template` option produces:
+This option outputs a template scenario file. The ML SDK Scenario Runner uses the template scenario file as an input file. The template scenario file describes what the scenario runner must execute. You must manually edit some file paths in the template scenario file. However, the `--scenario-template` is incompatible with `--dump-spirv` and `--dump-constant` options. For example, after creating a simple VGF file, the `--scenario-template` option produces:
 
 .. code-block:: json
 
