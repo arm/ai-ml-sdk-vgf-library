@@ -2,7 +2,7 @@ VGF Decoder C++ API
 ===================
 
 
-The VGF Library decoder enables the parsing of VGF files. The VGF library contains different sections and the methods for each section. The important sections are the Header section, Model Sequence Table, Module Table, Model Resource Table and the Constant Section.
+The VGF Library decoder enables the parsing of VGF files. The VGF Library contains different sections and the methods for each section. The important sections are the Header section, Model Sequence Table, Module Table, Model Resource Table and the Constant Section.
 
 Header section decoding
 ```````````````````````

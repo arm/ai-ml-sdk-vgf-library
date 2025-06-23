@@ -1,7 +1,7 @@
-# ML SDK VGF Lib
+# ML SDK VGF Library
 
-The VGF Lib is a library that encodes and decodes VGF files. The VGF format
-covers the entire model use-cases. These use-cases can be a combination of
+The VGF Library is a library that encodes and decodes VGF files. The VGF format
+covers the entire model use cases. These use cases can be a combination of
 SPIR-V™ module binary data, their constants, and compute shaders. The library
 provides a suite of APIs and tools for working with VGF files. The library
 includes the following:
@@ -21,12 +21,13 @@ memory required and provide it to this library. To minimize copies and peak
 memory requirements, the format also supports mmap read operations on the
 contents.
 
-VGF lib also provides a dumping tool which is called vgf_dump. vgf_dump prints
-the content of a VGF file into human-readable JSON format. You can also use
-vgf_dump to generate scenario file templates. You can use the scenario file
-templates with the scenario runner tool.
+VGF Library also provides a dumping tool which is called vgf_dump. vgf_dump
+prints the content of a VGF file into human-readable JSON format. You can also
+use vgf_dump to generate scenario file templates. You can use the scenario file
+templates with the
+[Scenario Runner](https://github.com/arm/ai-ml-sdk-scenario-runner) tool.
 
-## Building VGF Lib from source
+### Building VGF Library from source
 
 The build system must have:
 

@@ -1,7 +1,7 @@
 VGF Logging C API
 ===================
 
-The VGF library produces logging messages. The Logging C++ API allows you to process these logging messages. To enable the logging functionality, you must provide the callback function. The callback function accepts log level and message as input parameters:
+The VGF Library produces logging messages. The Logging C++ API allows you to process these logging messages. To enable the logging functionality, you must provide the callback function. The callback function accepts log level and message as input parameters:
 
 .. code-block:: cpp
 

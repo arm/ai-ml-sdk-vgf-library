@@ -21,12 +21,12 @@ CMAKE_TOOLCHAIN_PATH = VGF_LIB_DIR / "cmake" / "toolchain"
 
 class Builder:
     """
-    A  class that builds the VGF library.
+    A  class that builds the VGF Library.
 
     Parameters
     ----------
     args : 'dict'
-        Dictionary with arguments to build the VGF library.
+        Dictionary with arguments to build the VGF Library.
     """
 
     def __init__(self, args) -> None:
@@ -351,7 +351,7 @@ def parse_arguments():
     )
     parser.add_argument(
         "--build-pylib",
-        help="Build Python VGF Lib. Default: %(default)s",
+        help="Build Python VGF Library. Default: %(default)s",
         action="store_true",
         default=False,
     )
