@@ -100,9 +100,10 @@ if(ML_SDK_VGF_LIB_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
-if(ML_SDK_BUILD_DOCS)
+if(ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)
     include(docs/docs.cmake)
 endif()
+unset(ML_SDK_VGF_LIB_BUILD_DOCS CACHE)
 
 ###############################################################################
 # Packaging

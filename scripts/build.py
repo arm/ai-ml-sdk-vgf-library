@@ -133,7 +133,7 @@ class Builder:
             cmake_setup_cmd.append("-DML_SDK_VGF_LIB_ENABLE_LINT=ON")
 
         if self.doc:
-            cmake_setup_cmd.append("-DML_SDK_BUILD_DOCS=ON")
+            cmake_setup_cmd.append("-DML_SDK_VGF_LIB_BUILD_DOCS=ON")
 
         cmake_setup_cmd.append(f"-DARGPARSE_PATH={self.argparse_path}")
         cmake_setup_cmd.append(f"-DJSON_PATH={self.json_path}")
