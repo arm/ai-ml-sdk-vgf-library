@@ -15,7 +15,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 set(VGF_PACKAGE_NAME ${PROJECT_NAME})
 set(VGF_NAMESPACE ${PROJECT_NAME})
-set(CPACK_PACKAGE_NAME "ml-sdk-vgf-lib")
+if(ML_SDK_GENERATE_CPACK)
+    set(VGF_PACKAGE_NAME "ml-sdk")
+else()
+    set(CPACK_PACKAGE_NAME "ml-sdk-vgf-lib")
+endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -109,7 +113,8 @@ unset(ML_SDK_VGF_LIB_BUILD_DOCS CACHE)
 # Packaging
 ###############################################################################
 include(package)
-
-mlsdk_package(PACKAGE_NAME ${VGF_PACKAGE_NAME}
-    NAMESPACE ${VGF_NAMESPACE}
-    LICENSES "${CMAKE_CURRENT_LIST_DIR}/LICENSES/Apache-2.0.txt")
+if(NOT ML_SDK_GENERATE_CPACK)
+    mlsdk_package(PACKAGE_NAME ${VGF_PACKAGE_NAME}
+        NAMESPACE ${VGF_NAMESPACE}
+        LICENSES "${CMAKE_CURRENT_LIST_DIR}/LICENSES/Apache-2.0.txt")
+endif()
