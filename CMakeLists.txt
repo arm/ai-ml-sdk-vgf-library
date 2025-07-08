@@ -22,7 +22,9 @@ else()
 endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
+if(DEFINED ANDROID_PLATFORM)
+    message(WARNING "Cross-compiling for Android is currently an experimental feature.")
+endif()
 # Compile defines
 add_compile_definitions(
     "$<$<NOT:$<CONFIG:DEBUG>>:NDEBUG>")
@@ -118,3 +120,4 @@ if(NOT ML_SDK_GENERATE_CPACK)
         NAMESPACE ${VGF_NAMESPACE}
         LICENSES "${CMAKE_CURRENT_LIST_DIR}/LICENSES/Apache-2.0.txt")
 endif()
+unset(ANDROID_PLATFORM CACHE)
