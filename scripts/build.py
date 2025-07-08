@@ -90,9 +90,12 @@ class Builder:
             return True
 
         if self.target_platform == "android":
+            print(
+                "WARNING: Cross-compiling VGF Library for Android is currently an experimental feature."
+            )
             if not self.cmake_toolchain_for_android:
                 print(
-                    "ERROR: No toolchain path specified for android cross-compilation",
+                    "ERROR: No toolchain path specified for Android cross-compilation",
                     file=sys.stderr,
                 )
                 return False
