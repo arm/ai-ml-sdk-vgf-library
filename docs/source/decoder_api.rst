@@ -60,14 +60,14 @@ The segment contains 1 or more DescriptorSetInfos. Each DescriptorSetInfos corre
 
 Therefore, when you translate the VGF contents to Vulkan® API calls, there are 2 distinct stages where you need the binding slot information:
 
-#. during creation of the descriptor set layout
-#. during writing of the descriptor set
+#. During creation of the descriptor set layout
+#. During writing of the descriptor set
 
 There are several routes to getting binding slot information depending on the required view.
 
 #. The most common route is via DescriptorSetInfos on the 'Segment'. Each segment has a list of descriptor sets which themselves contain a view of the binding slots. There is a 1-1
    mapping between the DescriptorSetInfos in the Model Sequence Table and the Vulkan® API DescriptorSets.
-#. The ModelSequenceTable has a list of binding slots that form the inputs and outputs to the entire model. This is useful when connecting game/app resources to the model.
+#. The ModelSequenceTable has a list of binding slots that form the inputs and outputs to the entire model. This is useful when connecting game or app resources to the model.
 #. Each segment has a list of input and output binding slots. You can use the binding slots for for graph connectivity analysis.
 
 .. literalinclude:: ../sources/test/model_sequence_tests.cpp
