@@ -35,7 +35,7 @@ The build system must have:
 - C/C++ 17 compiler: GCC, or optionally Clang on Linux and MSVC on Windows®.
 - Python 3.10 or later. Required python libraries for building are listed in
   `tooling-requirements.txt`.
-- Flatbuffers flatc compiler.
+- Flatbuffers flatc compiler 25.2.10 or later.
 
 The following dependencies are also needed:
 
@@ -48,31 +48,29 @@ For the preferred dependency versions see the manifest file.
 
 ### Providing Flatc
 
-There are 3 options for providing the flatc binary.
+There are 3 options for providing the flatc binary and headers.
 
-1.  Installing flatc to the system. To install flatc to the system and make it
-    available on the searchable `PATH`, see the
-    [flatbuffers documentation](https://flatbuffers.dev/).
+1.  Using the default path. When the repository is initialized using the repo
+    manifest, the flatbuffers source is checked out in
+    `<repo-root>/dependencies/flatbuffers/`. The VGF Library cmake scripts
+    automatically find and build flatc in this location.
 
-2.  Building flatc from repo source. When the repository is initialized using
-    the repo manifest, you can find a flatbuffers source checkout in
-    `<repo-root>/dependencies/flatbuffers/`. Navigate to this location and run
-    the following commands:
+2.  Providing a custom flatc path. If flatc cannot be found in the default
+    `<repo-root>/dependencies/flatbuffers` path, you can provide a custom binary
+    file path to the build script using the `--flatc-path <path_to_flatc>`
+    option, see [Building with the script](#building-with-the-script).
+
+3.  Installing flatc to the system. If flatc cannot be found in the default path
+    and no custom path is provided, it will be searched using `PATH`. To install
+    flatc to the system and make it available on the searchable `PATH`, see the
+    [flatbuffers documentation](https://flatbuffers.dev/). For example, on Linux
+    navigate to the flatbuffers checkout location and run the following
+    commands:
 
 ```bash
-cmake -B build && cmake --build build --parallel $(nproc)
+cmake -B build -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build build --target install
 ```
-
-```{note}
-If you build into the `build` folder, the VGF-lib cmake scripts
-automatically find the flatc binary.
-```
-
-3.  Providing a custom flatc path. If flatc cannot be searched using `PATH` or
-    found in the default `<repo-root>/dependencies/flatbuffers/build` path, you
-    can provide a custom binary file path to the build script using the
-    `--flatc-path <path_to_flatc>` option, see
-    [Building with the script](#building-with-the-script).
 
 <a name="building-with-the-script"></a>
 
