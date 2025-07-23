@@ -10,13 +10,13 @@ For a minimal build and to initialize only the |VGF_project| and its dependencie
 
 .. code-block:: bash
 
-    repo init -u <server>/ml-sdk-for-vulkan-manifest -g vgf-lib
+    repo init -u https://github.com/arm/ai-ml-sdk-manifest -g vgf-lib
 
 Alternatively, to initialize the repo structure for the entire ML SDK for Vulkan®, including the VGF Library, run:
 
 .. code-block:: bash
 
-    repo init -u <server>/ml-sdk-for-vulkan-manifest -g all
+    repo init -u https://github.com/arm/ai-ml-sdk-manifest -g all
 
 After the repo is initialized, fetch the contents with:
 
