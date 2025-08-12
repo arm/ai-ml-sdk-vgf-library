@@ -55,11 +55,17 @@ class Builder:
         self.package_source = args.package_source
 
     def setup_platform_build(self, cmake_cmd):
+        system = platform.system()
         if self.target_platform == "host":
-            system = platform.system()
             if system == "Linux":
                 cmake_cmd.append(
-                    f"-DCMAKE_TOOLCHAIN_FILE={CMAKE_TOOLCHAIN_PATH / 'linux-gcc.cmake'}"
+                    f"-DCMAKE_TOOLCHAIN_FILE={CMAKE_TOOLCHAIN_PATH / 'gcc.cmake'}"
+                )
+                return True
+
+            if system == "Darwin":
+                cmake_cmd.append(
+                    f"-DCMAKE_TOOLCHAIN_FILE={CMAKE_TOOLCHAIN_PATH / 'clang.cmake'}"
                 )
                 return True
 
@@ -73,7 +79,25 @@ class Builder:
             print(f"ERROR: Unsupported host platform {system}", file=sys.stderr)
             return False
 
+        if self.target_platform == "linux-clang":
+            if system != "Linux":
+                print(
+                    f"ERROR: target {self.target_platform} only supported on Linux. Host platform {system}",
+                    file=sys.stderr,
+                )
+                return False
+            cmake_cmd.append(
+                f"-DCMAKE_TOOLCHAIN_FILE={CMAKE_TOOLCHAIN_PATH / 'clang.cmake'}"
+            )
+            return True
+
         if self.target_platform == "aarch64":
+            if system != "Linux":
+                print(
+                    f"ERROR: target {self.target_platform} only supported on Linux. Host platform {system}",
+                    file=sys.stderr,
+                )
+                return False
             cmake_cmd.append(
                 f"-DCMAKE_TOOLCHAIN_FILE={CMAKE_TOOLCHAIN_PATH / 'linux-aarch64-gcc.cmake'}"
             )
@@ -85,11 +109,16 @@ class Builder:
 
             cmake_cmd.append("-DBUILD_WSI_WAYLAND_SUPPORT=OFF")
             cmake_cmd.append("-DBUILD_WSI_XLIB_SUPPORT=OFF")
-            cmake_cmd.append("-DBUILD_WSI_XLIB_SUPPORT=OFF")
             cmake_cmd.append("-DBUILD_WSI_XCB_SUPPORT=OFF")
             return True
 
         if self.target_platform == "android":
+            if system != "Linux":
+                print(
+                    f"ERROR: target {self.target_platform} only supported on Linux. Host platform {system}",
+                    file=sys.stderr,
+                )
+                return False
             print(
                 "WARNING: Cross-compiling VGF Library for Android is currently an experimental feature."
             )
@@ -183,7 +212,7 @@ class Builder:
                 )
 
                 pytest_cmd = [
-                    "python",
+                    sys.executable,
                     "-m",
                     "pytest",
                     "-n",
@@ -301,7 +330,7 @@ def parse_arguments():
     parser.add_argument(
         "--target-platform",
         help="Specify the target build platform",
-        choices=["host", "android", "aarch64"],
+        choices=["host", "android", "aarch64", "linux-clang"],
         default="host",
     )
     parser.add_argument(
