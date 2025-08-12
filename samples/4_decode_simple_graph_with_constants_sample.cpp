@@ -13,14 +13,12 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
     // Open the file
     std::ifstream vgf_file(vgfFilename, std::ios::binary);
     assert(vgf_file);
+    size_t header_size = vgflib::HeaderSize();
 
     // get length of file so we can do some error checking
     vgf_file.seekg(0, std::ios_base::end);
-    std::streampos file_size = vgf_file.tellg();
+    assert(header_size <= static_cast<size_t>(vgf_file.tellg()));
     vgf_file.seekg(0, std::ios_base::beg);
-
-    size_t header_size = vgflib::HeaderSize();
-    assert(header_size <= static_cast<size_t>(file_size));
 
     // Read exactly 'headerSize' num bytes of data
     std::vector<char> header(header_size);
