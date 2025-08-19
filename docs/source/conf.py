@@ -37,7 +37,11 @@ extensions = [
 smartquotes_action = "qe"
 
 # Disable superfluous warnings
-suppress_warnings = ["sphinx.ext.autosectionlabel.*"]
+suppress_warnings = [
+    "autosectionlabel.*",
+    "myst.xref_missing",
+    "myst.header",
+]
 
 # Breathe Configuration
 breathe_projects = {"VGF": "../generated/xml"}
