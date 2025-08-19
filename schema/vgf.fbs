@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -87,12 +87,14 @@ table ModelSequenceTable {
     output_names: [string];
 }
 
+// This section is deprecated and is kept for backward compatibility
 table ConstantData {
     mrt_index: uint;
     sparsity_dimension: int64;
     raw: [ubyte] (force_align: 8);
 }
 
+// This section is deprecated and is kept for backward compatibility
 table ConstantSection {
     data: [ConstantData];
 }

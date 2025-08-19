@@ -66,7 +66,7 @@ constexpr size_t HEADER_CONSTANT_SECTION_OFFSET_OFFSET =
 constexpr size_t HEADER_CONSTANT_SECTION_SIZE_OFFSET = HEADER_CONSTANT_SECTION_OFFSET + offsetof(SectionEntry, size);
 
 constexpr uint8_t HEADER_MAJOR_VERSION_VALUE = 0;
-constexpr uint8_t HEADER_MINOR_VERSION_VALUE = 3;
+constexpr uint8_t HEADER_MINOR_VERSION_VALUE = 4;
 constexpr uint8_t HEADER_PATCH_VERSION_VALUE = 0;
 
 // This is a reminder to trigger removal of deprecated features on major version bump

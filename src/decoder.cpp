@@ -5,6 +5,7 @@
 
 #include "vgf/decoder.hpp"
 
+#include "constant.hpp"
 #include "header.hpp"
 #include "internal_types.hpp"
 #include "vgf_generated.h"
@@ -62,6 +63,10 @@ template <class T> bool VerifyImpl(const void *data, const uint64_t size) {
     const auto *obj = flatbuffers::GetRoot<const T>(data);
     flatbuffers::Verifier verifier(static_cast<const uint8_t *>(data), size);
     return obj->Verify(verifier);
+}
+
+const char *getConstantSectionVersion(const void *data) {
+    return static_cast<const char *>(data) + CONSTANT_SECTION_VERSION_OFFSET;
 }
 
 } // namespace
@@ -477,21 +482,80 @@ class ConstantDecoderImpl : public ConstantDecoder {
     const VGF::ConstantSection *_constantSection;
 };
 
-size_t ConstantDecoderSize() { return sizeof(ConstantDecoderImpl); }
+class ConstantDecoder_V00_Impl : public ConstantDecoder {
+  public:
+    explicit ConstantDecoder_V00_Impl(const void *const data) {
+        _count = ReadBytesAs<uint64_t>(data, CONSTANT_SECTION_COUNT_OFFSET);
+        _metaData = reinterpret_cast<const uint8_t *>(data) + CONSTANT_SECTION_METADATA_OFFSET;
+        _data = _metaData + _count * sizeof(ConstantMetaData_V00);
+    }
+
+    [[nodiscard]] size_t size() const override { return static_cast<size_t>(_count); }
+
+    [[nodiscard]] DataView<uint8_t> getConstant(uint32_t idx) const override {
+        if (!_count)
+            return DataView<uint8_t>();
+        auto metaData = ReadBytesAs<ConstantMetaData_V00>(_metaData, idx * sizeof(ConstantMetaData_V00));
+        return DataView<uint8_t>(_data + metaData.offset, metaData.size);
+    }
+
+    [[nodiscard]] uint32_t getConstantMrtIndex(uint32_t idx) const override {
+        return ReadBytesAs<ConstantMetaData_V00>(_metaData, idx * sizeof(ConstantMetaData_V00)).mrtIndex;
+    }
+
+    [[nodiscard]] bool isSparseConstant(uint32_t idx) const override {
+        return ReadBytesAs<ConstantMetaData_V00>(_metaData, idx * sizeof(ConstantMetaData_V00)).sparsityDimension != -1;
+    }
+
+    [[nodiscard]] int64_t getConstantSparsityDimension(uint32_t idx) const override {
+        return ReadBytesAs<ConstantMetaData_V00>(_metaData, idx * sizeof(ConstantMetaData_V00)).sparsityDimension;
+    }
+
+  private:
+    uint64_t _count;
+    const uint8_t *_metaData;
+    const uint8_t *_data;
+};
+size_t ConstantDecoderSize() { return std::max(sizeof(ConstantDecoderImpl), sizeof(ConstantDecoder_V00_Impl)); }
 
 bool VerifyConstant(const void *data, const uint64_t size) {
     assert(data != nullptr && "data is null");
+    if ((size >= CONSTANT_SECTION_VERSION_SIZE) &&
+        strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
+        if (size < CONSTANT_SECTION_METADATA_OFFSET) {
+            return false;
+        }
+        const auto decoder = std::make_unique<ConstantDecoder_V00_Impl>(data);
+        if (decoder->size()) {
+            auto metaData = reinterpret_cast<const uint8_t *>(data) + CONSTANT_SECTION_METADATA_OFFSET;
+            for (size_t i = 0; i < decoder->size(); ++i) {
+                auto [mrtIndex, sparsityDimension, sizeInBytes, offset] =
+                    ReadBytesAs<ConstantMetaData_V00>(metaData, i * sizeof(ConstantMetaData_V00));
+                if (sparsityDimension < -1) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
     return VerifyImpl<VGF::ConstantSection>(data, size);
 }
 
 std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *const data) {
     assert(data != nullptr && "data is null");
+    if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
+        return std::make_unique<ConstantDecoder_V00_Impl>(data);
+    }
     return std::make_unique<ConstantDecoderImpl>(data);
 }
 
 ConstantDecoder *CreateConstantDecoderInPlace(const void *const data, void *decoderMem) {
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
+    if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
+        return new (decoderMem) ConstantDecoder_V00_Impl(data);
+    }
     return new (decoderMem) ConstantDecoderImpl(data);
 }
 
