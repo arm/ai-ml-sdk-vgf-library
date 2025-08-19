@@ -5,6 +5,7 @@
 
 #include "vgf/encoder.hpp"
 
+#include "constant.hpp"
 #include "header.hpp"
 #include "internal_types.hpp"
 #include "section_index_table.hpp"
@@ -43,6 +44,8 @@ VGF::ResourceCategory toVGF(ResourceCategory category) {
         return VGF::ResourceCategory::ResourceCategory_MAX;
     }
 }
+
+template <typename T> size_t getAlignedSize(size_t size) { return (size + sizeof(T) - 1) / sizeof(T) * sizeof(T); }
 
 } // namespace
 
@@ -192,12 +195,19 @@ class EncoderImpl : public Encoder {
         assert(data && "data pointer cannot be nullptr");
         assert(sizeInBytes > 0 && "sizeInBytes cannot be zero");
 
-        _constantBuilder.ForceVectorAlignment(sizeInBytes, sizeof(uint8_t), 8);
-        auto vec = _constantBuilder.CreateVector(reinterpret_cast<const uint8_t *>(data), sizeInBytes);
-        _constants.emplace_back(
-            VGF::CreateConstantData(_constantBuilder, resourceRef.reference, sparsityDimension, vec));
+        _constsMetaData.emplace_back(ConstantMetaData_V00{
+            resourceRef.reference,
+            static_cast<int32_t>(sparsityDimension),
+            sizeInBytes,
+            _constDataOffset,
+        });
 
-        return {static_cast<uint32_t>(_constants.size() - 1)};
+        uint64_t sizeInBytesAligned = getAlignedSize<uint64_t>(sizeInBytes);
+        auto &constantData = _constsData.emplace_back(sizeInBytesAligned, 0);
+        std::memcpy(constantData.data(), data, sizeInBytes);
+        _constDataOffset += sizeInBytesAligned;
+
+        return {static_cast<uint32_t>(_constsMetaData.size() - 1)};
     }
 
     void Finish() override {
@@ -209,9 +219,6 @@ class EncoderImpl : public Encoder {
         auto modelResourceTable =
             VGF::CreateModelResourceTable(_modelResourceBuilder, _modelResourceBuilder.CreateVector(_resources));
         _modelResourceBuilder.Finish(modelResourceTable);
-
-        auto constSection = VGF::CreateConstantSection(_constantBuilder, _constantBuilder.CreateVector(_constants));
-        _constantBuilder.Finish(constSection);
 
         auto modelSequenceInputOffsets = _modelSequenceBuilder.CreateVector<flatbuffers::Offset<VGF::BindingSlot>>(
             _modelSequenceInputs.size(), [this](size_t i) { return _bindingSlots[_modelSequenceInputs[i].reference]; });
@@ -242,7 +249,11 @@ class EncoderImpl : public Encoder {
         const auto &moduleSection = table.AddSection(_moduleBuilder.GetSize());
         const auto &modelSequenceSection = table.AddSection(_modelSequenceBuilder.GetSize());
         const auto &modelResourceSection = table.AddSection(_modelResourceBuilder.GetSize());
-        const auto &constantSection = table.AddSection(_constantBuilder.GetSize());
+
+        auto numConsts = static_cast<uint64_t>(_constsMetaData.size());
+        const auto constantSectionSize =
+            CONSTANT_SECTION_METADATA_OFFSET + numConsts * sizeof(ConstantMetaData_V00) + _constDataOffset;
+        const auto &constantSection = table.AddSection(constantSectionSize);
 
         // calculate alignments and offsets
         table.Update();
@@ -261,8 +272,19 @@ class EncoderImpl : public Encoder {
         if (!modelResourceSection.Write(output, _modelResourceBuilder.GetBufferPointer())) {
             return false;
         }
-        if (!constantSection.Write(output, _constantBuilder.GetBufferPointer())) {
-            return false;
+        {
+            output.write(CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
+            output.write(reinterpret_cast<const char *>(&numConsts), CONSTANT_SECTION_COUNT_SIZE);
+            output.write(reinterpret_cast<const char *>(_constsMetaData.data()),
+                         static_cast<std::streamsize>(numConsts * sizeof(ConstantMetaData_V00)));
+            for (auto it = _constsData.begin(); it != _constsData.end();) {
+                output.write(reinterpret_cast<const char *>(it->data()), static_cast<std::streamsize>(it->size()));
+                it = _constsData.erase(it);
+            }
+
+            if (output.bad() || output.fail()) {
+                return false;
+            }
         }
         return true;
     }
@@ -272,11 +294,9 @@ class EncoderImpl : public Encoder {
     flatbuffers::FlatBufferBuilder _moduleBuilder;
     flatbuffers::FlatBufferBuilder _modelSequenceBuilder;
     flatbuffers::FlatBufferBuilder _modelResourceBuilder;
-    flatbuffers::FlatBufferBuilder _constantBuilder;
 
     std::vector<flatbuffers::Offset<VGF::Module>> _modules;
     std::vector<flatbuffers::Offset<VGF::ModelResourceTableEntry>> _resources;
-    std::vector<flatbuffers::Offset<VGF::ConstantData>> _constants;
     std::vector<flatbuffers::Offset<VGF::BindingSlot>> _bindingSlots;
     std::vector<flatbuffers::Offset<VGF::DescriptorSetInfo>> _descriptorSetInfos;
     std::vector<flatbuffers::Offset<VGF::SegmentInfo>> _segmentInfos;
@@ -286,6 +306,10 @@ class EncoderImpl : public Encoder {
     std::vector<BindingSlotRef> _modelSequenceInputs;
     std::vector<BindingSlotRef> _modelSequenceOutputs;
     std::vector<ModuleType> _moduleRefToType;
+
+    std::vector<ConstantMetaData_V00> _constsMetaData;
+    std::list<std::vector<uint8_t>> _constsData;
+    uint64_t _constDataOffset = 0;
 
     uint16_t _vkHeaderVersion;
 };

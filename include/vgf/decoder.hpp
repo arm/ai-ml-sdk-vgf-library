@@ -352,7 +352,7 @@ size_t ConstantDecoderSize();
 /**
  * @brief Returns true if input points to a valid Constant section
  *
- * @param data
+ * @param data Pointer to the Constants section data
  * @param size Max count of read bytes
  */
 bool VerifyConstant(const void *data, uint64_t size);

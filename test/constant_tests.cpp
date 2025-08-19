@@ -8,6 +8,8 @@
 #include "vgf/types.hpp"
 
 #include "header.hpp"
+#include "memory_map.hpp"
+#include "temp_folder.hpp"
 
 #include <gtest/gtest.h>
 
@@ -84,6 +86,87 @@ TEST(CppEncodeDecode, AddNonSparseConstant) {
     ASSERT_TRUE(decoder->getConstant(constantRef.reference) == DataView<uint8_t>(constant.data(), constant.size()));
     ASSERT_TRUE(decoder->getConstantMrtIndex(constantRef.reference) == resourceRef.reference);
     ASSERT_TRUE(decoder->isSparseConstant(constantRef.reference) == false);
+}
+
+TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
+    TempFolder tempFolder("vgf_lib_model_with_many_large_non_sparse_consts_cpp");
+    const std::string filename = tempFolder.relative("Model.bin").string();
+    std::ofstream file(filename, std::ios::binary);
+    ASSERT_TRUE(file);
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+
+    std::vector<ConstantRef> constants;
+
+    size_t largeConstsSize = 25000000; // 25MB
+    const std::vector<uint8_t> largeConst(largeConstsSize, 'l');
+    uint32_t numLargeConsts = 40;
+    for (uint32_t i = 0; i < numLargeConsts; ++i) {
+        ResourceRef resourceRef = {i};
+        constants.push_back(encoder->AddConstant(resourceRef, largeConst.data(), largeConst.size()));
+    }
+
+    size_t smallConstsSize = 2000; // 2KB
+    const std::vector<uint8_t> smallConst(smallConstsSize, 's');
+    uint32_t numSmallConsts = 1000;
+    for (uint32_t i = numLargeConsts; i < numLargeConsts + numSmallConsts; ++i) {
+        ResourceRef resourceRef = {i};
+        constants.push_back(encoder->AddConstant(resourceRef, smallConst.data(), smallConst.size()));
+    }
+
+    size_t veryLargeConstsSize = 500000000; // 500MB
+    const std::vector<uint8_t> veryLargeConst(veryLargeConstsSize, 'L');
+    uint32_t numVeryLargeConsts = 10;
+    for (uint32_t i = numLargeConsts + numSmallConsts; i < numLargeConsts + numSmallConsts + numVeryLargeConsts; ++i) {
+        ResourceRef resourceRef = {i};
+        constants.push_back(encoder->AddConstant(resourceRef, veryLargeConst.data(), veryLargeConst.size()));
+    }
+
+    size_t verySmallConstsSize = 1; // 1B
+    const std::vector<uint8_t> verySmallConst(verySmallConstsSize, 'S');
+    uint32_t numVerySmallConsts = 100000;
+    for (uint32_t i = numLargeConsts + numSmallConsts + numVeryLargeConsts;
+         i < numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts; ++i) {
+        ResourceRef resourceRef = {i};
+        constants.push_back(encoder->AddConstant(resourceRef, verySmallConst.data(), verySmallConst.size()));
+    }
+
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(file) == true);
+    file.close();
+
+    auto mmapped = MemoryMap(filename);
+
+    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(mmapped.ptr());
+    ASSERT_TRUE(headerDecoder->IsValid() == true);
+    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+
+    ASSERT_TRUE(VerifyConstant(mmapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize()));
+
+    std::unique_ptr<ConstantDecoder> decoder = CreateConstantDecoder(mmapped.ptr(headerDecoder->GetConstantsOffset()));
+
+    ASSERT_TRUE(decoder->size() == numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts);
+    for (uint32_t i = 0; i < numLargeConsts; ++i) {
+        ASSERT_TRUE(decoder->getConstant(i) == DataView<uint8_t>(largeConst.data(), largeConstsSize));
+        ASSERT_TRUE(decoder->getConstantMrtIndex(i) == constants[i].reference);
+        ASSERT_TRUE(decoder->isSparseConstant(i) == false);
+    }
+    for (uint32_t i = numLargeConsts; i < numLargeConsts + numSmallConsts; ++i) {
+        ASSERT_TRUE(decoder->getConstant(i) == DataView<uint8_t>(smallConst.data(), smallConstsSize));
+        ASSERT_TRUE(decoder->getConstantMrtIndex(i) == constants[i].reference);
+        ASSERT_TRUE(decoder->isSparseConstant(i) == false);
+    }
+    for (uint32_t i = numLargeConsts + numSmallConsts; i < numLargeConsts + numSmallConsts + numVeryLargeConsts; ++i) {
+        ASSERT_TRUE(decoder->getConstant(i) == DataView<uint8_t>(veryLargeConst.data(), veryLargeConstsSize));
+        ASSERT_TRUE(decoder->getConstantMrtIndex(i) == constants[i].reference);
+        ASSERT_TRUE(decoder->isSparseConstant(i) == false);
+    }
+    for (uint32_t i = numLargeConsts + numSmallConsts + numVeryLargeConsts;
+         i < numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts; ++i) {
+        ASSERT_TRUE(decoder->getConstant(i) == DataView<uint8_t>(verySmallConst.data(), verySmallConstsSize));
+        ASSERT_TRUE(decoder->getConstantMrtIndex(i) == constants[i].reference);
+        ASSERT_TRUE(decoder->isSparseConstant(i) == false);
+    }
 }
 
 TEST(CppEncodeDecode, EmptyConstantSection) {
@@ -214,6 +297,110 @@ TEST(CEncodeDecode, AddNonSparseConstant) {
     ASSERT_TRUE(false == mlsdk_decoder_constant_table_is_sparse(decoder, constantRef.reference));
     ASSERT_TRUE(DataView<uint8_t>(constantData.data, constantData.size) ==
                 DataView<uint8_t>(constant.data(), constant.size()));
+}
+
+TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
+    TempFolder tempFolder("vgf_lib_model_with_many_large_non_sparse_consts_c");
+    const std::string filename = tempFolder.relative("Model.bin").string();
+    std::ofstream file(filename, std::ios::binary);
+    ASSERT_TRUE(file);
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+
+    std::vector<ConstantRef> constants;
+
+    size_t largeConstsSize = 25000000; // 25MB
+    const std::vector<uint8_t> largeConst(largeConstsSize, 'l');
+    uint32_t numLargeConsts = 40;
+    for (uint32_t i = 0; i < numLargeConsts; ++i) {
+        ResourceRef resourceRef = {i};
+        constants.push_back(encoder->AddConstant(resourceRef, largeConst.data(), largeConst.size()));
+    }
+
+    size_t smallConstsSize = 2000; // 2KB
+    const std::vector<uint8_t> smallConst(smallConstsSize, 's');
+    uint32_t numSmallConsts = 1000;
+    for (uint32_t i = numLargeConsts; i < numLargeConsts + numSmallConsts; ++i) {
+        ResourceRef resourceRef = {i};
+        constants.push_back(encoder->AddConstant(resourceRef, smallConst.data(), smallConst.size()));
+    }
+
+    size_t veryLargeConstsSize = 500000000; // 500MB
+    const std::vector<uint8_t> veryLargeConst(veryLargeConstsSize, 'L');
+    uint32_t numVeryLargeConsts = 10;
+    for (uint32_t i = numLargeConsts + numSmallConsts; i < numLargeConsts + numSmallConsts + numVeryLargeConsts; ++i) {
+        ResourceRef resourceRef = {i};
+        constants.push_back(encoder->AddConstant(resourceRef, veryLargeConst.data(), veryLargeConst.size()));
+    }
+
+    size_t verySmallConstsSize = 1; // 1B
+    const std::vector<uint8_t> verySmallConst(verySmallConstsSize, 'S');
+    uint32_t numVerySmallConsts = 100000;
+    for (uint32_t i = numLargeConsts + numSmallConsts + numVeryLargeConsts;
+         i < numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts; ++i) {
+        ResourceRef resourceRef = {i};
+        constants.push_back(encoder->AddConstant(resourceRef, verySmallConst.data(), verySmallConst.size()));
+    }
+
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(file) == true);
+    file.close();
+
+    auto mmapped = MemoryMap(filename);
+    ASSERT_TRUE(mmapped.size() >= mlsdk_decoder_header_size());
+
+    std::vector<uint8_t> headerDecoderMemory;
+    headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(mmapped.ptr(), headerDecoderMemory.data());
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+
+    mlsdk_decoder_vgf_section_info moduleSection;
+    mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
+    mlsdk_decoder_vgf_section_info modelSequenceSection;
+    mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
+    mlsdk_decoder_vgf_section_info modelResourceSection;
+    mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_resources, &modelResourceSection);
+    mlsdk_decoder_vgf_section_info modelConstantsSection;
+    mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_constants, &modelConstantsSection);
+    ASSERT_TRUE(modelConstantsSection.size > 0);
+    ASSERT_TRUE(modelConstantsSection.offset ==
+                HEADER_HEADER_SIZE_VALUE + moduleSection.size + modelSequenceSection.size + modelResourceSection.size);
+
+    ASSERT_TRUE(
+        mlsdk_decoder_is_valid_constant_table(mmapped.ptr(modelConstantsSection.offset), modelConstantsSection.size));
+
+    std::vector<uint8_t> constantDecoderMemory;
+    constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    mlsdk_decoder_constant_table_decoder *decoder = mlsdk_decoder_create_constant_table_decoder(
+        mmapped.ptr(modelConstantsSection.offset), constantDecoderMemory.data());
+
+    ASSERT_TRUE(mlsdk_decoder_get_constant_table_num_entries(decoder) ==
+                numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts);
+
+    mlsdk_decoder_constant_data constantData;
+    for (uint32_t i = 0; i < numLargeConsts; ++i) {
+        mlsdk_decoder_constant_table_get_data(decoder, i, &constantData);
+        ASSERT_TRUE(DataView<uint8_t>(constantData.data, constantData.size) ==
+                    DataView<uint8_t>(largeConst.data(), largeConst.size()));
+    }
+    for (uint32_t i = numLargeConsts; i < numLargeConsts + numSmallConsts; ++i) {
+        mlsdk_decoder_constant_table_get_data(decoder, i, &constantData);
+        ASSERT_TRUE(DataView<uint8_t>(constantData.data, constantData.size) ==
+                    DataView<uint8_t>(smallConst.data(), smallConstsSize));
+    }
+    for (uint32_t i = numLargeConsts + numSmallConsts; i < numLargeConsts + numSmallConsts + numVeryLargeConsts; ++i) {
+        mlsdk_decoder_constant_table_get_data(decoder, i, &constantData);
+        ASSERT_TRUE(DataView<uint8_t>(constantData.data, constantData.size) ==
+                    DataView<uint8_t>(veryLargeConst.data(), veryLargeConstsSize));
+    }
+    for (uint32_t i = numLargeConsts + numSmallConsts + numVeryLargeConsts;
+         i < numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts; ++i) {
+        mlsdk_decoder_constant_table_get_data(decoder, i, &constantData);
+        ASSERT_TRUE(DataView<uint8_t>(constantData.data, constantData.size) ==
+                    DataView<uint8_t>(verySmallConst.data(), verySmallConstsSize));
+    }
 }
 
 TEST(CEncodeDecode, EmptyConstantSection) {
