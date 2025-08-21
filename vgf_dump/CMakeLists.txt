@@ -8,7 +8,6 @@ include(json)
 include(version)
 
 add_library(static_vgf_dump STATIC
-    src/memory_map.cpp
     src/numpy.cpp
     src/vgf_dump.cpp
 )
@@ -23,7 +22,7 @@ add_executable(vgf_dump
     src/main.cpp
 )
 
-target_link_libraries(vgf_dump PRIVATE static_vgf_dump argparse::argparse)
+target_link_libraries(vgf_dump PRIVATE static_vgf_dump argparse::argparse vgf-utils)
 target_compile_options(vgf_dump PRIVATE ${ML_SDK_VGF_LIB_COMPILE_OPTIONS})
 
 mlsdk_generate_version_header(

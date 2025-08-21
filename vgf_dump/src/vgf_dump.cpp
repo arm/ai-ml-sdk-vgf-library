@@ -6,6 +6,8 @@
 #include <vgf/decoder.hpp>
 #include <vgf/types.hpp>
 
+#include <vgf-utils/memory_map.hpp>
+
 #include "numpy.hpp"
 #include <vgf/vgf_dump.hpp>
 

@@ -46,6 +46,7 @@ option(ML_SDK_VGF_LIB_GCC_SANITIZERS "Sanitizers" OFF)
 
 # exclude schema from linting, to avoid failures in flatbuffers
 add_subdirectory(schema)
+add_subdirectory(utils)
 
 # Enable cppcheck
 if(ML_SDK_VGF_LIB_ENABLE_LINT)
