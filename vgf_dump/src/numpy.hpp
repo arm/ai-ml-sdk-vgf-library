@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "memory_map.hpp"
-
 #include <vgf/decoder.hpp>
 #include <vgf/types.hpp>
 
