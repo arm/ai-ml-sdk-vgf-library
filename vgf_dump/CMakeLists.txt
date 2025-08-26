@@ -8,7 +8,6 @@ include(json)
 include(version)
 
 add_library(static_vgf_dump STATIC
-    src/numpy.cpp
     src/vgf_dump.cpp
 )
 

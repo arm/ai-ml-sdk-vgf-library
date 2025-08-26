@@ -5,20 +5,11 @@
 
 #pragma once
 
-#include <vgf/decoder.hpp>
-#include <vgf/types.hpp>
-
-#include <algorithm>
-#include <fstream>
-#include <functional>
 #include <numeric>
-#include <sstream>
 #include <string>
 #include <vector>
 
-using namespace mlsdk::vgflib;
-
-namespace mlsdk::numpy {
+namespace mlsdk::vgfutils::numpy {
 
 namespace {
 inline bool is_little_endian() {
@@ -28,7 +19,7 @@ inline bool is_little_endian() {
 
 inline char get_endian_char(uint64_t size) { return size < 2 ? '|' : is_little_endian() ? '<' : '>'; }
 
-inline uint64_t size_of(const DataView<int64_t> &shape, const uint64_t &itemsize) {
+inline uint64_t size_of(const std::vector<int64_t> &shape, const uint64_t &itemsize) {
     return std::accumulate(shape.begin(), shape.end(), itemsize, std::multiplies<uint64_t>());
 }
 
@@ -38,9 +29,9 @@ inline bool isPow2(uint32_t value) { return ((value & (~(value - 1))) == value);
 
 char numpyTypeEncoding(const std::string &numeric);
 
-uint32_t elementSizeFromFormatType(FormatType format);
+uint32_t elementSizeFromBlockSize(uint32_t blockSize);
 
-void write(const std::string &filename, const char *ptr, const DataView<int64_t> &shape, const char kind,
+void write(const std::string &filename, const char *ptr, const std::vector<int64_t> &shape, const char kind,
            const uint64_t &itemsize);
 
-} // namespace mlsdk::numpy
+} // namespace mlsdk::vgfutils::numpy
