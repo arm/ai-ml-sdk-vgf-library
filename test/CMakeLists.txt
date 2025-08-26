@@ -12,11 +12,13 @@ add_executable(VGFLibTests
   model_resource_tests.cpp
   model_sequence_tests.cpp
   module_table_tests.cpp
+  numpy_test.cpp
   section_index_table_tests.cpp
 )
 target_link_libraries(VGFLibTests PRIVATE
     GTest::gtest_main
     vgf
+    vgf-utils
     vgf_schema
     $<$<PLATFORM_ID:Android>:log>)
 target_include_directories(VGFLibTests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
