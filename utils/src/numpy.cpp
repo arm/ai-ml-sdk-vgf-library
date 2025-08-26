@@ -5,26 +5,17 @@
 
 #include "numpy.hpp"
 
-#include <vgf/types.hpp>
-#define VGFLIB_VK_HELPERS // Avoid need to include Vulkan headers
-#include <vgf/vulkan_helpers.generated.hpp>
-
 #include <array>
-#include <cstring>
 #include <fstream>
-#include <numeric>
 #include <sstream>
-#include <string>
 
-using namespace mlsdk::vgflib;
-
-namespace mlsdk::numpy {
+namespace mlsdk::vgfutils::numpy {
 
 namespace {
 
 constexpr std::array<char, 6> numpy_magic_bytes = {'\x93', 'N', 'U', 'M', 'P', 'Y'};
 
-std::string shape_to_str(const DataView<int64_t> &shape) {
+std::string shape_to_str(const std::vector<int64_t> &shape) {
     std::stringstream shape_ss;
     shape_ss << "(";
 
@@ -43,7 +34,7 @@ std::string shape_to_str(const DataView<int64_t> &shape) {
     return shape_ss.str();
 }
 
-void write_header(std::ostream &out, const DataView<int64_t> &shape, const std::string &dtype) {
+void write_header(std::ostream &out, const std::vector<int64_t> &shape, const std::string &dtype) {
     std::stringstream header_dict;
     header_dict << "{";
     header_dict << "'descr': '" << dtype << "',";
@@ -100,20 +91,19 @@ char numpyTypeEncoding(const std::string &numeric) {
     throw std::runtime_error("Unable to classify NumPy encoding");
 }
 
-uint32_t elementSizeFromFormatType(FormatType format) {
-    uint32_t value = blockSize(format);
-    if (isPow2(value)) {
-        return value;
+uint32_t elementSizeFromBlockSize(uint32_t blockSize) {
+    if (isPow2(blockSize)) {
+        return blockSize;
     }
     // Round up to next power of 2
     uint32_t countBits = 1; // start with offset to select next power of 2
-    while (value >>= 1) {
+    while (blockSize >>= 1) {
         countBits++;
     }
     return 1 << countBits;
 }
 
-void write(const std::string &filename, const char *ptr, const DataView<int64_t> &shape, const char kind,
+void write(const std::string &filename, const char *ptr, const std::vector<int64_t> &shape, const char kind,
            const uint64_t &itemsize) {
 
     char byteorder = get_endian_char(itemsize);
@@ -132,4 +122,4 @@ void write(const std::string &filename, const char *ptr, const DataView<int64_t>
     file.close();
 }
 
-} // namespace mlsdk::numpy
+} // namespace mlsdk::vgfutils::numpy

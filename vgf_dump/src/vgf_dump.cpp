@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <vgf/vgf_dump.hpp>
+
 #include <vgf/decoder.hpp>
 #include <vgf/types.hpp>
 
 #include <vgf-utils/memory_map.hpp>
-
-#include "numpy.hpp"
-#include <vgf/vgf_dump.hpp>
+#include <vgf-utils/numpy.hpp>
 
 #define VGFLIB_VK_HELPERS // Avoid need to include Vulkan headers
 #include <vgf/vulkan_helpers.generated.hpp>
@@ -612,14 +612,15 @@ void mlsdk::vgf_dump::dumpNumpy(const std::string &inputFile, const std::string 
 
     const auto mrtIndex = constantDecoder->getConstantMrtIndex(index);
     const auto format = mrtDecoder->getVkFormat(mrtIndex);
-    const auto shape = mrtDecoder->getTensorShape(mrtIndex);
+    const auto shapeView = mrtDecoder->getTensorShape(mrtIndex);
+    const std::vector<int64_t> shape(shapeView.begin(), shapeView.end());
     const auto data = constantDecoder->getConstant(index);
 
     const auto numeric = componentNumericFormat(format);
-    const auto encoding = mlsdk::numpy::numpyTypeEncoding(numeric);
-    const auto itemsize = mlsdk::numpy::elementSizeFromFormatType(format);
+    const auto encoding = mlsdk::vgfutils::numpy::numpyTypeEncoding(numeric);
+    const auto itemsize = mlsdk::vgfutils::numpy::elementSizeFromBlockSize(blockSize(format));
 
-    mlsdk::numpy::write(outputFile, reinterpret_cast<const char *>(data.begin()), shape, encoding, itemsize);
+    mlsdk::vgfutils::numpy::write(outputFile, reinterpret_cast<const char *>(data.begin()), shape, encoding, itemsize);
 }
 
 void mlsdk::vgf_dump::dumpScenario(const std::string &inputFile, const std::string &outputFile, bool add_boundaries) {
