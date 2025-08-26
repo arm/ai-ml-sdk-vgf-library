@@ -6,75 +6,155 @@
 #include "numpy.hpp"
 
 #include <array>
+#include <cstdint>
+#include <cstring>
 #include <fstream>
-#include <sstream>
 
 namespace mlsdk::vgfutils::numpy {
 
 namespace {
 
-constexpr std::array<char, 6> numpy_magic_bytes = {'\x93', 'N', 'U', 'M', 'P', 'Y'};
+constexpr std::array<char, 6> numpyMagicBytes = {'\x93', 'N', 'U', 'M', 'P', 'Y'};
 
-std::string shape_to_str(const std::vector<int64_t> &shape) {
-    std::stringstream shape_ss;
-    shape_ss << "(";
+bool isLittleEndian() {
+    uint16_t num = 1;
+    return reinterpret_cast<uint8_t *>(&num)[1] == 0;
+}
+
+char getEndianChar(uint64_t size) { return size < 2 ? '|' : isLittleEndian() ? '<' : '>'; }
+
+uint64_t sizeOf(const std::vector<int64_t> &shape, const uint64_t &itemsize) {
+    return std::accumulate(shape.begin(), shape.end(), itemsize, std::multiplies<uint64_t>());
+}
+
+bool isPow2(uint32_t value) { return ((value & (~(value - 1))) == value); }
+
+std::string shapeToStr(const std::vector<int64_t> &shape) {
+    std::stringstream ss;
+    ss << "(";
 
     if (shape.size() == 0) {
         // nothing to do here
     } else if (shape.size() == 1) {
-        shape_ss << std::to_string(shape[0]) << ",";
+        ss << std::to_string(shape[0]) << ",";
     } else {
         for (uint32_t i = 0; i < shape.size(); ++i) {
-            shape_ss << std::to_string(shape[i]);
+            ss << std::to_string(shape[i]);
             if (i != shape.size() - 1)
-                shape_ss << ", ";
+                ss << ", ";
         }
     }
-    shape_ss << ")";
-    return shape_ss.str();
+    ss << ")";
+    return ss.str();
 }
 
-void write_header(std::ostream &out, const std::vector<int64_t> &shape, const std::string &dtype) {
-    std::stringstream header_dict;
-    header_dict << "{";
-    header_dict << "'descr': '" << dtype << "',";
-    header_dict << "'fortran_order': False,";
-    header_dict << "'shape': " << shape_to_str(shape);
-    header_dict << "}";
+std::string dtypeToStr(const DType &dtype) {
+    return std::string(1, dtype.byteorder) + dtype.kind + std::to_string(dtype.itemsize);
+}
+
+std::vector<int64_t> strToShape(const std::string &shapeStr) {
+    std::stringstream ss(shapeStr);
+    std::string token;
+    std::vector<int64_t> shape;
+
+    while (std::getline(ss, token, ',')) {
+        token.erase(0, token.find_first_not_of(' '));
+        token.erase(token.find_last_not_of(' ') + 1);
+
+        try {
+            shape.push_back(std::stoull(token));
+        } catch (const std::exception &e) {
+            throw std::runtime_error(std::string("invalid shape: ") + e.what());
+        }
+    }
+    return shape;
+}
+
+DType getDtype(const std::string &dict) {
+    size_t descrStart = dict.find("'descr':");
+    if (descrStart == std::string::npos)
+        throw std::runtime_error("missing 'descr' field in header");
+
+    descrStart += 8;
+    size_t valueStart = dict.find('\'', descrStart);
+    size_t valueEnd = dict.find('\'', valueStart + 1);
+    if (valueStart == std::string::npos || valueEnd == std::string::npos)
+        throw std::runtime_error("invalid 'descr' format in header");
+
+    std::string descrValue = dict.substr(valueStart + 1, valueEnd - valueStart - 1);
+    if (descrValue.size() < 3)
+        throw std::runtime_error("invalid 'descr' string");
+
+    char byteorder = descrValue[0];
+    char kind = descrValue[1];
+    uint64_t itemsize;
+
+    try {
+        itemsize = std::stoull(descrValue.substr(2));
+    } catch (const std::exception &e) {
+        throw std::runtime_error(std::string("invalid size in dtype: ") + e.what());
+    }
+
+    return DType(kind, itemsize, byteorder);
+}
+
+bool checkFortranOrder(const std::string &dict) {
+    size_t keyPos = dict.find("'fortran_order':");
+    if (keyPos == std::string::npos)
+        return false;
+
+    size_t valuePos = dict.find("False", keyPos);
+    if (valuePos == std::string::npos || valuePos != keyPos + 17)
+        return false;
+
+    return true;
+}
+
+void writeHeader(std::ostream &out, const std::vector<int64_t> &shape, const std::string &dtype) {
+    std::stringstream headerDict;
+    headerDict << "{";
+    headerDict << "'descr': '" << dtype << "',";
+    headerDict << "'fortran_order': False,";
+    headerDict << "'shape': " << shapeToStr(shape);
+    headerDict << "}";
 
     // calculate padding len
-    std::string header_str = header_dict.str();
-    size_t padding_len = 16 - ((10 + header_str.size() + 1) % 16);
-    header_str += std::string(padding_len, ' ') + '\n';
+    std::string headerStr = headerDict.str();
+    size_t paddingLen = 16 - ((10 + headerStr.size() + 1) % 16);
+    headerStr += std::string(paddingLen, ' ') + '\n';
 
     // write magic string
-    out.write(numpy_magic_bytes.data(), numpy_magic_bytes.size());
+    out.write(numpyMagicBytes.data(), numpyMagicBytes.size());
 
     // write version and HEADER_LEN
-    size_t header_len = header_str.size();
-    bool use_version_2 = header_len > 65535;
+    size_t headerLen = headerStr.size();
+    bool useVersion2 = headerLen > 65535;
 
-    if (use_version_2) {
+    if (useVersion2) {
         out.put(static_cast<char>(0x02));
         out.put(static_cast<char>(0x00));
-        out.put(static_cast<char>(header_len & 0xFF));
-        out.put(static_cast<char>((header_len >> 8) & 0xFF));
-        out.put(static_cast<char>((header_len >> 16) & 0xFF));
-        out.put(static_cast<char>((header_len >> 24) & 0xFF));
+        out.put(static_cast<char>(headerLen & 0xFF));
+        out.put(static_cast<char>((headerLen >> 8) & 0xFF));
+        out.put(static_cast<char>((headerLen >> 16) & 0xFF));
+        out.put(static_cast<char>((headerLen >> 24) & 0xFF));
     } else {
         out.put(static_cast<char>(0x01));
         out.put(static_cast<char>(0x00));
-        out.put(static_cast<char>(header_len & 0xFF));
-        out.put(static_cast<char>((header_len >> 8) & 0xFF));
+        out.put(static_cast<char>(headerLen & 0xFF));
+        out.put(static_cast<char>((headerLen >> 8) & 0xFF));
     }
 
     // write header dict
-    out.write(header_str.c_str(), std::streamsize(header_str.size()));
+    out.write(headerStr.c_str(), std::streamsize(headerStr.size()));
 }
 
 } // namespace
 
-char numpyTypeEncoding(const std::string &numeric) {
+DType::DType(char kind, uint64_t itemsize) : byteorder(getEndianChar(itemsize)), kind(kind), itemsize(itemsize) {}
+
+uint64_t DataPtr::size() const { return sizeOf(shape, dtype.itemsize); };
+
+char numpyTypeEncoding(std::string_view numeric) {
     if (numeric == "BOOL") {
         return 'b';
     }
@@ -103,11 +183,102 @@ uint32_t elementSizeFromBlockSize(uint32_t blockSize) {
     return 1 << countBits;
 }
 
+DataPtr parse(const MemoryMap &mapped) {
+    uint8_t majorVersion;
+    uint32_t headerLen;
+    size_t headerOffset = 0;
+
+    // check magic string
+    if (std::memcmp(mapped.ptr(), numpyMagicBytes.data(), numpyMagicBytes.size()) != 0)
+        throw std::runtime_error("invalid NumPy file format");
+
+    headerOffset += numpyMagicBytes.size();
+    majorVersion = *reinterpret_cast<const uint8_t *>(mapped.ptr(headerOffset));
+    headerOffset += 2;
+
+    // check version
+    if (majorVersion == 1) {
+        uint16_t headerLenV1 = *reinterpret_cast<const uint16_t *>(mapped.ptr(headerOffset));
+        headerLen = headerLenV1;
+        headerOffset += sizeof(headerLenV1);
+
+    } else if (majorVersion == 2) {
+        headerLen = *reinterpret_cast<const uint32_t *>(mapped.ptr(headerOffset));
+        headerOffset += sizeof(headerLen);
+
+    } else {
+        throw std::runtime_error("unsupported NumPy file version");
+    }
+
+    // parse header dict
+    std::string dict(reinterpret_cast<const char *>(mapped.ptr(headerOffset)), headerLen);
+
+    DataPtr dataPtr;
+    // get dtype
+    dataPtr.dtype = getDtype(dict);
+
+    // check byte order
+    char byteorder = dataPtr.dtype.byteorder;
+    if ((isLittleEndian() && byteorder == '>') || (!isLittleEndian() && byteorder == '<'))
+        throw std::runtime_error("mismatch in byte order");
+
+    // check fortran order
+    if (!checkFortranOrder(dict))
+        throw std::runtime_error("only supported is fortran_order: False");
+
+    // convert shape str to shape
+    size_t shapeStart = dict.find('(');
+    size_t shapeEnd = dict.find(')', shapeStart);
+    std::string shapeStr = dict.substr(shapeStart + 1, shapeEnd - shapeStart - 1);
+    dataPtr.shape = strToShape(shapeStr);
+
+    // set dataPtr to start of numpy data
+    headerOffset += headerLen;
+    dataPtr.ptr = reinterpret_cast<const char *>(mapped.ptr(headerOffset));
+
+    // consistency check: verify that all data is mapped
+    if (headerOffset + dataPtr.size() > mapped.size())
+        throw std::runtime_error("data size exceeds the mapped memory size");
+
+    return dataPtr;
+}
+
+void write(const std::string &filename, const DataPtr &dataPtr) {
+    std::ofstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("cannot open " + filename);
+    }
+
+    // write npy header to file
+    writeHeader(file, dataPtr.shape, dtypeToStr(dataPtr.dtype));
+
+    // write data to file
+    file.write(reinterpret_cast<const char *>(dataPtr.ptr), std::streamsize(dataPtr.size()));
+    file.close();
+}
+
+void write(const std::string &filename, const std::vector<int64_t> &shape, const DType &dtype,
+           std::function<uint64_t(std::ostream &)> &&callback) {
+    std::ofstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("cannot open " + filename);
+    }
+
+    // write npy header to file
+    writeHeader(file, shape, dtypeToStr(dtype));
+
+    // write data to file
+    uint64_t size = callback(file);
+    if (sizeOf(shape, dtype.itemsize) != size) {
+        throw std::runtime_error("written wrong amount of data");
+    }
+    file.close();
+}
+
 void write(const std::string &filename, const char *ptr, const std::vector<int64_t> &shape, const char kind,
            const uint64_t &itemsize) {
 
-    char byteorder = get_endian_char(itemsize);
-    std::string dtype = std::string(1, byteorder) + kind + std::to_string(itemsize);
+    DType dtype{kind, itemsize};
 
     std::ofstream file(filename, std::ios::binary);
     if (!file.is_open()) {
@@ -115,10 +286,10 @@ void write(const std::string &filename, const char *ptr, const std::vector<int64
     }
 
     // write npy header to file
-    write_header(file, shape, dtype);
+    writeHeader(file, shape, dtypeToStr(dtype));
 
     // write data to file
-    file.write(reinterpret_cast<const char *>(ptr), std::streamsize(size_of(shape, itemsize)));
+    file.write(reinterpret_cast<const char *>(ptr), std::streamsize(sizeOf(shape, itemsize)));
     file.close();
 }
 
