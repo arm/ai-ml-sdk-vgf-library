@@ -47,12 +47,15 @@ class Builder:
         self.gtest_path = args.gtest_path
         self.flatbuffers_path = args.flatbuffers_path
         self.pybind11_path = args.pybind11_path
-        self.build_pylib = args.build_pylib or args.test
+        self.build_pylib = args.build_pylib or args.test or args.package_type == "pip"
         self.enable_gcc_sanitizers = args.enable_gcc_sanitizers
         self.install = args.install
         self.package = args.package
         self.package_type = args.package_type
         self.package_source = args.package_source
+
+        if not self.install and self.package_type == "pip":
+            self.install = "pip_install"
 
     def setup_platform_build(self, cmake_cmd):
         system = platform.system()
@@ -235,7 +238,7 @@ class Builder:
                 ]
                 subprocess.run(cmake_install_cmd, check=True)
 
-            if self.package:
+            if self.package and self.package_type != "pip":
                 package_type = self.package_type or "tgz"
                 cpack_generator = package_type.upper()
 
@@ -253,6 +256,40 @@ class Builder:
                     "CPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF",
                 ]
                 subprocess.run(cmake_package_cmd, check=True)
+
+            if self.package_type == "pip":
+                subprocess.run(
+                    [
+                        "mkdir",
+                        "-p",
+                        "pip_package/vgf_lib/binaries",
+                    ]
+                )
+                subprocess.run(
+                    ["cp", "-R", f"{self.install}/.", "pip_package/vgf_lib/binaries/"]
+                )
+                subprocess.run(
+                    [
+                        "cp",
+                        "-R",
+                        f"{self.build_dir}/src/.",
+                        "pip_package/vgf_lib/binaries/",
+                    ]
+                )
+                result = subprocess.Popen(
+                    [
+                        "python",
+                        "setup.py",
+                        "bdist_wheel",
+                        "--plat-name",
+                        "manyLinux2014_x86_64",
+                    ],
+                    cwd="pip_package",
+                )
+                result.communicate()
+                if result.returncode != 0:
+                    print("ERROR: Failed to generate pip package")
+                    return 1
 
             if self.package_source:
                 package_type = self.package_type or "tgz"
@@ -374,7 +411,7 @@ def parse_arguments():
     )
     parser.add_argument(
         "--package-type",
-        choices=["zip", "tgz"],
+        choices=["zip", "tgz", "pip"],
         help="Package type",
     )
     parser.add_argument(
