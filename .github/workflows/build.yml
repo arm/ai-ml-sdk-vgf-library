@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-License-Identifier: Apache-2.0
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - test_fix
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: 'Build (${{ matrix.os }})'
+    runs-on: '${{ matrix.os }}'
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - macos-15
+          - windows-latest
+
+    steps:
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Checkout and sync repos
+        uses: arm/ai-ml-sdk-manifest/.github/actions/checkout@main
+        with:
+          repo_groups: scenario-runner
+          overrides: |
+              ${{ github.repository }}@${{ github.sha }}
+
+      - name: Build (macOS/Linux)
+        if: runner.os != 'Windows'
+        working-directory: sw/scenario-runner
+        run: python scripts/build.py
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        working-directory: sw/scenario-runner
+        run: python scripts/build.py
