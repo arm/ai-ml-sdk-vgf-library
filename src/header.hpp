@@ -78,8 +78,8 @@ struct Header {
            const SectionEntry &constantSection, uint16_t vkHeaderVersion)
         : vkHeaderVersion(vkHeaderVersion), moduleSection{moduleSection.offset, moduleSection.size},
           sequenceSection{sequenceSection.offset, sequenceSection.size},
-          resourceSection{resourceSection.offset, resourceSection.size}, constantSection{constantSection.offset,
-                                                                                         constantSection.size} {}
+          resourceSection{resourceSection.offset, resourceSection.size},
+          constantSection{constantSection.offset, constantSection.size} {}
 
     const FourCCValue magic = HEADER_MAGIC_VALUE;
     const uint16_t vkHeaderVersion{0};
