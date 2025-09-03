@@ -7,6 +7,7 @@
 
 #include "memory_map.hpp"
 
+#include <cstdint>
 #include <functional>
 #include <numeric>
 #include <sstream>
