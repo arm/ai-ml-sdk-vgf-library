@@ -495,21 +495,21 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
     [[nodiscard]] DataView<uint8_t> getConstant(uint32_t idx) const override {
         if (!_count)
             return DataView<uint8_t>();
-        auto metaData = ReadBytesAs<ConstantMetaData_V00>(_metaData, idx * sizeof(ConstantMetaData_V00));
-        return DataView<uint8_t>(_data + metaData.offset, metaData.size);
+        auto metaData = reinterpret_cast<const ConstantMetaData_V00 *>(_metaData + idx * sizeof(ConstantMetaData_V00));
+        return DataView<uint8_t>(_data + metaData->offset, metaData->size);
     }
 
     [[nodiscard]] uint32_t getConstantMrtIndex(uint32_t idx) const override {
-        return ReadBytesAs<ConstantMetaData_V00>(_metaData, idx * sizeof(ConstantMetaData_V00)).mrtIndex;
-    }
-
-    [[nodiscard]] bool isSparseConstant(uint32_t idx) const override {
-        return ReadBytesAs<ConstantMetaData_V00>(_metaData, idx * sizeof(ConstantMetaData_V00)).sparsityDimension != -1;
+        auto metaData = reinterpret_cast<const ConstantMetaData_V00 *>(_metaData + idx * sizeof(ConstantMetaData_V00));
+        return metaData->mrtIndex;
     }
 
     [[nodiscard]] int64_t getConstantSparsityDimension(uint32_t idx) const override {
-        return ReadBytesAs<ConstantMetaData_V00>(_metaData, idx * sizeof(ConstantMetaData_V00)).sparsityDimension;
+        auto metaData = reinterpret_cast<const ConstantMetaData_V00 *>(_metaData + idx * sizeof(ConstantMetaData_V00));
+        return metaData->sparsityDimension;
     }
+
+    [[nodiscard]] bool isSparseConstant(uint32_t idx) const override { return getConstantSparsityDimension(idx) != -1; }
 
   private:
     uint64_t _count;
@@ -526,14 +526,9 @@ bool VerifyConstant(const void *data, const uint64_t size) {
             return false;
         }
         const auto decoder = std::make_unique<ConstantDecoder_V00_Impl>(data);
-        if (decoder->size()) {
-            auto metaData = reinterpret_cast<const uint8_t *>(data) + CONSTANT_SECTION_METADATA_OFFSET;
-            for (size_t i = 0; i < decoder->size(); ++i) {
-                auto [mrtIndex, sparsityDimension, sizeInBytes, offset] =
-                    ReadBytesAs<ConstantMetaData_V00>(metaData, i * sizeof(ConstantMetaData_V00));
-                if (sparsityDimension < -1) {
-                    return false;
-                }
+        for (size_t i = 0; i < decoder->size(); ++i) {
+            if (decoder->getConstantSparsityDimension(static_cast<uint32_t>(i)) < -1) {
+                return false;
             }
         }
 
