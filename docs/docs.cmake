@@ -10,6 +10,11 @@ if(NOT DOXYGEN_FOUND OR NOT SPHINX_FOUND)
     return()
 endif()
 
+if(CMAKE_CROSSCOMPILING)
+    message(WARNING "Cannot build the documentation when cross-compiling. Skipping.")
+    return()
+endif()
+
 file(MAKE_DIRECTORY ${SPHINX_GEN_DIR})
 
 # copy MD files for inclusion into the published docs
@@ -21,12 +26,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LICENSES/Apache-2.0.txt ${SPHINX_GEN_
 # Generate a text file with the VGF_DUMP tool help text
 set(VGF_DUMP_ARG_HELP_TXT ${SPHINX_GEN_DIR}/vgf_dump_help.txt)
 add_custom_command(
-    OUTPUT ${VGF_DUMP_ARG_HELP_TXT}
-    DEPENDS vgf_dump
-    COMMAND ./vgf_dump --help > ${VGF_DUMP_ARG_HELP_TXT}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/vgf_dump
-    COMMENT "Generating vgf_dump tool ARGPARSE help documentation"
-    VERBATIM
+  OUTPUT "${VGF_DUMP_ARG_HELP_TXT}"
+  COMMAND ${CMAKE_COMMAND}
+          -Dcmd=$<IF:$<PLATFORM_ID:Windows>,.\\,./>$<TARGET_FILE_NAME:${VGF_NAMESPACE}::vgf_dump>
+          -Dargs=--help
+          -Dwd=$<TARGET_FILE_DIR:${VGF_NAMESPACE}::vgf_dump>
+          -Dout=${VGF_DUMP_ARG_HELP_TXT}
+          -P ${CMAKE_CURRENT_LIST_DIR}/redirect-output.cmake
+  COMMAND_EXPAND_LISTS
+  DEPENDS ${VGF_NAMESPACE}::vgf_dump
+  BYPRODUCTS ${VGF_DUMP_ARG_HELP_TXT}
+  VERBATIM
+  COMMENT "Generating vgf_dump --help text"
 )
 
 set(DOC_SRC_FILES_FULL_PATHS
