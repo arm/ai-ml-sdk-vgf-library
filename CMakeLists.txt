@@ -42,7 +42,6 @@ option(ML_SDK_VGF_LIB_BUILD_PYLIB "Build VGF Python Lib" OFF)
 option(ML_SDK_VGF_LIB_BUILD_TESTS "Build Format unit tests" OFF)
 option(ML_SDK_VGF_LIB_BUILD_TOOLS "Build VGF tools" ON)
 option(ML_SDK_VGF_LIB_ENABLE_LINT "Enable linting using cppcheck" OFF)
-option(ML_SDK_VGF_LIB_GCC_SANITIZERS "Sanitizers" OFF)
 
 # exclude schema from linting, to avoid failures in flatbuffers
 add_subdirectory(schema)
