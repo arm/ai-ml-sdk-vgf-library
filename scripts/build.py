@@ -4,8 +4,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import argparse
+import os
 import pathlib
 import platform
+import shutil
 import subprocess
 import sys
 
@@ -258,31 +260,26 @@ class Builder:
                 subprocess.run(cmake_package_cmd, check=True)
 
             if self.package_type == "pip":
-                subprocess.run(
-                    [
-                        "mkdir",
-                        "-p",
-                        "pip_package/vgf_lib/binaries",
-                    ]
+                if sys.platform.startswith("win"):
+                    platformName = "win_amd64"
+                elif sys.platform.startswith("linux"):
+                    platformName = "manyLinux2014_x86_64"
+                else:
+                    print(f"ERROR: Unknown platform: {sys.platform}")
+                    return 1
+
+                os.makedirs("pip_package/vgf_lib/binaries/", exist_ok=True)
+                shutil.copytree(
+                    self.install, "pip_package/vgf_lib/binaries/", dirs_exist_ok=True
                 )
-                subprocess.run(
-                    ["cp", "-R", f"{self.install}/.", "pip_package/vgf_lib/binaries/"]
-                )
-                subprocess.run(
-                    [
-                        "cp",
-                        "-R",
-                        f"{self.build_dir}/src/.",
-                        "pip_package/vgf_lib/binaries/",
-                    ]
-                )
+
                 result = subprocess.Popen(
                     [
                         "python",
                         "setup.py",
                         "bdist_wheel",
                         "--plat-name",
-                        "manyLinux2014_x86_64",
+                        platformName,
                     ],
                     cwd="pip_package",
                 )
