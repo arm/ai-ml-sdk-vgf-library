@@ -10,7 +10,7 @@
         "licenseListVersion": "3.20",
         "comment": "NOTICE: THIS SOFTWARE BILL OF MATERIALS (“SBOM”) IS PROVIDED BY ARM LIMITED 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT ARE DISCLAIMED. IN NO EVENT SHALL ARM LIMITED BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SBOM, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
     },
-    "name": "ai-ml-sdk-vgf-lib",
+    "name": "ai-ml-sdk-vgf-library",
     "dataLicense": "CC0-1.0",
     "documentNamespace": "https://blackducksoftware.github.io/spdx/ML%3AMLSDKforVulkan-d411e343-029f-49dc-b8d9-91a740f48319",
     "packages": [
@@ -27,11 +27,11 @@
             "filesAnalyzed": false,
             "licenseConcluded": "(Apache-2.0)",
             "licenseDeclared": "(Apache-2.0)",
-            "name": "ai-ml-sdk-vgf-lib",
+            "name": "ai-ml-sdk-vgf-library",
             "originator": "Organization: Arm Limited.",
             "copyrightText": "Copyright (c) Arm Limited",
             "supplier": "Organization: Arm Limited.",
-            "versionInfo": "ai-ml-sdk-vgf-lib"
+            "versionInfo": "ai-ml-sdk-vgf-library"
         },
         {
             "SPDXID": "SPDXRef-package-b5e8d763-2306-40ca-b3fe-16ca34951016",
