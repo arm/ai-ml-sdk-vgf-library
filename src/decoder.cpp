@@ -62,7 +62,7 @@ bool validateSectionsSizesInHeader(const HeaderDecoder &headerDecoder, uint64_t 
 
 // FlatBuffers uses 32-bit offsets; cap verification to what the format can encode and what the platform can address.
 constexpr uint64_t maxFlatbufferBytes() {
-    constexpr uint64_t uoffsetMax = static_cast<uint64_t>(std::numeric_limits<flatbuffers::uoffset_t>::max());
+    constexpr auto uoffsetMax = static_cast<uint64_t>(std::numeric_limits<flatbuffers::uoffset_t>::max());
     return std::min<uint64_t>(SIZE_MAX_VALUE, uoffsetMax);
 }
 
@@ -296,7 +296,7 @@ class ModuleTableDecoderImpl : public ModuleTableDecoder {
 
     [[nodiscard]] DataView<uint32_t> getModuleCode(uint32_t idx) const override {
         const VGF::SPIRV *spirv = getModuleAt(idx)->code_as_SPIRV();
-        if (spirv && spirv->words()) {
+        if ((spirv != nullptr) && (spirv->words() != nullptr)) {
             return {spirv->words()->data(), spirv->words()->size()};
         }
         return {};

@@ -319,7 +319,7 @@ TEST(CppVerify, EmptyConstantSection) {
 TEST(CppVerify, LegacyConstantSectionSizeWrapRejected) {
     Logger logger;
     const uint64_t constantOffset = 80;
-    const uint64_t constantSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const auto constantSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
     const size_t vgfSize = 162;
     const auto constant = std::vector<uint8_t>(40, 'a');
 
@@ -747,7 +747,7 @@ TEST(CVerify, EmptyConstantSection) {
 TEST(CVerify, LegacyConstantSectionSizeWrapRejected) {
     Logger logger;
     const uint64_t constantOffset = 80;
-    const uint64_t constantSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const auto constantSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
     const size_t vgfSize = 162;
     const auto constant = std::vector<uint8_t>(40, 'a');
 

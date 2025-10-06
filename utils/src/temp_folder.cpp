@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -20,7 +20,7 @@ std::string randomString() {
     return alpha_numeric.substr(0, 16);
 }
 
-std::filesystem::path make_non_preferred(std::filesystem::path path) {
+std::filesystem::path make_non_preferred(const std::filesystem::path &path) {
     std::string path_str = path.generic_string();
     std::replace(path_str.begin(), path_str.end(), '\\', '/');
     return std::filesystem::path(path_str);

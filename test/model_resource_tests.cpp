@@ -27,9 +27,11 @@ const uint16_t pretendVulkanHeaderVersion = 123;
 
 constexpr bool DataViewTests() {
     static_assert(DataView<uint8_t>().empty(), "Default constructor should create an empty view");
+    // NOLINTNEXTLINE code coverage
     static_assert(DataView<uint8_t>().size() == 0, "Default constructor should create a view of size 0");
     static_assert(DataView<uint8_t>(nullptr, 0).empty(),
                   "Constructor with nullptr and size 0 should create an empty view");
+    // NOLINTNEXTLINE code coverage
     static_assert(DataView<uint32_t>() == DataView<uint32_t>(nullptr, 0),
                   "Two DataViews constructed with nullptr and size 0 should be equal");
 
@@ -188,7 +190,7 @@ TEST(CppModelResourceTable, UnknownDimensions) {
 TEST(CppVerify, ModelResourceSizeWrapRejected) {
     Logger logger;
     const uint64_t resourceOffset = 46;
-    const uint64_t resourceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const auto resourceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
     const size_t fileSize = 296;
 
     std::vector<uint8_t> buffer(fileSize, 0);
@@ -417,7 +419,7 @@ TEST(CModelResourceTable, UnknownDimensions) {
 TEST(CVerify, ModelResourceSizeWrapRejected) {
     Logger logger;
     const uint64_t resourceOffset = 46;
-    const uint64_t resourceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const auto resourceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
     const size_t fileSize = 296;
 
     std::vector<uint8_t> buffer(fileSize, 0);

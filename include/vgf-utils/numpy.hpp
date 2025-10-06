@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -49,7 +49,7 @@ void write(const std::string &filename, const DataPtr &dataPtr);
 void write(const std::string &filename, const std::vector<int64_t> &shape, const DType &dtype,
            std::function<uint64_t(std::ostream &)> &&callback);
 
-void write(const std::string &filename, const char *ptr, const std::vector<int64_t> &shape, const char kind,
+void write(const std::string &filename, const char *ptr, const std::vector<int64_t> &shape, char kind,
            const uint64_t &itemsize);
 
 } // namespace mlsdk::vgfutils::numpy

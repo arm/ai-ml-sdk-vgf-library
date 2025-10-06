@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 import argparse
@@ -299,6 +299,7 @@ class Builder:
                     "run-clang-tidy",
                     f"-j{self.threads}",
                     f"-p{self.build_dir}",
+                    "-extra-arg=-Wno-ignored-optimization-argument",
                 ] + src_dirs
 
                 if self.clang_tidy_fix:

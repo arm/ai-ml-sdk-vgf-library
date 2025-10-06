@@ -63,7 +63,7 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
     uint32_t segIdx = 0;                                                      // Therefore it is index 0
     assert(mst_decoder->getSegmentType(segIdx) == vgflib::ModuleType::GRAPH); // It should be a SPIR-V graph module
     assert(mst_decoder->getSegmentName(segIdx) == "segment_maxpool_graph1");  // We know what it should be named
-    assert(mst_decoder->getSegmentConstantIndexes(segIdx).size() == 0);       // There are no graph constants used.
+    assert(mst_decoder->getSegmentConstantIndexes(segIdx).empty());           // There are no graph constants used.
     assert(mst_decoder->getSegmentDescriptorSetInfosSize(segIdx) == 1);       // Only one descriptor set used.
     // ...etc
 
@@ -173,7 +173,7 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
                                                       // a placeholder module would require the user to provision the
                                                       // source code via some other/bespoke route.
         assert(modules_decoder->getModuleEntryPoint(0) == "main"); // the entry function name
-        assert(modules_decoder->getModuleCode(0).size() > 0);      // the source code, if embedded
+        assert(!modules_decoder->getModuleCode(0).empty());        // the source code, if embedded
 
         // Once the pipelines have been compiled, we don't need the modules to be loaded.
         // explicitly destruct the decoder now that we're done with it

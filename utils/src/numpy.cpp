@@ -33,15 +33,16 @@ std::string shapeToStr(const std::vector<int64_t> &shape) {
     std::stringstream ss;
     ss << "(";
 
-    if (shape.size() == 0) {
+    if (shape.empty()) {
         // nothing to do here
     } else if (shape.size() == 1) {
         ss << std::to_string(shape[0]) << ",";
     } else {
         for (uint32_t i = 0; i < shape.size(); ++i) {
             ss << std::to_string(shape[i]);
-            if (i != shape.size() - 1)
+            if (i != shape.size() - 1) {
                 ss << ", ";
+            }
         }
     }
     ss << ")";
@@ -72,18 +73,21 @@ std::vector<int64_t> strToShape(const std::string &shapeStr) {
 
 DType getDtype(const std::string &dict) {
     size_t descrStart = dict.find("'descr':");
-    if (descrStart == std::string::npos)
+    if (descrStart == std::string::npos) {
         throw std::runtime_error("missing 'descr' field in header");
+    }
 
     descrStart += 8;
     size_t valueStart = dict.find('\'', descrStart);
     size_t valueEnd = dict.find('\'', valueStart + 1);
-    if (valueStart == std::string::npos || valueEnd == std::string::npos)
+    if (valueStart == std::string::npos || valueEnd == std::string::npos) {
         throw std::runtime_error("invalid 'descr' format in header");
+    }
 
     std::string descrValue = dict.substr(valueStart + 1, valueEnd - valueStart - 1);
-    if (descrValue.size() < 3)
+    if (descrValue.size() < 3) {
         throw std::runtime_error("invalid 'descr' string");
+    }
 
     char byteorder = descrValue[0];
     char kind = descrValue[1];
@@ -99,13 +103,15 @@ DType getDtype(const std::string &dict) {
 }
 
 bool checkFortranOrder(const std::string &dict) {
-    size_t keyPos = dict.find("'fortran_order':");
-    if (keyPos == std::string::npos)
+    const auto keyPos = dict.find("'fortran_order':");
+    if (keyPos == std::string::npos) {
         return false;
+    }
 
-    size_t valuePos = dict.find("False", keyPos);
-    if (valuePos == std::string::npos || valuePos != keyPos + 17)
+    const auto valuePos = dict.find("False", keyPos);
+    if (valuePos == std::string::npos || valuePos != keyPos + 17) {
         return false;
+    }
 
     return true;
 }
@@ -180,7 +186,7 @@ uint32_t elementSizeFromBlockSize(uint32_t blockSize) {
     }
     // Round up to next power of 2
     uint32_t countBits = 1; // start with offset to select next power of 2
-    while (blockSize >>= 1) {
+    while ((blockSize >>= 1) != 0) {
         countBits++;
     }
     return 1 << countBits;
@@ -192,8 +198,9 @@ DataPtr parse(const MemoryMap &mapped) {
     size_t headerOffset = 0;
 
     // check magic string
-    if (std::memcmp(mapped.ptr(), numpyMagicBytes.data(), numpyMagicBytes.size()) != 0)
+    if (std::memcmp(mapped.ptr(), numpyMagicBytes.data(), numpyMagicBytes.size()) != 0) {
         throw std::runtime_error("invalid NumPy file format");
+    }
 
     headerOffset += numpyMagicBytes.size();
     majorVersion = *reinterpret_cast<const uint8_t *>(mapped.ptr(headerOffset));
@@ -222,12 +229,14 @@ DataPtr parse(const MemoryMap &mapped) {
 
     // check byte order
     char byteorder = dataPtr.dtype.byteorder;
-    if ((isLittleEndian() && byteorder == '>') || (!isLittleEndian() && byteorder == '<'))
+    if ((isLittleEndian() && byteorder == '>') || (!isLittleEndian() && byteorder == '<')) {
         throw std::runtime_error("mismatch in byte order");
+    }
 
     // check fortran order
-    if (!checkFortranOrder(dict))
+    if (!checkFortranOrder(dict)) {
         throw std::runtime_error("only supported is fortran_order: False");
+    }
 
     // convert shape str to shape
     size_t shapeStart = dict.find('(');
@@ -240,8 +249,9 @@ DataPtr parse(const MemoryMap &mapped) {
     dataPtr.ptr = reinterpret_cast<const char *>(mapped.ptr(headerOffset));
 
     // consistency check: verify that all data is mapped
-    if (headerOffset + dataPtr.size() > mapped.size())
+    if (headerOffset + dataPtr.size() > mapped.size()) {
         throw std::runtime_error("data size exceeds the mapped memory size");
+    }
 
     return dataPtr;
 }

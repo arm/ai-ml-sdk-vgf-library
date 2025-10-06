@@ -71,22 +71,22 @@ ModelSequence parseModelSequenceTable(const void *data, uint64_t size) {
         throw std::runtime_error("Model sequence table could not be decoded safely");
     }
 
-    const auto inputsHandle = decoder->getModelSequenceInputBindingSlotsHandle();
+    const auto *inputsHandle = decoder->getModelSequenceInputBindingSlotsHandle();
     std::vector<BindingSlot> inputs = parseBindingSlots(*decoder, inputsHandle);
-    const auto outputsHandle = decoder->getModelSequenceOutputBindingSlotsHandle();
+    const auto *outputsHandle = decoder->getModelSequenceOutputBindingSlotsHandle();
     std::vector<BindingSlot> outputs = parseBindingSlots(*decoder, outputsHandle);
 
-    const auto inputNamesHandle = decoder->getModelSequenceInputNamesHandle();
+    const auto *inputNamesHandle = decoder->getModelSequenceInputNamesHandle();
     std::vector<std::string_view> inputNames = parseNames(*decoder, inputNamesHandle);
 
-    const auto outputNamesHandle = decoder->getModelSequenceOutputNamesHandle();
+    const auto *outputNamesHandle = decoder->getModelSequenceOutputNamesHandle();
     std::vector<std::string_view> outputNames = parseNames(*decoder, outputNamesHandle);
 
     auto merge = [](const std::vector<BindingSlot> &bindings, const std::vector<std::string_view> &names) {
         std::vector<NamedBindingSlot> output;
         output.reserve(bindings.size());
         for (size_t i = 0; i < bindings.size(); ++i) {
-            std::string name = "";
+            std::string name;
             if (names.size() == bindings.size()) {
                 name = names[i];
             }
@@ -107,20 +107,20 @@ ModelSequence parseModelSequenceTable(const void *data, uint64_t size) {
         const auto segmentModuleIndex = decoder->getSegmentModuleIndex(i);
         auto segmentName = decoder->getSegmentName(i);
 
-        const auto segInputsHandle = decoder->getSegmentInputBindingSlotsHandle(i);
+        const auto *segInputsHandle = decoder->getSegmentInputBindingSlotsHandle(i);
         std::vector<BindingSlot> segmentInputs = parseBindingSlots(*decoder, segInputsHandle);
 
-        const auto segOutputsHandle = decoder->getSegmentOutputBindingSlotsHandle(i);
+        const auto *segOutputsHandle = decoder->getSegmentOutputBindingSlotsHandle(i);
         std::vector<BindingSlot> segmentOutputs = parseBindingSlots(*decoder, segOutputsHandle);
 
         std::vector<std::vector<BindingSlot>> segmentDescriptorSetInfos;
         segmentDescriptorSetInfos.reserve(decoder->getSegmentDescriptorSetInfosSize(i));
         for (uint32_t j = 0; j < decoder->getSegmentDescriptorSetInfosSize(i); ++j) {
-            const auto descSlotsHandle = decoder->getDescriptorBindingSlotsHandle(i, j);
+            const auto *descSlotsHandle = decoder->getDescriptorBindingSlotsHandle(i, j);
             segmentDescriptorSetInfos.emplace_back(parseBindingSlots(*decoder, descSlotsHandle));
         }
 
-        const auto pcrHandle = decoder->getSegmentPushConstRange(i);
+        const auto *pcrHandle = decoder->getSegmentPushConstRange(i);
         std::vector<PushConstantRange> segmentPushConstantRange = parsePushConstantRanges(*decoder, pcrHandle);
 
         const DataView<uint32_t> segmentConstants = decoder->getSegmentConstantIndexes(i);
@@ -147,7 +147,7 @@ std::vector<Constant> parseConstantSection(const void *data, uint64_t size) {
         const auto constantView = decoder->getConstant(i);
         const auto mrtIndex = decoder->getConstantMrtIndex(i);
         const auto sparsityDimension = decoder->getConstantSparsityDimension(i);
-        if (constantView.size() == 0 || mrtIndex == CONSTANT_INVALID_MRT_INDEX ||
+        if (constantView.empty() || mrtIndex == CONSTANT_INVALID_MRT_INDEX ||
             sparsityDimension == CONSTANT_INVALID_SPARSITY_DIMENSION) {
             throw std::runtime_error("Invalid constant metadata at index " + std::to_string(i));
         }

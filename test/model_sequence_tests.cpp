@@ -367,7 +367,7 @@ TEST(CppModelSequenceTable, PushConstantRange) {
 TEST(CppVerify, ModelSequenceSizeWrapRejected) {
     Logger logger;
     const uint64_t sequenceOffset = 32;
-    const uint64_t sequenceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const auto sequenceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
     const size_t fileSize = 131;
 
     std::vector<uint8_t> buffer(fileSize, 0);
@@ -937,7 +937,7 @@ TEST(CModelSequenceTable, PushConstantRange) {
 TEST(CVerify, ModelSequenceSizeWrapRejected) {
     Logger logger;
     const uint64_t sequenceOffset = 32;
-    const uint64_t sequenceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const auto sequenceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
     const size_t fileSize = 131;
 
     std::vector<uint8_t> buffer(fileSize, 0);

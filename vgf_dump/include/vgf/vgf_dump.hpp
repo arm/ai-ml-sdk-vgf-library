@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -22,9 +22,11 @@ void dumpScenario(const std::string &inputFile, const std::string &outputFile, b
 
 void dumpFile(const std::string &inputFile, const std::string &outputFile);
 
-void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(const uint32_t *, size_t)> callback);
+void getSpirv(const std::string &inputFile, uint32_t index,
+              const std::function<void(const uint32_t *, size_t)> &callback);
 
-void getConstant(const std::string &inputFile, uint32_t index, std::function<void(const uint8_t *, size_t)> callback);
+void getConstant(const std::string &inputFile, uint32_t index,
+                 const std::function<void(const uint8_t *, size_t)> &callback);
 
 nlohmann::json getScenario(const std::string &inputFile, bool add_boundaries);
 

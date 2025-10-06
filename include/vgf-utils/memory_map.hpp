@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
@@ -16,7 +16,7 @@ class MemoryMap {
 
     ~MemoryMap();
 
-    const void *ptr(const size_t offset = 0) const;
+    const void *ptr(size_t offset = 0) const;
     size_t size() const { return _size; }
 
   private:

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -32,7 +32,7 @@ TEST(NumPy, Roundtrip) {
     ASSERT_TRUE(readPtr.dtype.byteorder == type.byteorder);
     ASSERT_TRUE(readPtr.dtype.kind == type.kind);
     ASSERT_TRUE(readPtr.dtype.itemsize == type.itemsize);
-    const int32_t *test = reinterpret_cast<const int32_t *>(readPtr.ptr);
+    const auto *test = reinterpret_cast<const int32_t *>(readPtr.ptr);
     for (unsigned i = 0; i < data.size(); i++) {
         ASSERT_TRUE(test[i] == data[i]);
     }
@@ -65,7 +65,7 @@ TEST(NumPy, RoundtripCallbackWrite) {
     ASSERT_TRUE(readPtr.dtype.byteorder == type.byteorder);
     ASSERT_TRUE(readPtr.dtype.kind == type.kind);
     ASSERT_TRUE(readPtr.dtype.itemsize == type.itemsize);
-    const int32_t *test = reinterpret_cast<const int32_t *>(readPtr.ptr);
+    const auto *test = reinterpret_cast<const int32_t *>(readPtr.ptr);
     for (unsigned i = 0; i < data.size(); i++) {
         ASSERT_TRUE(test[i] == data[i]);
     }
