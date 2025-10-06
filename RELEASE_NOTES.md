@@ -43,4 +43,11 @@ The file format is versioned; the project aims to maintain backward compatibilit
 - **Version 0.4.0**: Added large model file support
 - **Version 0.3.0**: Initial version
 
+## Platform Support
+
+The following platform combinations are supported:
+
+- Linux - X86-64
+- Windows® - X86-64
+
 ---
