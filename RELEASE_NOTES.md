@@ -39,6 +39,7 @@ constants, shaders and metadata.
 ### File Format Support
 
 The file format is versioned; the project aims to maintain backward compatibility with older VGF folder versions. File formats:
+
 - **Version 0.4.0**: Added large model file support
 - **Version 0.3.0**: Initial version
 
