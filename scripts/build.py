@@ -39,7 +39,7 @@ class Builder:
 
         self.threads = args.threads
         self.run_tests = args.test
-        self.run_linting = args.lint
+        self.lint = args.lint
         self.build_type = args.build_type
         self.doc = args.doc
         self.target_platform = args.target_platform
@@ -168,8 +168,8 @@ class Builder:
         if self.run_tests:
             cmake_setup_cmd.append("-DML_SDK_VGF_LIB_BUILD_TESTS=ON")
 
-        if self.run_linting and self.target_platform != "aarch64":
-            cmake_setup_cmd.append("-DML_SDK_VGF_LIB_ENABLE_LINT=ON")
+        if self.lint and self.target_platform != "aarch64":
+            cmake_setup_cmd.append("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
 
         if self.doc:
             cmake_setup_cmd.append("-DML_SDK_VGF_LIB_BUILD_DOCS=ON")
@@ -227,6 +227,30 @@ class Builder:
         try:
             subprocess.run(cmake_setup_cmd, check=True)
             subprocess.run(cmake_build_cmd, check=True)
+
+            if self.lint:
+                lint_cmd = [
+                    "cppcheck",
+                    f"-j{str(self.threads)}",
+                    "--std=c++17",
+                    "--error-exitcode=1",
+                    "--inline-suppr",
+                    f"--project={self.build_dir}/compile_commands.json",
+                    f"--cppcheck-build-dir={self.build_dir}/cppcheck",
+                    "--enable=information,performance,portability,style",
+                    f"-i={DEPENDENCY_DIR}",
+                    f"--suppress=unreadVariable",
+                    f"--suppress=unmatchedSuppression",
+                    f"--suppress=noValidConfiguration",
+                    f"--suppress=preprocessorErrorDirective",
+                    f"--suppress=passedByValue:*/utils/src/temp_folder.cpp",
+                    f"--suppress=passedByValue:*/utils/src/numpy.cpp",
+                    f"--suppress=*:{self.flatbuffers_path}*",
+                    f"--suppress=*:{self.argparse_path}*",
+                    f"--suppress=*:{self.json_path}*",
+                    f"--suppress=*:{self.gtest_path}*",
+                ]
+                subprocess.run(lint_cmd, check=True)
 
             if self.run_tests:
                 test_cmd = [

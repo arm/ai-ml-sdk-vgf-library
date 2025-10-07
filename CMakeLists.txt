@@ -41,57 +41,9 @@ option(ML_SDK_VGF_LIB_BUILD_DOCS "Build Documentation" OFF)
 option(ML_SDK_VGF_LIB_BUILD_PYLIB "Build VGF Python Lib" OFF)
 option(ML_SDK_VGF_LIB_BUILD_TESTS "Build Format unit tests" OFF)
 option(ML_SDK_VGF_LIB_BUILD_TOOLS "Build VGF tools" ON)
-option(ML_SDK_VGF_LIB_ENABLE_LINT "Enable linting using cppcheck" OFF)
 
-# exclude schema from linting, to avoid failures in flatbuffers
 add_subdirectory(schema)
 add_subdirectory(utils)
-
-# Enable cppcheck
-if(ML_SDK_VGF_LIB_ENABLE_LINT)
-    message(STATUS "Cppcheck is enabled.")
-    find_program(CPPCHECK_EXECUTABLE NAMES cppcheck)
-    include(ProcessorCount)
-    ProcessorCount(NCORES)
-    set(CMAKE_CXX_CPPCHECK_OPTIONS
-        -j${NCORES}
-        --force
-        --enable=style,performance,portability,information
-        --quiet
-        --inline-suppr
-        --error-exitcode=1
-        --suppress=unreadVariable
-        --suppress=unmatchedSuppression
-        --suppress=noValidConfiguration
-        --suppress=preprocessorErrorDirective
-        --suppress=*:${CMAKE_BINARY_DIR}*
-        )
-
-    if(EXISTS ${FLATBUFFERS_PATH})
-        list(APPEND CMAKE_CXX_CPPCHECK_OPTIONS --suppress=*:*${FLATBUFFERS_PATH}*)
-    endif()
-
-    if(EXISTS ${ARGPARSE_PATH})
-        list(APPEND CMAKE_CXX_CPPCHECK_OPTIONS --suppress=*:*${ARGPARSE_PATH}*)
-    endif()
-
-    if(EXISTS ${JSON_PATH})
-        list(APPEND CMAKE_CXX_CPPCHECK_OPTIONS --suppress=*:*${JSON_PATH}*)
-    endif()
-
-    if(EXISTS ${GTEST_PATH})
-        list(APPEND CMAKE_CXX_CPPCHECK_OPTIONS --suppress=*:*${GTEST_PATH}*)
-    endif()
-
-    if(ML_SDK_VGF_LIB_BUILD_PYLIB AND EXISTS ${PYBIND11_PATH})
-        list(APPEND CMAKE_CXX_CPPCHECK_OPTIONS --suppress=*:*${PYBIND11_PATH}*)
-    endif()
-
-    set(CMAKE_C_CPPCHECK "${CPPCHECK_EXECUTABLE}" "${CMAKE_CXX_CPPCHECK_OPTIONS}" --std=c99)
-    set(CMAKE_CXX_CPPCHECK "${CPPCHECK_EXECUTABLE}" "${CMAKE_CXX_CPPCHECK_OPTIONS}" --std=c++17)
-endif()
-unset(ML_SDK_VGF_LIB_ENABLE_LINT CACHE)
-
 add_subdirectory(src)
 
 add_subdirectory(samples)
