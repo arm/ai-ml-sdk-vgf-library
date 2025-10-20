@@ -10,6 +10,7 @@ includes the following:
 - C++ decoder API
 - C decoder API
 - VGF dumping tool: `vgf_dump`
+- VGF converter tool: `vgf_converter`
 
 The encoder provides a simple, high-level API for building up VGF files. It is
 designed for easy integration into offline tooling.
@@ -26,6 +27,10 @@ prints the content of a VGF file into human-readable JSON format. You can also
 use vgf_dump to generate scenario file templates. You can use the scenario file
 templates with the
 [Scenario Runner](https://github.com/arm/ai-ml-sdk-scenario-runner) tool.
+
+The VGF converter rewrites an existing VGF file to the latest VGF format
+version supported by the VGF library. The new version of the VGF file is
+written to the provided output path.
 
 To see the contents of a VGF file in a visual format, you can use the
 [VGF Adapter for Model Explorer](https://github.com/arm/vgf-adapter-model-explorer),
