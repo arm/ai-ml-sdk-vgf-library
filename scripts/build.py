@@ -55,13 +55,17 @@ class Builder:
         self.build_pylib = args.build_pylib or args.test or args.package_type == "pip"
         self.enable_sanitizers = args.enable_sanitizers
         self.install = args.install
-        self.package = args.package
-        self.package_type = args.package_type
-        self.package_source = args.package_source
-        self.package_version = args.package_version
         self.clang_tidy_fix = args.clang_tidy_fix
 
-        if not self.install and self.package_type == "pip":
+        self.package_dir = args.package_dir or self.build_dir
+        self.package_version = args.package_version
+        self.package_tgz = "tgz" in args.package_type
+        self.package_zip = "zip" in args.package_type
+        self.package_pip = "pip" in args.package_type
+        self.package_source_tgz = "source-tgz" in args.package_type
+        self.package_source_zip = "source-zip" in args.package_type
+
+        if not self.install and self.package_pip:
             self.install = "pip_install"
 
     def setup_platform_build(self, cmake_cmd):
@@ -152,6 +156,26 @@ class Builder:
             file=sys.stderr,
         )
         return False
+
+    def generate_cmake_package(self, generator, sourcePackage=False):
+        config_file = (
+            "CPackSourceConfig.cmake" if sourcePackage else "CPackConfig.cmake"
+        )
+
+        cmake_package_cmd = [
+            "cpack",
+            "--config",
+            f"{self.build_dir}/{config_file}",
+            "-C",
+            self.build_type,
+            "-G",
+            generator,
+            "-B",
+            self.package_dir,
+            "-D",
+            "CPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF",
+        ]
+        subprocess.run(cmake_package_cmd, check=True)
 
     def run(self):
         cmake_setup_cmd = [
@@ -319,26 +343,19 @@ class Builder:
                 ]
                 subprocess.run(cmake_install_cmd, check=True)
 
-            if self.package and self.package_type != "pip":
-                package_type = self.package_type or "tgz"
-                cpack_generator = package_type.upper()
+            if self.package_tgz:
+                self.generate_cmake_package("TGZ")
 
-                cmake_package_cmd = [
-                    "cpack",
-                    "--config",
-                    f"{self.build_dir}/CPackConfig.cmake",
-                    "-C",
-                    self.build_type,
-                    "-G",
-                    cpack_generator,
-                    "-B",
-                    self.package,
-                    "-D",
-                    "CPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF",
-                ]
-                subprocess.run(cmake_package_cmd, check=True)
+            if self.package_zip:
+                self.generate_cmake_package("ZIP")
 
-            if self.package_type == "pip":
+            if self.package_source_tgz:
+                self.generate_cmake_package("TGZ", True)
+
+            if self.package_source_zip:
+                self.generate_cmake_package("ZIP", True)
+
+            if self.package_pip:
                 if sys.platform.startswith("win"):
                     platformName = "win_amd64"
                 elif sys.platform.startswith("linux"):
@@ -380,24 +397,6 @@ class Builder:
                     print("ERROR: Failed to generate pip package")
                     return 1
 
-            if self.package_source:
-                package_type = self.package_type or "tgz"
-                cpack_generator = package_type.upper()
-
-                cmake_package_cmd = [
-                    "cpack",
-                    "--config",
-                    f"{self.build_dir}/CPackSourceConfig.cmake",
-                    "-C",
-                    self.build_type,
-                    "-G",
-                    cpack_generator,
-                    "-B",
-                    self.package_source,
-                    "-D",
-                    "CPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF",
-                ]
-                subprocess.run(cmake_package_cmd, check=True)
         except Exception as e:
             print(f"ERROR: Build failed with error: {e}", file=sys.stderr)
             return 1
@@ -495,22 +494,21 @@ def parse_arguments():
         help="Install build artifacts into a provided location",
     )
     parser.add_argument(
-        "--package",
-        help="Create a package with build artifacts and store it in a provided location",
+        "--package-dir",
+        help="Specify location for packages to be created. Default path is the build directory",
+        default="",
     )
     parser.add_argument(
         "--package-type",
-        choices=["zip", "tgz", "pip"],
-        help="Package type",
+        choices=["zip", "tgz", "pip", "source-zip", "source-tgz"],
+        action="append",
+        help="Create a package of a certain type",
+        default=[],
     )
     parser.add_argument(
         "--package-version",
         help="Manually specify pip package version number",
         default=datetime.today().strftime("%m.%d"),
-    )
-    parser.add_argument(
-        "--package-source",
-        help="Create a source code package and store it in a provided location",
     )
     parser.add_argument(
         "--build-pylib",
