@@ -7,11 +7,11 @@
 
 #define VK_HEADER_VERSION 999
 
-typedef enum {
+enum VkDescriptorType {
     VK_DESCRIPTOR_TYPE_TENSOR_ARM = 1000460000,
-} VkDescriptorType;
+};
 
-typedef enum {
+enum VkFormat {
     VK_FORMAT_R8_SINT = 14,
     VK_FORMAT_R32_SINT = 99,
-} VkFormat;
+};
