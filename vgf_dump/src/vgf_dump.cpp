@@ -8,6 +8,7 @@
 #include <vgf/decoder.hpp>
 #include <vgf/types.hpp>
 
+#include "parse_vgf.hpp"
 #include <vgf-utils/memory_map.hpp>
 #include <vgf-utils/numpy.hpp>
 
@@ -39,6 +40,16 @@ using nlohmann::json;
 using namespace mlsdk::vgflib;
 
 namespace {
+
+using mlsdk::vgfutils::BindingSlot;
+using mlsdk::vgfutils::Constant;
+using mlsdk::vgfutils::ModelSequence;
+using mlsdk::vgfutils::NamedBindingSlot;
+using mlsdk::vgfutils::parseModelResourceTable;
+using mlsdk::vgfutils::parseModelSequenceTable;
+using mlsdk::vgfutils::PushConstantRange;
+using mlsdk::vgfutils::Resource;
+using mlsdk::vgfutils::Segment;
 
 std::string moduleTypeToString(ModuleType type) {
     switch (type) {
@@ -114,160 +125,6 @@ void to_json(json &j, const Module &m) {
     };
 }
 
-struct Resource {
-    Resource() = default;
-    Resource(uint32_t index, ResourceCategory category, std::optional<DescriptorType> descriptorType, VkFormat vkFormat,
-             DataView<int64_t> &&shape, DataView<int64_t> &&stride)
-        : mIndex(index), mCategory(category), mDescriptorType(descriptorType), mVkFormat(vkFormat),
-          mShape(shape.begin(), shape.end()), mStride(stride.begin(), stride.end()) {}
-
-    uint32_t mIndex{0};
-    ResourceCategory mCategory{ResourceCategory::INPUT};
-    std::optional<DescriptorType> mDescriptorType{std::nullopt};
-    FormatType mVkFormat{UndefinedFormat()};
-    std::vector<int64_t> mShape{};
-    std::vector<int64_t> mStride{};
-};
-
-void to_json(json &j, const Resource &resource) {
-    j = json{
-        {"index", resource.mIndex},
-        {"category", resourceCategoryToString(resource.mCategory)},
-        {"vk_descriptor_type", DescriptorTypeToString(resource.mDescriptorType)},
-        {"vk_format", FormatTypeToString(resource.mVkFormat)},
-        {"shape", resource.mShape},
-        {"stride", resource.mStride},
-    };
-}
-
-struct BindingSlot {
-    BindingSlot() = default;
-    BindingSlot(uint32_t index, uint32_t binding, uint32_t mrtIndex)
-        : mIndex(index), mBinding(binding), mMrtIndex(mrtIndex) {}
-
-    uint32_t mIndex{0};
-    uint32_t mBinding{0};
-    uint32_t mMrtIndex{0};
-};
-
-void to_json(json &j, const BindingSlot &bindingSlot) {
-    j = json{
-        {"index", bindingSlot.mIndex},
-        {"binding", bindingSlot.mBinding},
-        {"mrt_index", bindingSlot.mMrtIndex},
-    };
-}
-
-struct PushConstantRange {
-    PushConstantRange() = default;
-    PushConstantRange(uint32_t index, uint32_t stageFlags, uint32_t offset, uint32_t size)
-        : mIndex(index), mStageFlags(stageFlags), mOffset(offset), mSize(size) {}
-
-    uint32_t mIndex{0};
-    uint32_t mStageFlags{0};
-    uint32_t mOffset{0};
-    uint32_t mSize{0};
-};
-
-void to_json(json &j, const PushConstantRange &pushConstantRange) {
-    j = json{
-        {"index", pushConstantRange.mIndex},
-        {"stage_flags", pushConstantRange.mStageFlags},
-        {"offset", pushConstantRange.mOffset},
-        {"size", pushConstantRange.mSize},
-    };
-}
-
-struct Segment {
-    Segment() = default;
-    Segment(uint32_t index, ModuleType type, uint32_t moduleIndex, std::string_view &name,
-            std::vector<BindingSlot> &&inputs, std::vector<BindingSlot> &&outputs,
-            std::vector<std::vector<BindingSlot>> &&descriptorSetInfos,
-            std::vector<PushConstantRange> &&pushConstantRanges, DataView<uint32_t> &constants,
-            DataView<uint32_t> &dispatchShape)
-        : mIndex(index), mType(type), mModuleIndex(moduleIndex), mName(name), mInputs(std::move(inputs)),
-          mOutputs(std::move(outputs)), mDescriptorSetInfos(std::move(descriptorSetInfos)),
-          mPushConstantRanges(std::move(pushConstantRanges)), mConstants(constants.begin(), constants.end()),
-          mDispatchShape(dispatchShape.begin(), dispatchShape.end()) {}
-
-    uint32_t mIndex{0};
-    ModuleType mType{ModuleType::COMPUTE};
-    uint32_t mModuleIndex{0};
-    std::string mName{};
-    std::vector<BindingSlot> mInputs{};
-    std::vector<BindingSlot> mOutputs{};
-    std::vector<std::vector<BindingSlot>> mDescriptorSetInfos{};
-    std::vector<PushConstantRange> mPushConstantRanges{};
-    std::vector<uint32_t> mConstants{};
-    std::vector<uint32_t> mDispatchShape{};
-};
-
-void to_json(json &j, const Segment &segment) {
-    j = json{
-        {"index", segment.mIndex},
-        {"type", moduleTypeToString(segment.mType)},
-        {"module_index", segment.mModuleIndex},
-        {"name", segment.mName},
-        {"inputs", segment.mInputs},
-        {"outputs", segment.mOutputs},
-        {"descriptor_set_infos", segment.mDescriptorSetInfos},
-        {"push_constant_ranges", segment.mPushConstantRanges},
-        {"constants", segment.mConstants},
-        {"dispatch_shape", segment.mDispatchShape},
-    };
-}
-
-struct NamedBindingSlot {
-    BindingSlot mBindingSlot;
-    std::string mName;
-};
-
-void to_json(json &j, const NamedBindingSlot &namedSlot) {
-    j = json{
-        {"index", namedSlot.mBindingSlot.mIndex},
-        {"name", namedSlot.mName},
-        {"binding", namedSlot.mBindingSlot.mBinding},
-        {"mrt_index", namedSlot.mBindingSlot.mMrtIndex},
-    };
-}
-
-struct ModelSequence {
-    ModelSequence() = default;
-    ModelSequence(std::vector<Segment> &&segments, std::vector<NamedBindingSlot> &&inputs,
-                  std::vector<NamedBindingSlot> &&outputs)
-        : mSegments(std::move(segments)), mInputs(std::move(inputs)), mOutputs(std::move(outputs)) {}
-
-    std::vector<Segment> mSegments;
-    std::vector<NamedBindingSlot> mInputs;
-    std::vector<NamedBindingSlot> mOutputs;
-};
-
-void to_json(json &j, const ModelSequence &modelSequence) {
-    j = json{
-        {"segments", modelSequence.mSegments},
-        {"inputs", modelSequence.mInputs},
-        {"outputs", modelSequence.mOutputs},
-    };
-}
-
-struct Constant {
-    Constant() = default;
-    Constant(uint32_t index, uint32_t mrtIndex, int64_t sparsityDimension)
-        : mIndex(index), mMrtIndex(mrtIndex), mSparsityDimension(sparsityDimension) {}
-
-    uint32_t mIndex{0};
-    uint32_t mMrtIndex = 0;
-    int64_t mSparsityDimension = -1;
-};
-
-void to_json(json &j, const Constant &constant) {
-    j = json{
-        {"index", constant.mIndex},
-        {"mrt_index", constant.mMrtIndex},
-        {"sparsity_dimension", constant.mSparsityDimension},
-    };
-}
-
 std::unique_ptr<HeaderDecoder> parseHeader(const void *const headerData) {
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(headerData);
     if (!headerDecoder->IsValid()) {
@@ -291,116 +148,6 @@ std::vector<Module> parseModuleTable(const void *const data) {
                              decoder->hasSPIRV(i), decoder->getModuleCode(i).size());
     }
     return modules;
-}
-
-std::vector<Resource> parseModelResourceTable(const void *const data) {
-    std::unique_ptr<ModelResourceTableDecoder> decoder = CreateModelResourceTableDecoder(data);
-
-    std::vector<Resource> resources;
-    resources.reserve(decoder->size());
-    for (uint32_t i = 0; i < decoder->size(); i++) {
-        resources.emplace_back(i, decoder->getCategory(i), decoder->getDescriptorType(i), decoder->getVkFormat(i),
-                               decoder->getTensorShape(i), decoder->getTensorStride(i));
-    }
-    return resources;
-}
-
-std::vector<BindingSlot> parseBindingSlots(const ModelSequenceTableDecoder &decoder,
-                                           BindingSlotArrayHandle bindingSlotsHandle) {
-    std::vector<BindingSlot> output;
-    output.reserve(decoder.getBindingsSize(bindingSlotsHandle));
-    for (uint32_t i = 0; i < decoder.getBindingsSize(bindingSlotsHandle); ++i) {
-        output.emplace_back(i, decoder.getBindingSlotBinding(bindingSlotsHandle, i),
-                            decoder.getBindingSlotMrtIndex(bindingSlotsHandle, i));
-    }
-    return output;
-}
-
-std::vector<std::string_view> parseNames(const ModelSequenceTableDecoder &decoder, NameArrayHandle namesHandle) {
-    std::vector<std::string_view> output;
-    output.reserve(decoder.getNamesSize(namesHandle));
-    for (uint32_t i = 0; i < decoder.getNamesSize(namesHandle); ++i) {
-        output.emplace_back(decoder.getName(namesHandle, i));
-    }
-    return output;
-}
-
-std::vector<PushConstantRange> parsePushConstantRanges(const ModelSequenceTableDecoder &decoder,
-                                                       PushConstantRangeHandle handle) {
-    std::vector<PushConstantRange> output;
-    output.reserve(decoder.getPushConstRangesSize(handle));
-    for (uint32_t i = 0; i < decoder.getPushConstRangesSize(handle); ++i) {
-        output.emplace_back(i, decoder.getPushConstRangeStageFlags(handle, i),
-                            decoder.getPushConstRangeOffset(handle, i), decoder.getPushConstRangeSize(handle, i));
-    }
-    return output;
-}
-
-ModelSequence parseModelSequenceTable(const void *const data) {
-    std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(data);
-
-    BindingSlotArrayHandle inputsHandle = decoder->getModelSequenceInputBindingSlotsHandle();
-    std::vector<BindingSlot> inputs = parseBindingSlots(*decoder, inputsHandle);
-    BindingSlotArrayHandle outputsHandle = decoder->getModelSequenceOutputBindingSlotsHandle();
-    std::vector<BindingSlot> outputs = parseBindingSlots(*decoder, outputsHandle);
-
-    NameArrayHandle inputNamesHandle = decoder->getModelSequenceInputNamesHandle();
-    std::vector<std::string_view> inputNames = parseNames(*decoder, inputNamesHandle);
-
-    NameArrayHandle outputNamesHandle = decoder->getModelSequenceOutputNamesHandle();
-    std::vector<std::string_view> outputNames = parseNames(*decoder, outputNamesHandle);
-
-    auto merge = [](std::vector<BindingSlot> &bindings,
-                    std::vector<std::string_view> &names) -> std::vector<NamedBindingSlot> {
-        std::vector<NamedBindingSlot> output;
-        output.reserve(bindings.size());
-        for (size_t i = 0; i < bindings.size(); ++i) {
-            std::string name = "";
-            if (names.size() == bindings.size()) {
-                name = names[i];
-            }
-
-            BindingSlot binding = bindings[i];
-
-            output.push_back({binding, std::move(name)});
-        }
-        return output;
-    };
-
-    std::vector<NamedBindingSlot> namedInputs = merge(inputs, inputNames);
-    std::vector<NamedBindingSlot> namedOutputs = merge(outputs, outputNames);
-
-    std::vector<Segment> segments;
-    for (uint32_t i = 0; i < decoder->modelSequenceTableSize(); ++i) {
-        ModuleType segmentType = decoder->getSegmentType(i);
-        uint32_t segmentModuleIndex = decoder->getSegmentModuleIndex(i);
-        std::string_view segmentName = decoder->getSegmentName(i);
-
-        BindingSlotArrayHandle segInputsHandle = decoder->getSegmentInputBindingSlotsHandle(i);
-        std::vector<BindingSlot> segmentInputs = parseBindingSlots(*decoder, segInputsHandle);
-
-        BindingSlotArrayHandle segOutputsHandle = decoder->getSegmentOutputBindingSlotsHandle(i);
-        std::vector<BindingSlot> segmentOutputs = parseBindingSlots(*decoder, segOutputsHandle);
-
-        std::vector<std::vector<BindingSlot>> segmentDescriptorSetInfos;
-        segmentDescriptorSetInfos.reserve(decoder->getSegmentDescriptorSetInfosSize(i));
-        for (uint32_t j = 0; j < decoder->getSegmentDescriptorSetInfosSize(i); ++j) {
-            BindingSlotArrayHandle descSlotsHandle = decoder->getDescriptorBindingSlotsHandle(i, j);
-            segmentDescriptorSetInfos.emplace_back(parseBindingSlots(*decoder, descSlotsHandle));
-        }
-
-        PushConstantRangeHandle pcrHandle = decoder->getSegmentPushConstRange(i);
-        std::vector<PushConstantRange> segmentPushConstantRange = parsePushConstantRanges(*decoder, pcrHandle);
-
-        DataView<uint32_t> segmentConstants = decoder->getSegmentConstantIndexes(i);
-        DataView<uint32_t> segmentDispatchShape = decoder->getSegmentDispatchShape(i);
-
-        segments.emplace_back(i, segmentType, segmentModuleIndex, segmentName, std::move(segmentInputs),
-                              std::move(segmentOutputs), std::move(segmentDescriptorSetInfos),
-                              std::move(segmentPushConstantRange), segmentConstants, segmentDispatchShape);
-    }
-
-    return {std::move(segments), std::move(namedInputs), std::move(namedOutputs)};
 }
 
 void writeOutputText(const std::string &path, const char *ptr, size_t size) {
@@ -577,6 +324,64 @@ void to_json(json &j, const Boundary &boundary) {
 }
 
 } // namespace
+
+namespace mlsdk::vgfutils {
+
+void to_json(nlohmann::json &j, const BindingSlot &bindingSlot) {
+    j = nlohmann::json{
+        {"index", bindingSlot.mIndex}, {"binding", bindingSlot.mBinding}, {"mrt_index", bindingSlot.mMrtIndex}};
+}
+
+void to_json(nlohmann::json &j, const PushConstantRange &pushConstantRange) {
+    j = nlohmann::json{{"index", pushConstantRange.mIndex},
+                       {"stage_flags", pushConstantRange.mStageFlags},
+                       {"offset", pushConstantRange.mOffset},
+                       {"size", pushConstantRange.mSize}};
+}
+
+void to_json(nlohmann::json &j, const Segment &segment) {
+    j = nlohmann::json{{"index", segment.mIndex},
+                       {"type", moduleTypeToString(segment.mType)},
+                       {"module_index", segment.mModuleIndex},
+                       {"name", segment.mName},
+                       {"inputs", segment.mInputs},
+                       {"outputs", segment.mOutputs},
+                       {"descriptor_set_infos", segment.mDescriptorSetInfos},
+                       {"push_constant_ranges", segment.mPushConstantRanges},
+                       {"constants", segment.mConstants},
+                       {"dispatch_shape", segment.mDispatchShape}};
+}
+
+void to_json(nlohmann::json &j, const NamedBindingSlot &namedSlot) {
+    j = nlohmann::json{{"index", namedSlot.mBindingSlot.mIndex},
+                       {"name", namedSlot.mName},
+                       {"binding", namedSlot.mBindingSlot.mBinding},
+                       {"mrt_index", namedSlot.mBindingSlot.mMrtIndex}};
+}
+
+void to_json(nlohmann::json &j, const ModelSequence &modelSequence) {
+    j = nlohmann::json{
+        {"segments", modelSequence.mSegments}, {"inputs", modelSequence.mInputs}, {"outputs", modelSequence.mOutputs}};
+}
+
+void to_json(nlohmann::json &j, const Constant &constant) {
+    j = nlohmann::json{{"index", constant.mIndex},
+                       {"mrt_index", constant.mMrtIndex},
+                       {"sparsity_dimension", constant.mSparsityDimension}};
+}
+
+void to_json(nlohmann::json &j, const Resource &resource) {
+    j = json{
+        {"index", resource.mIndex},
+        {"category", resourceCategoryToString(resource.mCategory)},
+        {"vk_descriptor_type", DescriptorTypeToString(resource.mDescriptorType)},
+        {"vk_format", FormatTypeToString(resource.mVkFormat)},
+        {"shape", resource.mShape},
+        {"stride", resource.mStride},
+    };
+}
+
+} // namespace mlsdk::vgfutils
 
 void mlsdk::vgf_dump::dumpSpirv(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
     getSpirv(inputFile, index, [&](const uint32_t *data, size_t size) {
