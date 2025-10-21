@@ -17,8 +17,10 @@ try:
 except:
     argcomplete = None
 
-VGF_LIB_DIR = pathlib.Path(__file__).resolve().parent / ".."
+VGF_LIB_DIR = pathlib.Path(__file__).parent / ".."
+VGF_LIB_DIR = VGF_LIB_DIR.resolve()
 DEPENDENCY_DIR = VGF_LIB_DIR / ".." / ".." / "dependencies"
+DEPENDENCY_DIR = DEPENDENCY_DIR.resolve()
 CMAKE_TOOLCHAIN_PATH = VGF_LIB_DIR / "cmake" / "toolchain"
 
 
@@ -57,6 +59,7 @@ class Builder:
         self.package_type = args.package_type
         self.package_source = args.package_source
         self.package_version = args.package_version
+        self.clang_tidy_fix = args.clang_tidy_fix
 
         if not self.install and self.package_type == "pip":
             self.install = "pip_install"
@@ -230,6 +233,11 @@ class Builder:
             subprocess.run(cmake_setup_cmd, check=True)
             subprocess.run(cmake_build_cmd, check=True)
 
+            if self.clang_tidy_fix and not self.lint:
+                print(
+                    "WARNING: --clang-tidy-fix requires --lint to be enabled, argument ignored."
+                )
+
             if self.lint:
                 lint_cmd = [
                     "cppcheck",
@@ -253,6 +261,22 @@ class Builder:
                     f"--suppress=*:{self.gtest_path}*",
                 ]
                 subprocess.run(lint_cmd, check=True)
+
+                clang_tidy_cmd = [
+                    "run-clang-tidy",
+                    f"-j{self.threads}",
+                    f"-p{self.build_dir}",
+                    f"{VGF_LIB_DIR / 'samples'}",
+                    f"{VGF_LIB_DIR / 'src'}",
+                    f"{VGF_LIB_DIR / 'test'}",
+                    f"{VGF_LIB_DIR / 'utils'}",
+                    f"{VGF_LIB_DIR / 'vgf_dump'}",
+                ]
+
+                if self.clang_tidy_fix:
+                    clang_tidy_cmd.append("-fix")
+
+                subprocess.run(clang_tidy_cmd, check=True)
 
             if self.run_tests:
                 test_cmd = [
@@ -498,6 +522,12 @@ def parse_arguments():
         "--pybind11-path",
         help="Path to pybind11 repo",
         default=f"{DEPENDENCY_DIR / 'pybind11'}",
+    )
+    parser.add_argument(
+        "--clang-tidy-fix",
+        help="Enable clang-tidy fix (requires --lint). Default: %(default)s",
+        action="store_true",
+        default=False,
     )
 
     if argcomplete:
