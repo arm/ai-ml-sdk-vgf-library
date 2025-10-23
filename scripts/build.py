@@ -52,7 +52,6 @@ class Builder:
         self.gtest_path = args.gtest_path
         self.flatbuffers_path = args.flatbuffers_path
         self.pybind11_path = args.pybind11_path
-        self.build_pylib = args.build_pylib or args.test or args.package_type == "pip"
         self.enable_sanitizers = args.enable_sanitizers
         self.install = args.install
         self.clang_tidy_fix = args.clang_tidy_fix
@@ -64,6 +63,8 @@ class Builder:
         self.package_pip = "pip" in args.package_type
         self.package_source_tgz = "source-tgz" in args.package_type
         self.package_source_zip = "source-zip" in args.package_type
+
+        self.build_pylib = args.build_pylib or args.test or self.package_pip
 
         if not self.install and self.package_pip:
             self.install = "pip_install"
