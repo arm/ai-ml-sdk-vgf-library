@@ -303,6 +303,18 @@ class Builder:
 
                 subprocess.run(clang_tidy_cmd, check=True)
 
+            if self.install:
+                cmake_install_cmd = [
+                    "cmake",
+                    "--install",
+                    self.build_dir,
+                    "--prefix",
+                    self.install,
+                    "--config",
+                    self.build_type,
+                ]
+                subprocess.run(cmake_install_cmd, check=True)
+
             if self.run_tests:
                 test_cmd = [
                     "ctest",
@@ -331,18 +343,6 @@ class Builder:
                 if self.enable_sanitizers:
                     pytest_cmd.append("--sanitizers")
                 subprocess.run(pytest_cmd, cwd=VGF_LIB_DIR, check=True)
-
-            if self.install:
-                cmake_install_cmd = [
-                    "cmake",
-                    "--install",
-                    self.build_dir,
-                    "--prefix",
-                    self.install,
-                    "--config",
-                    self.build_type,
-                ]
-                subprocess.run(cmake_install_cmd, check=True)
 
             if self.package_tgz:
                 self.generate_cmake_package("TGZ")
