@@ -35,7 +35,6 @@ add_custom_command(
           -P ${CMAKE_CURRENT_LIST_DIR}/redirect-output.cmake
   COMMAND_EXPAND_LISTS
   DEPENDS ${VGF_NAMESPACE}::vgf_dump
-  BYPRODUCTS ${VGF_DUMP_ARG_HELP_TXT}
   VERBATIM
   COMMENT "Generating vgf_dump --help text"
 )

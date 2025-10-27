@@ -100,6 +100,7 @@ The build system must have:
 - Python 3.10 or later. Required python libraries for building are listed in
   `tooling-requirements.txt`.
 - Flatbuffers flatc compiler 25.2.10 or later.
+- Ninja 1.10 or later.
 
 The following dependencies are also needed:
 

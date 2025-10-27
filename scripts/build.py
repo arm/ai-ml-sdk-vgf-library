@@ -186,7 +186,10 @@ class Builder:
             "-B",
             self.build_dir,
             f"-DCMAKE_BUILD_TYPE={self.build_type}",
+            "-G",
+            "Ninja",
         ]
+
         if self.prefix_path:
             cmake_setup_cmd.append(f"-DCMAKE_PREFIX_PATH={self.prefix_path}")
 
@@ -196,7 +199,7 @@ class Builder:
         if self.run_tests:
             cmake_setup_cmd.append("-DML_SDK_VGF_LIB_BUILD_TESTS=ON")
 
-        if self.lint and self.target_platform != "aarch64":
+        if self.lint:
             cmake_setup_cmd.append("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
 
         if self.doc:
@@ -326,10 +329,6 @@ class Builder:
                 ]
                 subprocess.run(test_cmd, check=True)
 
-                build_type_dir = (
-                    self.build_type if platform.system() == "Windows" else ""
-                )
-
                 pytest_cmd = [
                     sys.executable,
                     "-m",
@@ -338,7 +337,7 @@ class Builder:
                     str(self.threads),
                     "test",
                     "--vgf-pylib-dir",
-                    f"{self.build_dir}/src/{build_type_dir}",
+                    f"{self.build_dir}/src/",
                 ]
                 if self.enable_sanitizers:
                     pytest_cmd.append("--sanitizers")
