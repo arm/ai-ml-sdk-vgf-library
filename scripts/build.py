@@ -357,43 +357,17 @@ class Builder:
                 self.generate_cmake_package("ZIP", True)
 
             if self.package_pip:
-                if sys.platform.startswith("win"):
-                    platformName = "win_amd64"
-                elif sys.platform.startswith("linux"):
-                    if self.target_platform == "aarch64":
-                        platformName = "manyLinux2014_aarch64"
-                    else:
-                        platformName = "manyLinux2014_x86_64"
-                elif sys.platform.startswith("darwin"):
-                    platformName = "macosx_11_0_arm64"
-                else:
-                    print(f"ERROR: Unknown platform: {sys.platform}")
-                    return 1
-
                 os.makedirs("pip_package/vgf_lib/binaries/", exist_ok=True)
                 shutil.copytree(
                     self.install, "pip_package/vgf_lib/binaries/", dirs_exist_ok=True
                 )
 
-                with open("pip_package/setup.py.template", "r") as templateFile:
-                    inputData = templateFile.read()
-
-                outputData = inputData.replace(
-                    "{VERSION_NUMBER}",
-                    f'"{self.package_version}"',
-                )
-
-                with open(f"{self.build_dir}/setup.py", "w") as outputFile:
-                    outputFile.write(outputData)
-
+                os.environ[
+                    "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_AI_ML_SDK_VGF_LIBRARY"
+                ] = self.package_version
                 result = subprocess.Popen(
-                    [
-                        "python",
-                        f"{self.build_dir}/setup.py",
-                        "bdist_wheel",
-                        "--plat-name",
-                        platformName,
-                    ],
+                    [sys.executable, "-m", "build"],
+                    env=os.environ,
                     cwd="pip_package",
                 )
                 result.communicate()
