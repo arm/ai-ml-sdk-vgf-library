@@ -361,6 +361,7 @@ class Builder:
                 shutil.copytree(
                     self.install, "pip_package/vgf_lib/binaries/", dirs_exist_ok=True
                 )
+                shutil.copyfile("README.md", "pip_package/README.md")
 
                 os.environ[
                     "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_AI_ML_SDK_VGF_LIBRARY"
