@@ -180,6 +180,13 @@ typedef struct {
 MLSDKAPI void mlsdk_decoder_get_version(mlsdk_decoder_vgf_version *version);
 
 /**
+ * @brief Checks if VGF version is the latest
+ *
+ * @return True if version of VGF is the latest, false otherwise
+ */
+MLSDKAPI bool mlsdk_decoder_is_latest_version(const mlsdk_decoder_header_decoder *const decoder);
+
+/**
  * @brief Returns the size in bytes of the VGF header on disk
  * @return The size in bytes of the VGF header data
  */

@@ -29,6 +29,11 @@ mlsdk_decoder_header_decoder *mlsdk_decoder_create_header_decoder(const void *co
     return reinterpret_cast<mlsdk_decoder_header_decoder *>(CreateHeaderDecoderInPlace(headerData, decoderMemory));
 }
 
+bool mlsdk_decoder_is_latest_version(const mlsdk_decoder_header_decoder *const decoder) {
+    assert(decoder != nullptr && "decoder is null");
+    return reinterpret_cast<const HeaderDecoder *>(decoder)->IsLatestVersion();
+}
+
 bool mlsdk_decoder_is_header_valid(const mlsdk_decoder_header_decoder *const decoder) {
     assert(decoder != nullptr && "decoder is null");
     return reinterpret_cast<const HeaderDecoder *>(decoder)->IsValid();
