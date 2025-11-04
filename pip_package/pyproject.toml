@@ -8,6 +8,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai_ml_sdk_vgf_library"
+description = "ML SDK VGF Library"
+readme = "README.md"
 dynamic = ["version"]
 
 [project.scripts]
