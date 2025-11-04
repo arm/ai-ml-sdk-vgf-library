@@ -176,11 +176,8 @@ python3 $SDK_PATH/sw/vgf-lib/scripts/build.py --help
 
 ## License
 
-[Apache-2.0](LICENSES/Apache-2.0.txt)
-
-## Security
-
-If you have found a security issue, see the [Security Section](SECURITY.md)
+The ML SDK VGF Library is distributed under the software licenses in
+LICENSES directory.
 
 ## Trademark notice
 
