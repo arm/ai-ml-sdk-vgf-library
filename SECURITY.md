@@ -11,4 +11,4 @@ Response Team (PSIRT) by sending an email to
 [psirt@arm.com](mailto:psirt@arm.com).
 
 For more information visit
-https://developer.arm.com/support/arm-security-updates/report-security-vulnerabilities
+<https://developer.arm.com/support/arm-security-updates/report-security-vulnerabilities>
