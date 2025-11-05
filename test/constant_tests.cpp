@@ -8,8 +8,8 @@
 #include "vgf/types.hpp"
 
 #include "header.hpp"
-#include "memory_map.hpp"
-#include "temp_folder.hpp"
+#include "vgf-utils/memory_map.hpp"
+#include "vgf-utils/temp_folder.hpp"
 
 #include <gtest/gtest.h>
 

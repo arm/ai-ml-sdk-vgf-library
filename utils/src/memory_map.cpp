@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "memory_map.hpp"
+#include "vgf-utils/memory_map.hpp"
 
 #include <fcntl.h>
 #include <sys/stat.h>
