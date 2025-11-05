@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "numpy.hpp"
+#include "vgf-utils/numpy.hpp"
 
 #include <array>
 #include <cstdint>

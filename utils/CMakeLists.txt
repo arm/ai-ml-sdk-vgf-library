@@ -10,5 +10,5 @@ target_sources(vgf-utils PRIVATE
     src/numpy.cpp
     src/temp_folder.cpp)
 target_include_directories(vgf-utils PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/vgf-utils>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
 add_library(${VGF_NAMESPACE}::vgf-utils ALIAS vgf-utils)
