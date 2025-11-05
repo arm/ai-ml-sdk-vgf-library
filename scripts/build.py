@@ -267,13 +267,20 @@ class Builder:
                 )
 
             if self.lint:
+                src_dirs = [
+                    f"{VGF_LIB_DIR / 'samples'}",
+                    f"{VGF_LIB_DIR / 'src'}",
+                    f"{VGF_LIB_DIR / 'test'}",
+                    f"{VGF_LIB_DIR / 'utils'}",
+                    f"{VGF_LIB_DIR / 'vgf_dump'}",
+                ]
+
                 lint_cmd = [
                     "cppcheck",
                     f"-j{str(self.threads)}",
                     "--std=c++17",
                     "--error-exitcode=1",
                     "--inline-suppr",
-                    f"--project={self.build_dir}/compile_commands.json",
                     f"--cppcheck-build-dir={self.build_dir}/cppcheck",
                     "--enable=information,performance,portability,style",
                     f"-i={DEPENDENCY_DIR}",
@@ -283,23 +290,15 @@ class Builder:
                     f"--suppress=preprocessorErrorDirective",
                     f"--suppress=passedByValue:*/utils/src/temp_folder.cpp",
                     f"--suppress=passedByValue:*/utils/src/numpy.cpp",
-                    f"--suppress=*:{self.flatbuffers_path}*",
-                    f"--suppress=*:{self.argparse_path}*",
-                    f"--suppress=*:{self.json_path}*",
-                    f"--suppress=*:{self.gtest_path}*",
-                ]
+                    f"--suppress=*:{DEPENDENCY_DIR}*",
+                ] + src_dirs
                 subprocess.run(lint_cmd, check=True)
 
                 clang_tidy_cmd = [
                     "run-clang-tidy",
                     f"-j{self.threads}",
                     f"-p{self.build_dir}",
-                    f"{VGF_LIB_DIR / 'samples'}",
-                    f"{VGF_LIB_DIR / 'src'}",
-                    f"{VGF_LIB_DIR / 'test'}",
-                    f"{VGF_LIB_DIR / 'utils'}",
-                    f"{VGF_LIB_DIR / 'vgf_dump'}",
-                ]
+                ] + src_dirs
 
                 if self.clang_tidy_fix:
                     clang_tidy_cmd.append("-fix")
