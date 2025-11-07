@@ -14,14 +14,17 @@ add_library(static_vgf_dump STATIC
 target_include_directories(static_vgf_dump PUBLIC
     include
 )
-target_link_libraries(static_vgf_dump PUBLIC vgf nlohmann_json::nlohmann_json)
+target_include_directories(static_vgf_dump PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../utils/src>
+)
+target_link_libraries(static_vgf_dump PUBLIC vgf vgf-utils nlohmann_json::nlohmann_json)
 target_compile_options(static_vgf_dump PRIVATE ${ML_SDK_VGF_LIB_COMPILE_OPTIONS})
 
 add_executable(vgf_dump
     src/main.cpp
 )
 
-target_link_libraries(vgf_dump PRIVATE static_vgf_dump argparse::argparse vgf-utils)
+target_link_libraries(vgf_dump PRIVATE static_vgf_dump argparse::argparse)
 target_compile_options(vgf_dump PRIVATE ${ML_SDK_VGF_LIB_COMPILE_OPTIONS})
 
 mlsdk_generate_version_header(
