@@ -42,6 +42,7 @@ TEST(CppEncodeDecode, HeaderTest) {
     ASSERT_TRUE(decoder->GetMajor() == HEADER_MAJOR_VERSION_VALUE);
     ASSERT_TRUE(decoder->GetMinor() == HEADER_MINOR_VERSION_VALUE);
     ASSERT_TRUE(decoder->GetPatch() == HEADER_PATCH_VERSION_VALUE);
+    ASSERT_TRUE(decoder->IsLatestVersion());
 
     ASSERT_TRUE(decoder->GetModuleTableSize() > 0);
     ASSERT_TRUE(decoder->GetModuleTableOffset() == HEADER_HEADER_SIZE_VALUE);
@@ -109,6 +110,8 @@ TEST(CDecode, HeaderTest) {
     ASSERT_TRUE(version.major == HEADER_MAJOR_VERSION_VALUE);
     ASSERT_TRUE(version.minor == HEADER_MINOR_VERSION_VALUE);
     ASSERT_TRUE(version.patch == HEADER_PATCH_VERSION_VALUE);
+
+    ASSERT_TRUE(mlsdk_decoder_is_latest_version(decoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(decoder, mlsdk_decoder_section_modules, &moduleSection);

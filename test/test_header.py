@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 """ Tests for VGF Header. """
@@ -37,6 +37,7 @@ def test_encode_decode_header():
     assert headerDecoder.GetMajor() == vgf.HEADER_MAJOR_VERSION_VALUE
     assert headerDecoder.GetMinor() == vgf.HEADER_MINOR_VERSION_VALUE
     assert headerDecoder.GetPatch() == vgf.HEADER_PATCH_VERSION_VALUE
+    assert headerDecoder.IsLatestVersion()
 
     assert headerDecoder.GetModuleTableSize() > 0
     assert headerDecoder.GetModuleTableOffset() == vgf.HEADER_HEADER_SIZE_VALUE

@@ -29,6 +29,8 @@ class PyHeaderDecoder final : public HeaderDecoder {
   public:
     using HeaderDecoder::HeaderDecoder;
 
+    bool IsLatestVersion() const override { PYBIND11_OVERRIDE_PURE(bool, HeaderDecoder, IsLatestVersion); }
+
     bool IsValid() const override { PYBIND11_OVERRIDE_PURE(bool, HeaderDecoder, IsValid); }
 
     uint16_t GetEncoderVulkanHeadersVersion() const override {
@@ -78,6 +80,7 @@ void pyInitHeaderDecoder(py::module m) {
 
     py::class_<HeaderDecoder, PyHeaderDecoder>(m, "HeaderDecoder")
         .def(py::init<>())
+        .def("IsLatestVersion", &HeaderDecoder::IsLatestVersion)
         .def("IsValid", &HeaderDecoder::IsValid)
         .def("GetEncoderVulkanHeadersVersion", &HeaderDecoder::GetEncoderVulkanHeadersVersion)
         .def("CheckVersion", &HeaderDecoder::CheckVersion)

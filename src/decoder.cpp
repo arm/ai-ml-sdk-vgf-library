@@ -76,6 +76,11 @@ class HeaderDecoderImpl : public HeaderDecoder {
   public:
     explicit HeaderDecoderImpl(const void *const data) : _header(reinterpret_cast<const Header *>(data)) {}
 
+    [[nodiscard]] bool IsLatestVersion() const override {
+        return IsValid() && GetMajor() == HEADER_MAJOR_VERSION_VALUE && GetMinor() == HEADER_MINOR_VERSION_VALUE &&
+               GetPatch() == HEADER_PATCH_VERSION_VALUE;
+    }
+
     [[nodiscard]] bool IsValid() const override {
         return _header->magic == HEADER_MAGIC_VALUE || _header->magic == OldMagicAsFourCC();
     }
