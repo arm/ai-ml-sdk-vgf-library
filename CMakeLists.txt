@@ -48,14 +48,14 @@ add_subdirectory(src)
 
 add_subdirectory(samples)
 
-if(ML_SDK_VGF_LIB_BUILD_TOOLS OR ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)
-    add_subdirectory(vgf_dump)
+if(ML_SDK_VGF_LIB_BUILD_TESTS)
+    include(CTest)
+    include(gtest)
+    add_subdirectory(test)
 endif()
 
-if(ML_SDK_VGF_LIB_BUILD_TESTS)
-    include(gtest)
-
-    add_subdirectory(test)
+if(ML_SDK_VGF_LIB_BUILD_TOOLS OR ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)
+    add_subdirectory(vgf_dump)
 endif()
 
 if(ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)
