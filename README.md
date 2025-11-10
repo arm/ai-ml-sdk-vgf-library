@@ -175,6 +175,16 @@ For more command line options, see the help output:
 python3 $SDK_PATH/sw/vgf-lib/scripts/build.py --help
 ```
 
+## PyPI
+
+The ML SDK VGF Library is available on PyPI as the [ai-ml-sdk-vgf-library](https://pypi.org/project/ai-ml-sdk-vgf-library/) package.
+
+Install:
+
+```bash
+pip install ai-ml-sdk-vgf-library
+```
+
 ## License
 
 The ML SDK VGF Library is distributed under the software licenses in
