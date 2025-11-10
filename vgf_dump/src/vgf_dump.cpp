@@ -36,20 +36,11 @@
 #    include <unistd.h>
 #endif
 
+namespace mlsdk {
 using nlohmann::json;
-using namespace mlsdk::vgflib;
+using namespace vgflib;
 
 namespace {
-
-using mlsdk::vgfutils::BindingSlot;
-using mlsdk::vgfutils::Constant;
-using mlsdk::vgfutils::ModelSequence;
-using mlsdk::vgfutils::NamedBindingSlot;
-using mlsdk::vgfutils::parseModelResourceTable;
-using mlsdk::vgfutils::parseModelSequenceTable;
-using mlsdk::vgfutils::PushConstantRange;
-using mlsdk::vgfutils::Resource;
-using mlsdk::vgfutils::Segment;
 
 std::string moduleTypeToString(ModuleType type) {
     switch (type) {
@@ -325,7 +316,7 @@ void to_json(json &j, const Boundary &boundary) {
 
 } // namespace
 
-namespace mlsdk::vgfutils {
+namespace vgfutils {
 
 void to_json(nlohmann::json &j, const BindingSlot &bindingSlot) {
     j = nlohmann::json{
@@ -381,21 +372,23 @@ void to_json(nlohmann::json &j, const Resource &resource) {
     };
 }
 
-} // namespace mlsdk::vgfutils
+} // namespace vgfutils
 
-void mlsdk::vgf_dump::dumpSpirv(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
+namespace vgf_dump {
+
+void dumpSpirv(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
     getSpirv(inputFile, index, [&](const uint32_t *data, size_t size) {
         writeOutputBinary(outputFile, reinterpret_cast<const char *>(data), size * sizeof(uint32_t));
     });
 }
 
-void mlsdk::vgf_dump::dumpConstant(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
+void dumpConstant(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
     getConstant(inputFile, index, [&](const uint8_t *data, size_t size) {
         writeOutputBinary(outputFile, reinterpret_cast<const char *>(data), size);
     });
 }
 
-void mlsdk::vgf_dump::dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
+void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
     MemoryMap mapped(inputFile);
     const auto headerDecoder = parseHeader(mapped.ptr());
 
@@ -422,24 +415,23 @@ void mlsdk::vgf_dump::dumpNumpy(const std::string &inputFile, const std::string 
     const auto data = constantDecoder->getConstant(index);
 
     const auto numeric = componentNumericFormat(format);
-    const auto encoding = mlsdk::vgfutils::numpy::numpyTypeEncoding(numeric);
-    const auto itemsize = mlsdk::vgfutils::numpy::elementSizeFromBlockSize(blockSize(format));
+    const auto encoding = vgfutils::numpy::numpyTypeEncoding(numeric);
+    const auto itemsize = vgfutils::numpy::elementSizeFromBlockSize(blockSize(format));
 
-    mlsdk::vgfutils::numpy::write(outputFile, reinterpret_cast<const char *>(data.begin()), shape, encoding, itemsize);
+    vgfutils::numpy::write(outputFile, reinterpret_cast<const char *>(data.begin()), shape, encoding, itemsize);
 }
 
-void mlsdk::vgf_dump::dumpScenario(const std::string &inputFile, const std::string &outputFile, bool add_boundaries) {
+void dumpScenario(const std::string &inputFile, const std::string &outputFile, bool add_boundaries) {
     json json = getScenario(inputFile, add_boundaries);
     writeOutputJSON(outputFile, json);
 }
 
-void mlsdk::vgf_dump::dumpFile(const std ::string &inputFile, const std::string &outputFile) {
+void dumpFile(const std ::string &inputFile, const std::string &outputFile) {
     json json = getFile(inputFile);
     writeOutputJSON(outputFile, json);
 }
 
-void mlsdk::vgf_dump::getSpirv(const std::string &inputFile, uint32_t index,
-                               std::function<void(const uint32_t *, size_t)> callback) {
+void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(const uint32_t *, size_t)> callback) {
     MemoryMap mapped(inputFile);
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
 
@@ -461,8 +453,7 @@ void mlsdk::vgf_dump::getSpirv(const std::string &inputFile, uint32_t index,
     callback(&data[0], data.size());
 }
 
-void mlsdk::vgf_dump::getConstant(const std::string &inputFile, uint32_t index,
-                                  std::function<void(const uint8_t *, size_t)> callback) {
+void getConstant(const std::string &inputFile, uint32_t index, std::function<void(const uint8_t *, size_t)> callback) {
     MemoryMap mapped(inputFile);
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
 
@@ -481,7 +472,7 @@ void mlsdk::vgf_dump::getConstant(const std::string &inputFile, uint32_t index,
     callback(&data[0], data.size());
 }
 
-json mlsdk::vgf_dump::getScenario(const std::string &inputFile, bool add_boundaries) {
+json getScenario(const std::string &inputFile, bool add_boundaries) {
     MemoryMap mapped(inputFile);
 
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
@@ -600,7 +591,7 @@ json mlsdk::vgf_dump::getScenario(const std::string &inputFile, bool add_boundar
     return json;
 }
 
-json mlsdk::vgf_dump::getFile(const std::string &inputFile) {
+json getFile(const std::string &inputFile) {
     MemoryMap mapped(inputFile);
 
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
@@ -621,13 +612,13 @@ json mlsdk::vgf_dump::getFile(const std::string &inputFile) {
         throw std::runtime_error("Invalid constant section");
     }
 
-    std::vector<Module> modules = parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()));
-    std::vector<Resource> resources = parseModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()));
-    ModelSequence modelSequence = parseModelSequenceTable(mapped.ptr(headerDecoder->GetModelSequenceTableOffset()));
+    const auto modules = parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()));
+    const auto resources = vgfutils::parseModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()));
+    const auto modelSequence =
+        vgfutils::parseModelSequenceTable(mapped.ptr(headerDecoder->GetModelSequenceTableOffset()));
 
-    std::unique_ptr<ConstantDecoder> constantDecoder =
-        CreateConstantDecoder(mapped.ptr(headerDecoder->GetConstantsOffset()));
-    std::vector<Constant> constants;
+    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(headerDecoder->GetConstantsOffset()));
+    std::vector<vgfutils::Constant> constants;
     constants.reserve(constantDecoder->size());
     for (uint32_t i = 0; i < constantDecoder->size(); ++i) {
         constants.emplace_back(i, constantDecoder->getConstantMrtIndex(i),
@@ -643,3 +634,6 @@ json mlsdk::vgf_dump::getFile(const std::string &inputFile) {
 
     return json;
 }
+
+} // namespace vgf_dump
+} // namespace mlsdk
