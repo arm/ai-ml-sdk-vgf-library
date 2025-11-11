@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-include(CTest)
-
 add_executable(VGFLibTests
   constant_tests.cpp
   header_tests.cpp
