@@ -6,7 +6,7 @@
 #pragma once
 
 #include "sample_utils.hpp"
-#include "sample_vulkan.h"
+#include "sample_vulkan.hpp"
 
 #include <vgf/decoder.hpp>
 #include <vgf/encoder.hpp>

@@ -4,11 +4,13 @@
 #
 Checks: >
     -*,
+    google-build-namespaces,
     modernize-deprecated-headers,
     modernize-make-unique,
     modernize-use-nullptr,
     modernize-use-override,
-    modernize-use-using
+    modernize-use-using,
+
 WarningsAsErrors: '*'
-HeaderFilterRegex: '.*\.hpp$'
+HeaderFilterRegex: 'vgf-lib/.+/.+\.hpp$'
 FormatStyle: file
