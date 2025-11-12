@@ -11,11 +11,11 @@
 #include <vector>
 
 namespace mlsdk::vgfutils {
-
+using namespace vgflib;
 namespace {
 
-std::vector<BindingSlot> parseBindingSlots(const mlsdk::vgflib::ModelSequenceTableDecoder &decoder,
-                                           mlsdk::vgflib::BindingSlotArrayHandle bindingSlotsHandle) {
+std::vector<BindingSlot> parseBindingSlots(const ModelSequenceTableDecoder &decoder,
+                                           BindingSlotArrayHandle bindingSlotsHandle) {
     std::vector<BindingSlot> output;
     output.reserve(decoder.getBindingsSize(bindingSlotsHandle));
     for (uint32_t i = 0; i < decoder.getBindingsSize(bindingSlotsHandle); ++i) {
@@ -25,8 +25,7 @@ std::vector<BindingSlot> parseBindingSlots(const mlsdk::vgflib::ModelSequenceTab
     return output;
 }
 
-std::vector<std::string_view> parseNames(const mlsdk::vgflib::ModelSequenceTableDecoder &decoder,
-                                         mlsdk::vgflib::NameArrayHandle namesHandle) {
+std::vector<std::string_view> parseNames(const ModelSequenceTableDecoder &decoder, NameArrayHandle namesHandle) {
     std::vector<std::string_view> output;
     output.reserve(decoder.getNamesSize(namesHandle));
     for (uint32_t i = 0; i < decoder.getNamesSize(namesHandle); ++i) {
@@ -35,8 +34,8 @@ std::vector<std::string_view> parseNames(const mlsdk::vgflib::ModelSequenceTable
     return output;
 }
 
-std::vector<PushConstantRange> parsePushConstantRanges(const mlsdk::vgflib::ModelSequenceTableDecoder &decoder,
-                                                       mlsdk::vgflib::PushConstantRangeHandle handle) {
+std::vector<PushConstantRange> parsePushConstantRanges(const ModelSequenceTableDecoder &decoder,
+                                                       PushConstantRangeHandle handle) {
     std::vector<PushConstantRange> output;
     output.reserve(decoder.getPushConstRangesSize(handle));
     for (uint32_t i = 0; i < decoder.getPushConstRangesSize(handle); ++i) {
@@ -46,15 +45,12 @@ std::vector<PushConstantRange> parsePushConstantRanges(const mlsdk::vgflib::Mode
     return output;
 }
 
-std::vector<uint32_t> dataViewToVector(mlsdk::vgflib::DataView<uint32_t> dataView) {
-    return {dataView.begin(), dataView.end()};
-}
+std::vector<uint32_t> dataViewToVector(DataView<uint32_t> dataView) { return {dataView.begin(), dataView.end()}; }
 
 } // namespace
 
 std::vector<Resource> parseModelResourceTable(const void *const data) {
-    std::unique_ptr<mlsdk::vgflib::ModelResourceTableDecoder> decoder =
-        mlsdk::vgflib::CreateModelResourceTableDecoder(data);
+    const auto decoder = CreateModelResourceTableDecoder(data);
 
     std::vector<Resource> resources;
     resources.reserve(decoder->size());
@@ -66,22 +62,20 @@ std::vector<Resource> parseModelResourceTable(const void *const data) {
 }
 
 ModelSequence parseModelSequenceTable(const void *data) {
-    std::unique_ptr<mlsdk::vgflib::ModelSequenceTableDecoder> decoder =
-        mlsdk::vgflib::CreateModelSequenceTableDecoder(data);
+    const auto decoder = CreateModelSequenceTableDecoder(data);
 
-    mlsdk::vgflib::BindingSlotArrayHandle inputsHandle = decoder->getModelSequenceInputBindingSlotsHandle();
+    const auto inputsHandle = decoder->getModelSequenceInputBindingSlotsHandle();
     std::vector<BindingSlot> inputs = parseBindingSlots(*decoder, inputsHandle);
-    mlsdk::vgflib::BindingSlotArrayHandle outputsHandle = decoder->getModelSequenceOutputBindingSlotsHandle();
+    const auto outputsHandle = decoder->getModelSequenceOutputBindingSlotsHandle();
     std::vector<BindingSlot> outputs = parseBindingSlots(*decoder, outputsHandle);
 
-    mlsdk::vgflib::NameArrayHandle inputNamesHandle = decoder->getModelSequenceInputNamesHandle();
+    const auto inputNamesHandle = decoder->getModelSequenceInputNamesHandle();
     std::vector<std::string_view> inputNames = parseNames(*decoder, inputNamesHandle);
 
-    mlsdk::vgflib::NameArrayHandle outputNamesHandle = decoder->getModelSequenceOutputNamesHandle();
+    const auto outputNamesHandle = decoder->getModelSequenceOutputNamesHandle();
     std::vector<std::string_view> outputNames = parseNames(*decoder, outputNamesHandle);
 
-    auto merge = [](std::vector<BindingSlot> &bindings,
-                    std::vector<std::string_view> &names) -> std::vector<NamedBindingSlot> {
+    auto merge = [](const std::vector<BindingSlot> &bindings, const std::vector<std::string_view> &names) {
         std::vector<NamedBindingSlot> output;
         output.reserve(bindings.size());
         for (size_t i = 0; i < bindings.size(); ++i) {
@@ -102,28 +96,28 @@ ModelSequence parseModelSequenceTable(const void *data) {
 
     std::vector<Segment> segments;
     for (uint32_t i = 0; i < decoder->modelSequenceTableSize(); ++i) {
-        mlsdk::vgflib::ModuleType segmentType = decoder->getSegmentType(i);
-        uint32_t segmentModuleIndex = decoder->getSegmentModuleIndex(i);
-        std::string_view segmentName = decoder->getSegmentName(i);
+        const auto segmentType = decoder->getSegmentType(i);
+        const auto segmentModuleIndex = decoder->getSegmentModuleIndex(i);
+        auto segmentName = decoder->getSegmentName(i);
 
-        mlsdk::vgflib::BindingSlotArrayHandle segInputsHandle = decoder->getSegmentInputBindingSlotsHandle(i);
+        const auto segInputsHandle = decoder->getSegmentInputBindingSlotsHandle(i);
         std::vector<BindingSlot> segmentInputs = parseBindingSlots(*decoder, segInputsHandle);
 
-        mlsdk::vgflib::BindingSlotArrayHandle segOutputsHandle = decoder->getSegmentOutputBindingSlotsHandle(i);
+        const auto segOutputsHandle = decoder->getSegmentOutputBindingSlotsHandle(i);
         std::vector<BindingSlot> segmentOutputs = parseBindingSlots(*decoder, segOutputsHandle);
 
         std::vector<std::vector<BindingSlot>> segmentDescriptorSetInfos;
         segmentDescriptorSetInfos.reserve(decoder->getSegmentDescriptorSetInfosSize(i));
         for (uint32_t j = 0; j < decoder->getSegmentDescriptorSetInfosSize(i); ++j) {
-            mlsdk::vgflib::BindingSlotArrayHandle descSlotsHandle = decoder->getDescriptorBindingSlotsHandle(i, j);
+            const auto descSlotsHandle = decoder->getDescriptorBindingSlotsHandle(i, j);
             segmentDescriptorSetInfos.emplace_back(parseBindingSlots(*decoder, descSlotsHandle));
         }
 
-        mlsdk::vgflib::PushConstantRangeHandle pcrHandle = decoder->getSegmentPushConstRange(i);
+        const auto pcrHandle = decoder->getSegmentPushConstRange(i);
         std::vector<PushConstantRange> segmentPushConstantRange = parsePushConstantRanges(*decoder, pcrHandle);
 
-        mlsdk::vgflib::DataView<uint32_t> segmentConstants = decoder->getSegmentConstantIndexes(i);
-        mlsdk::vgflib::DataView<uint32_t> segmentDispatchShape = decoder->getSegmentDispatchShape(i);
+        const DataView<uint32_t> segmentConstants = decoder->getSegmentConstantIndexes(i);
+        const DataView<uint32_t> segmentDispatchShape = decoder->getSegmentDispatchShape(i);
 
         segments.emplace_back(i, segmentType, segmentModuleIndex, segmentName, std::move(segmentInputs),
                               std::move(segmentOutputs), std::move(segmentDescriptorSetInfos),
