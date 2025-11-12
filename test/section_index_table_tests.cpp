@@ -20,40 +20,40 @@ TEST(SectionIndexTable, Construction) {
     ASSERT_TRUE(index0.GetAlignment() == 1);
     ASSERT_TRUE(index0.GetOffset() == 0);
     ASSERT_TRUE(index0.GetPadding() == 0);
-    ASSERT_TRUE(index0.IsAligned() == true);
+    ASSERT_TRUE(index0.IsAligned());
 
     const auto &index1 = table.AddSection(13, 8);
     ASSERT_TRUE(index1.GetSize() == 13);
     ASSERT_TRUE(index1.GetAlignment() == 8);
     ASSERT_TRUE(index1.GetOffset() == 0);
     ASSERT_TRUE(index1.GetPadding() == 0);
-    ASSERT_TRUE(index1.IsAligned() == true);
+    ASSERT_TRUE(index1.IsAligned());
 
     const auto &index2 = table.AddSection(5, 8);
     ASSERT_TRUE(index2.GetSize() == 5);
     ASSERT_TRUE(index2.GetAlignment() == 8);
     ASSERT_TRUE(index2.GetOffset() == 0);
     ASSERT_TRUE(index2.GetPadding() == 0);
-    ASSERT_TRUE(index2.IsAligned() == true);
+    ASSERT_TRUE(index2.IsAligned());
 
     const auto &index3 = table.AddSection(5, 8);
     ASSERT_TRUE(index3.GetSize() == 5);
     ASSERT_TRUE(index3.GetAlignment() == 8);
     ASSERT_TRUE(index3.GetOffset() == 0);
     ASSERT_TRUE(index3.GetPadding() == 0);
-    ASSERT_TRUE(index3.IsAligned() == true);
+    ASSERT_TRUE(index3.IsAligned());
 
     table.Update(); // Update all the indexes (offsets and padding)
 
     ASSERT_TRUE(index0.GetOffset() == 0);
     ASSERT_TRUE(index0.GetPadding() == 0);
-    ASSERT_TRUE(index0.IsAligned() == true);
+    ASSERT_TRUE(index0.IsAligned());
     ASSERT_TRUE(index0.EndOfData() == 16);
     ASSERT_TRUE(index0.NextOffset() == 16);
 
     ASSERT_TRUE(index1.GetOffset() == 16);
     ASSERT_TRUE(index1.GetPadding() == 3);
-    ASSERT_TRUE(index1.IsAligned() == true);
+    ASSERT_TRUE(index1.IsAligned());
     ASSERT_TRUE(index1.EndOfData() == 29);
     ASSERT_TRUE(index1.NextOffset() == 32);
 
@@ -61,11 +61,11 @@ TEST(SectionIndexTable, Construction) {
     ASSERT_TRUE(index2.GetPadding() == 3);
     ASSERT_TRUE(index2.EndOfData() == 37);
     ASSERT_TRUE(index2.NextOffset() == 40);
-    ASSERT_TRUE(index2.IsAligned() == true);
+    ASSERT_TRUE(index2.IsAligned());
 
     ASSERT_TRUE(index3.GetOffset() == 40);
     ASSERT_TRUE(index3.GetPadding() == 0);
     ASSERT_TRUE(index3.EndOfData() == 45);
     ASSERT_TRUE(index3.NextOffset() == 45);
-    ASSERT_TRUE(index3.IsAligned() == true);
+    ASSERT_TRUE(index3.IsAligned());
 }

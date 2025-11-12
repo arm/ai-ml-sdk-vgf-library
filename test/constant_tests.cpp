@@ -42,12 +42,12 @@ TEST(CppEncodeDecode, AddConstant) {
     ConstantRef constantRef = encoder->AddConstant(resourceRef, constant.data(), constant.size(), sparsityDimension);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyConstant(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize()));
     std::unique_ptr<ConstantDecoder> decoder =
@@ -56,7 +56,7 @@ TEST(CppEncodeDecode, AddConstant) {
     ASSERT_TRUE(decoder->size() == 1);
     ASSERT_TRUE(decoder->getConstant(constantRef.reference) == DataView<uint8_t>(constant.data(), constant.size()));
     ASSERT_TRUE(decoder->getConstantMrtIndex(constantRef.reference) == resourceRef.reference);
-    ASSERT_TRUE(decoder->isSparseConstant(constantRef.reference) == true);
+    ASSERT_TRUE(decoder->isSparseConstant(constantRef.reference));
     ASSERT_TRUE(decoder->getConstantSparsityDimension(constantRef.reference) == sparsityDimension);
 }
 
@@ -71,12 +71,12 @@ TEST(CppEncodeDecode, AddNonSparseConstant) {
     ConstantRef constantRef = encoder->AddConstant(resourceRef, constant.data(), constant.size());
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyConstant(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize()));
     std::unique_ptr<ConstantDecoder> decoder =
@@ -132,14 +132,14 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
     }
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(file) == true);
+    ASSERT_TRUE(encoder->WriteTo(file));
     file.close();
 
     auto mmapped = MemoryMap(filename);
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(mmapped.ptr());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyConstant(mmapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize()));
 
@@ -175,12 +175,12 @@ TEST(CppEncodeDecode, EmptyConstantSection) {
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyConstant(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize()));
     std::unique_ptr<ConstantDecoder> decoder =
@@ -201,7 +201,7 @@ TEST(CEncodeDecode, AddConstant) {
     ConstantRef constantRef = encoder->AddConstant(resourceRef, constant.data(), constant.size(), sparsityDimension);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
@@ -211,8 +211,8 @@ TEST(CEncodeDecode, AddConstant) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -256,7 +256,7 @@ TEST(CEncodeDecode, AddNonSparseConstant) {
     ConstantRef constantRef = encoder->AddConstant(resourceRef, constant.data(), constant.size());
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
@@ -266,8 +266,8 @@ TEST(CEncodeDecode, AddNonSparseConstant) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -343,7 +343,7 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
     }
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(file) == true);
+    ASSERT_TRUE(encoder->WriteTo(file));
     file.close();
 
     auto mmapped = MemoryMap(filename);
@@ -353,8 +353,8 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(mmapped.ptr(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -408,7 +408,7 @@ TEST(CEncodeDecode, EmptyConstantSection) {
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
@@ -418,8 +418,8 @@ TEST(CEncodeDecode, EmptyConstantSection) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
