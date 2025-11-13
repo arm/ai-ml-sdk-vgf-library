@@ -23,14 +23,14 @@ TEST(CppModuleTable, Empty) {
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= HeaderSize());
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(
         VerifyModuleTable(data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize()));
@@ -47,14 +47,14 @@ TEST(CppModuleTable, Single) {
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test", "main", code);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string vgf_data = buffer.str();
     ASSERT_TRUE(vgf_data.size() >= HeaderSize());
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(vgf_data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     uint32_t moduleIndex = module.reference;
     //! [ModuleTableDecodingSample0 begin]
@@ -78,7 +78,7 @@ TEST(CppModuleTable, Single) {
     ASSERT_TRUE(numModules == 1);
     ASSERT_TRUE(moduleDecoder->getModuleType(moduleIndex) == ModuleType::GRAPH);
     ASSERT_TRUE(moduleDecoder->getModuleName(moduleIndex) == "test");
-    ASSERT_TRUE(moduleDecoder->hasSPIRV(moduleIndex) == true);
+    ASSERT_TRUE(moduleDecoder->hasSPIRV(moduleIndex));
     ASSERT_TRUE(moduleDecoder->getModuleEntryPoint(moduleIndex) == "main");
     ASSERT_TRUE(moduleDecoder->getModuleCode(moduleIndex) == DataView<uint32_t>(code.data(), code.size()));
 }
@@ -89,14 +89,14 @@ TEST(CppModuleTable, Single2) {
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     ModuleRef module = encoder->AddPlaceholderModule(ModuleType::COMPUTE, "test", "main");
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= HeaderSize());
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(
         VerifyModuleTable(data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize()));
@@ -116,7 +116,7 @@ TEST(CModuleTable, Empty) {
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
@@ -126,8 +126,8 @@ TEST(CModuleTable, Empty) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -150,7 +150,7 @@ TEST(CModuleTable, Single) {
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test", "main", code);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -159,8 +159,8 @@ TEST(CModuleTable, Single) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -189,7 +189,7 @@ TEST(CModuleTable, Single2) {
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     ModuleRef module = encoder->AddPlaceholderModule(ModuleType::COMPUTE, "test", "main");
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -198,8 +198,8 @@ TEST(CModuleTable, Single2) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);

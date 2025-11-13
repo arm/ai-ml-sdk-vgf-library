@@ -29,13 +29,13 @@ TEST(CppModelSequenceTable, SegmentInfo) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment");
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
@@ -60,13 +60,13 @@ TEST(CppModelSequenceTable, DescripterSetInfo) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
@@ -95,13 +95,13 @@ TEST(CppModelSequenceTable, DescriptorBindingSlot) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string vgf_data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(vgf_data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     //! [ModelSequenceTableDecodingSample0 begin]
     ASSERT_TRUE(VerifyModelSequenceTable(vgf_data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
@@ -175,14 +175,14 @@ TEST(CppModelSequenceTable, SegmentBindingSlot) {
     //! [BindingSlotEncodingSample5 begin]
     std::stringstream buffer;
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
     //! [BindingSlotEncodingSample5 end]
 
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
@@ -222,13 +222,13 @@ TEST(CppModelSequenceTable, BindingSlot) {
     encoder->AddSegmentInfo(module, "test_segment", {}, inputBindings, outputBindings);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
@@ -266,13 +266,13 @@ TEST(CppModelSequenceTable, SegmentConstants) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, {}, {}, constants);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
@@ -299,13 +299,13 @@ TEST(CppModelSequenceTable, SegmentDispatchShape) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, {}, {}, {}, dispatchShape);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
@@ -333,13 +333,13 @@ TEST(CppModelSequenceTable, PushConstantRange) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, {}, {}, {}, {}, pushConstRanges);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder =
         CreateModelSequenceTableDecoder(data.c_str() + headerDecoder->GetModelSequenceTableOffset());
@@ -365,7 +365,7 @@ TEST(CModelSequenceTable, SegmentInfo) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment");
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
@@ -375,8 +375,8 @@ TEST(CModelSequenceTable, SegmentInfo) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -424,7 +424,7 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -433,8 +433,8 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -481,7 +481,7 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -490,8 +490,8 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -545,7 +545,7 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, inputBindings, outputBindings);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -554,8 +554,8 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -615,7 +615,7 @@ TEST(CModelSequenceTable, BindingSlot) {
     encoder->AddSegmentInfo(module, "test_segment", {}, inputBindings, outputBindings);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -624,8 +624,8 @@ TEST(CModelSequenceTable, BindingSlot) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -679,7 +679,7 @@ TEST(CModelSequenceTable, SegmentConstants) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, {}, {}, constants);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -688,8 +688,8 @@ TEST(CModelSequenceTable, SegmentConstants) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -738,7 +738,7 @@ TEST(CModelSequenceTable, SegmentDispatchShape) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, {}, {}, {}, dispatchShape);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -747,8 +747,8 @@ TEST(CModelSequenceTable, SegmentDispatchShape) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
@@ -798,7 +798,7 @@ TEST(CModelSequenceTable, PushConstantRange) {
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, {}, {}, {}, {}, pushConstRanges);
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -807,8 +807,8 @@ TEST(CModelSequenceTable, PushConstantRange) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info moduleSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);

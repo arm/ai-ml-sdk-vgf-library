@@ -23,7 +23,7 @@ TEST(CppEncodeDecode, HeaderTest) {
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string vgf_data = buffer.str();
     ASSERT_TRUE(vgf_data.size() >= HeaderSize());
@@ -33,8 +33,8 @@ TEST(CppEncodeDecode, HeaderTest) {
     //! [HeaderDecodingSample0 end]
 
     //! [HeaderDecodingSample1 begin]
-    ASSERT_TRUE(decoder->IsValid() == true);
-    ASSERT_TRUE(decoder->CheckVersion() == true);
+    ASSERT_TRUE(decoder->IsValid());
+    ASSERT_TRUE(decoder->CheckVersion());
     //! [HeaderDecodingSample1 end]
 
     ASSERT_TRUE(decoder->GetEncoderVulkanHeadersVersion() == pretendVulkanHeaderVersion);
@@ -90,7 +90,7 @@ TEST(CDecode, HeaderTest) {
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -98,8 +98,8 @@ TEST(CDecode, HeaderTest) {
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *decoder = mlsdk_decoder_create_header_decoder(data.c_str(), decoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(decoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(decoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(decoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(decoder));
 
     mlsdk_vk_header_version vkHeaderVersion;
     mlsdk_decoder_get_encoder_vk_header_version(decoder, &vkHeaderVersion);

@@ -24,13 +24,13 @@ TEST(CppModelResourceTable, EmptyTable) {
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelResourceTable(data.c_str() + headerDecoder->GetModelResourceTableOffset(),
                                          headerDecoder->GetModelResourceTableSize()));
@@ -65,13 +65,13 @@ TEST(CppModelResourceTable, EncodeDecode) {
     //! [MrtEncodeConstant end]
 
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string vgf_data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(vgf_data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     uint32_t mrtIndex = resource0.reference;
     //! [MrtDecodingSample0 begin]
@@ -95,7 +95,7 @@ TEST(CppModelResourceTable, EncodeDecode) {
     ASSERT_TRUE(numEntries == 3);
     ASSERT_TRUE(category == ResourceCategory::INPUT);
     ASSERT_TRUE(shape == DataView<int64_t>(shape1.data(), shape1.size()));
-    ASSERT_TRUE(type.has_value() == true);
+    ASSERT_TRUE(type.has_value());
     ASSERT_TRUE(type.value() == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
     ASSERT_TRUE(format == VK_FORMAT_R4G4_UNORM_PACK8);
     ASSERT_TRUE(stride == DataView<int64_t>(strides1.data(), strides1.size()));
@@ -123,13 +123,13 @@ TEST(CppModelResourceTable, UnknownDimensions) {
         encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape1, {});
     [[maybe_unused]] auto resource1 = encoder->AddConstantResource(VK_FORMAT_R4G4B4A4_UNORM_PACK16, shape2, {});
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string vgf_data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(vgf_data.c_str());
-    ASSERT_TRUE(headerDecoder->IsValid() == true);
-    ASSERT_TRUE(headerDecoder->CheckVersion() == true);
+    ASSERT_TRUE(headerDecoder->IsValid());
+    ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelResourceTable(vgf_data.c_str() + headerDecoder->GetModelResourceTableOffset(),
                                          headerDecoder->GetModelResourceTableSize()));
@@ -149,7 +149,7 @@ TEST(CppModelResourceTable, UnknownDimensions) {
     ASSERT_TRUE(numEntries == 2);
     ASSERT_TRUE(category == ResourceCategory::INPUT);
     ASSERT_TRUE(shape == DataView<int64_t>(shape1.data(), shape1.size()));
-    ASSERT_TRUE(type.has_value() == true);
+    ASSERT_TRUE(type.has_value());
     ASSERT_TRUE(type.value() == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
     ASSERT_TRUE(format == VK_FORMAT_R4G4_UNORM_PACK8);
 
@@ -164,7 +164,7 @@ TEST(CModelResourceTable, EmptyTable) {
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
@@ -174,8 +174,8 @@ TEST(CModelResourceTable, EmptyTable) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info section;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_resources, &section);
@@ -210,7 +210,7 @@ TEST(CModelResourceTable, EncodeDecode) {
         encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape1, strides1);
     auto resource1 = encoder->AddConstantResource(VK_FORMAT_R4G4B4A4_UNORM_PACK16, shape2, strides2);
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
@@ -218,8 +218,8 @@ TEST(CModelResourceTable, EncodeDecode) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info section;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_resources, &section);
@@ -235,7 +235,7 @@ TEST(CModelResourceTable, EncodeDecode) {
 
     ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_category(resourceTableDecoder, resource0.reference) ==
                 mlsdk_decoder_mrt_category_input);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).has_value == true);
+    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).has_value);
     ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).value ==
                 mlsdk_vk_descriptor_type_storage_image);
     ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource0.reference) ==
@@ -287,7 +287,7 @@ TEST(CModelResourceTable, UnknownDimensions) {
         encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape1, {});
     auto resource1 = encoder->AddConstantResource(VK_FORMAT_R4G4B4A4_UNORM_PACK16, shape2, {});
     encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer) == true);
+    ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
 
@@ -295,8 +295,8 @@ TEST(CModelResourceTable, UnknownDimensions) {
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *headerDecoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder) == true);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder) == true);
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
     mlsdk_decoder_vgf_section_info section;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_resources, &section);
@@ -312,7 +312,7 @@ TEST(CModelResourceTable, UnknownDimensions) {
 
     ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_category(resourceTableDecoder, resource0.reference) ==
                 mlsdk_decoder_mrt_category_input);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).has_value == true);
+    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).has_value);
     ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).value ==
                 mlsdk_vk_descriptor_type_storage_image);
     ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource0.reference) ==
