@@ -5,6 +5,7 @@
 Checks: >
     -*,
     google-build-namespaces,
+    misc-unused-*,
     modernize-deprecated-headers,
     modernize-make-unique,
     modernize-use-nullptr,
