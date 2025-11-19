@@ -5,6 +5,7 @@
 #include "vgf/decoder.h"
 #include "vgf/decoder.hpp"
 #include "vgf/encoder.hpp"
+#include "vgf/logging.hpp"
 #include "vgf/types.hpp"
 
 #include "header.hpp"
@@ -20,6 +21,15 @@
 using namespace mlsdk::vgflib;
 
 const uint16_t pretendVulkanHeaderVersion = 123;
+
+struct Logger {
+    Logger() { logging::EnableLogging(Logger::log); }
+    ~Logger() { logging::DisableLogging(); }
+
+    static void log(logging::LogLevel logLevel, const std::string &message) {
+        std::cout << logLevel << " Message: " << message << std::endl;
+    }
+};
 
 TEST(CppVerify, BadData) {
 
@@ -94,6 +104,7 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
     std::ofstream file(filename, std::ios::binary);
     ASSERT_TRUE(file);
 
+    Logger logger;
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
 
     const size_t largeConstsSize = 25000000; // 25MB
@@ -312,6 +323,7 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
     std::ofstream file(filename, std::ios::binary);
     ASSERT_TRUE(file);
 
+    Logger logger;
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
 
     const size_t largeConstsSize = 25000000; // 25MB

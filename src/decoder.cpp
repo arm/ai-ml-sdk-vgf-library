@@ -7,6 +7,7 @@
 
 #include "constant.hpp"
 #include "header.hpp"
+#include "internal_logging.hpp"
 #include "internal_types.hpp"
 #include "vgf_generated.h"
 
@@ -528,11 +529,13 @@ bool VerifyConstant(const void *data, const uint64_t size) {
     if ((size >= CONSTANT_SECTION_VERSION_SIZE) &&
         strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
         if (size < CONSTANT_SECTION_METADATA_OFFSET) {
+            logging::error("Constant section size is too small to contain metadata");
             return false;
         }
         const auto decoder = std::make_unique<ConstantDecoder_V00_Impl>(data);
         for (size_t i = 0; i < decoder->size(); ++i) {
             if (decoder->getConstantSparsityDimension(static_cast<uint32_t>(i)) < -1) {
+                logging::error("Constant sparsity dimension is invalid");
                 return false;
             }
         }
