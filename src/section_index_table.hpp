@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "header.hpp"
+#include "internal_logging.hpp"
 
 namespace mlsdk::vgflib {
 
@@ -41,13 +42,15 @@ struct SectionIndexTable {
         /// Write the section and check offsets
         bool Write(std::basic_ostream<char> &file, void *data) const {
             file.write(reinterpret_cast<const char *>(data), static_cast<std::streamsize>(size));
-            if (file.bad()) {
+            if (file.fail()) {
+                logging::error("Failed to write section index, rdstate: " + std::to_string(file.rdstate()));
                 return false;
             }
             if (_padding) {
                 std::vector<char> padArray(_padding, 0);
                 file.write(padArray.data(), static_cast<std::streamsize>(padArray.size()));
-                if (file.bad()) {
+                if (file.fail()) {
+                    logging::error("Failed to write section index padding, rdstate: " + std::to_string(file.rdstate()));
                     return false;
                 }
             }
