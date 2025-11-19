@@ -67,9 +67,9 @@ TEST(CppModuleTable, Single) {
 
     ASSERT_TRUE(moduleIndex < numModules);
 
-    DataView<uint32_t> moduleCode;
     if (moduleDecoder->hasSPIRV(moduleIndex)) {
-        moduleCode = moduleDecoder->getModuleCode(moduleIndex);
+        DataView<uint32_t> moduleCode = moduleDecoder->getModuleCode(moduleIndex);
+        ASSERT_FALSE(moduleCode.empty());
 
         //...
     }

@@ -293,7 +293,8 @@ class EncoderImpl : public Encoder {
             output.write(reinterpret_cast<const char *>(constsData.data()),
                          static_cast<std::streamsize>(constsData.size()));
             if (output.fail()) {
-                logging::error("Failed to write constant section, rdstate: " + std::to_string(output.rdstate()));
+                logging::error("Failed to write constant section, rdstate: " +
+                               std::string(rdStateToStr(output.rdstate())));
                 result = false;
                 break;
             }

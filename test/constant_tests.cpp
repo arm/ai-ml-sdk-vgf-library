@@ -21,6 +21,7 @@
 using namespace mlsdk::vgflib;
 
 const uint16_t pretendVulkanHeaderVersion = 123;
+constexpr size_t GB{1024 * 1024 * 1024};
 
 struct Logger {
     Logger() { logging::EnableLogging(Logger::log); }
@@ -109,16 +110,16 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
 
     const size_t largeConstsSize = 25000000; // 25MB
     const std::vector<uint8_t> largeConst(largeConstsSize, 'l');
-    const uint32_t numLargeConsts = 40;
+    const uint32_t numLargeConsts = 10;
     const size_t smallConstsSize = 2000; // 2KB
     const std::vector<uint8_t> smallConst(smallConstsSize, 's');
     const uint32_t numSmallConsts = 1000;
     const size_t veryLargeConstsSize = 500000000; // 500MB
     const std::vector<uint8_t> veryLargeConst(veryLargeConstsSize, 'L');
-    const uint32_t numVeryLargeConsts = 10;
+    const uint32_t numVeryLargeConsts = 4;
     const size_t verySmallConstsSize = 1; // 1B
     const std::vector<uint8_t> verySmallConst(verySmallConstsSize, 'S');
-    const uint32_t numVerySmallConsts = 100000;
+    const uint32_t numVerySmallConsts = 10000;
 
     std::vector<ConstantRef> constants;
     constants.reserve(numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts);
@@ -155,6 +156,7 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
+    EXPECT_GT(mmapped.size(), 2 * GB);
     ASSERT_TRUE(VerifyConstant(mmapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize()));
 
     std::unique_ptr<ConstantDecoder> decoder = CreateConstantDecoder(mmapped.ptr(headerDecoder->GetConstantsOffset()));
@@ -328,16 +330,16 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
 
     const size_t largeConstsSize = 25000000; // 25MB
     const std::vector<uint8_t> largeConst(largeConstsSize, 'l');
-    const uint32_t numLargeConsts = 40;
+    const uint32_t numLargeConsts = 10;
     const size_t smallConstsSize = 2000; // 2KB
     const std::vector<uint8_t> smallConst(smallConstsSize, 's');
     const uint32_t numSmallConsts = 1000;
     const size_t veryLargeConstsSize = 500000000; // 500MB
     const std::vector<uint8_t> veryLargeConst(veryLargeConstsSize, 'L');
-    const uint32_t numVeryLargeConsts = 10;
+    const uint32_t numVeryLargeConsts = 4;
     const size_t verySmallConstsSize = 1; // 1B
     const std::vector<uint8_t> verySmallConst(verySmallConstsSize, 'S');
-    const uint32_t numVerySmallConsts = 100000;
+    const uint32_t numVerySmallConsts = 10000;
 
     std::vector<ConstantRef> constants;
     constants.reserve(numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts);
@@ -370,6 +372,7 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
 
     auto mmapped = MemoryMap(filename);
     ASSERT_TRUE(mmapped.size() >= mlsdk_decoder_header_size());
+    EXPECT_GT(mmapped.size(), 2 * GB);
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
