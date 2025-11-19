@@ -7,6 +7,7 @@
 
 #include "constant.hpp"
 #include "header.hpp"
+#include "internal_logging.hpp"
 #include "internal_types.hpp"
 #include "section_index_table.hpp"
 #include "vgf_generated.h"
@@ -65,6 +66,8 @@ class EncoderImpl : public Encoder {
                                                           VGF::ModuleCode::ModuleCode_SPIRV, spirv.Union()));
         }
         auto moduleRef = static_cast<ModuleRef::RefType>(_modules.size() - 1);
+        logging::debug("Added module. Name: " + name + " EntryPoint: " + entryPoint +
+                       " Type: " + std::to_string(static_cast<int>(type)) + " ModuleRef: " + std::to_string(moduleRef));
         _moduleRefToType.push_back(type);
         assert(moduleRef == _moduleRefToType.size() - 1);
         assert(_modules.size() == _moduleRefToType.size());
@@ -136,7 +139,10 @@ class EncoderImpl : public Encoder {
                                    module.reference, descriptorSetOffsets, inputOffsets, outputOffsets, constantOffsets,
                                    dispatchShapeOffsets, pushConstRangeOffsets));
 
-        return {static_cast<uint32_t>(_segmentInfos.size() - 1)};
+        const auto segmentRef = static_cast<SegmentInfoRef::RefType>(_segmentInfos.size() - 1);
+        logging::debug("Added segment info. Name: " + name + " ModuleRef: " + std::to_string(module.reference) +
+                       " SegmentRef: " + std::to_string(segmentRef));
+        return {segmentRef};
     }
 
     void AddModelSequenceInputsOutputs(const std::vector<BindingSlotRef> &inputs,
@@ -243,6 +249,7 @@ class EncoderImpl : public Encoder {
 
     bool WriteTo(std::ostream &output) override {
         assert(_finished && "cannot write if encoding is not marked finished");
+        logging::debug("Writing VGF model to output stream");
 
         SectionIndexTable table;
         const auto &headerSection = table.AddSection(sizeof(Header));
@@ -261,15 +268,19 @@ class EncoderImpl : public Encoder {
         Header header(moduleSection, modelSequenceSection, modelResourceSection, constantSection, _vkHeaderVersion);
 
         if (!headerSection.Write(output, &header)) {
+            logging::error("Failed to write header section");
             return false;
         }
         if (!moduleSection.Write(output, _moduleBuilder.GetBufferPointer())) {
+            logging::error("Failed to write module section");
             return false;
         }
         if (!modelSequenceSection.Write(output, _modelSequenceBuilder.GetBufferPointer())) {
+            logging::error("Failed to write model sequence section");
             return false;
         }
         if (!modelResourceSection.Write(output, _modelResourceBuilder.GetBufferPointer())) {
+            logging::error("Failed to write model resource section");
             return false;
         }
         {
