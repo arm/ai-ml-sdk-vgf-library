@@ -52,7 +52,7 @@ template <typename T> size_t getAlignedSize(size_t size) { return (size + sizeof
 
 class EncoderImpl : public Encoder {
   public:
-    explicit EncoderImpl(uint16_t vkHeaderVersion) : _finished(false), _vkHeaderVersion(vkHeaderVersion) {}
+    explicit EncoderImpl(uint16_t vkHeaderVersion) : _vkHeaderVersion(vkHeaderVersion) {}
 
     ModuleRef AddModule(ModuleType type, const std::string &name, const std::string &entryPoint,
                         const std::vector<uint32_t> &code) override {
@@ -283,25 +283,28 @@ class EncoderImpl : public Encoder {
             logging::error("Failed to write model resource section");
             return false;
         }
-        {
-            output.write(CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
-            output.write(reinterpret_cast<const char *>(&numConsts), CONSTANT_SECTION_COUNT_SIZE);
-            output.write(reinterpret_cast<const char *>(_constsMetaData.data()),
-                         static_cast<std::streamsize>(numConsts * sizeof(ConstantMetaData_V00)));
-            for (auto it = _constsData.begin(); it != _constsData.end();) {
-                output.write(reinterpret_cast<const char *>(it->data()), static_cast<std::streamsize>(it->size()));
-                it = _constsData.erase(it);
-            }
 
-            if (output.bad() || output.fail()) {
-                return false;
+        output.write(CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
+        output.write(reinterpret_cast<const char *>(&numConsts), CONSTANT_SECTION_COUNT_SIZE);
+        output.write(reinterpret_cast<const char *>(_constsMetaData.data()),
+                     static_cast<std::streamsize>(numConsts * sizeof(ConstantMetaData_V00)));
+        bool result = true;
+        for (const auto &constsData : _constsData) {
+            output.write(reinterpret_cast<const char *>(constsData.data()),
+                         static_cast<std::streamsize>(constsData.size()));
+            if (output.fail()) {
+                logging::error("Failed to write constant section, rdstate: " + std::to_string(output.rdstate()));
+                result = false;
+                break;
             }
         }
-        return true;
+        _constsData.clear();
+
+        return result;
     }
 
   private:
-    bool _finished;
+    bool _finished = false;
     flatbuffers::FlatBufferBuilder _moduleBuilder;
     flatbuffers::FlatBufferBuilder _modelSequenceBuilder;
     flatbuffers::FlatBufferBuilder _modelResourceBuilder;
