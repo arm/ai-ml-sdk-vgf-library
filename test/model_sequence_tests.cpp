@@ -282,6 +282,7 @@ TEST(CppModelSequenceTable, SegmentConstants) {
     ASSERT_TRUE(decoder->modelSequenceTableSize() == 1);
 
     DataView<uint32_t> constantIndexes = decoder->getSegmentConstantIndexes(segment.reference);
+    ASSERT_FALSE(constantIndexes.empty());
     ASSERT_TRUE(constantIndexes.size() == 3);
     ASSERT_TRUE(constantIndexes[0] == constants[0].reference);
     ASSERT_TRUE(constantIndexes[1] == constants[1].reference);
@@ -315,6 +316,7 @@ TEST(CppModelSequenceTable, SegmentDispatchShape) {
     ASSERT_TRUE(decoder->modelSequenceTableSize() == 1);
 
     DataView<uint32_t> checkShape = decoder->getSegmentDispatchShape(segment.reference);
+    ASSERT_FALSE(checkShape.empty());
     ASSERT_TRUE(checkShape.size() == 3);
     ASSERT_TRUE(checkShape[0] == dispatchShape[0]);
     ASSERT_TRUE(checkShape[1] == dispatchShape[1]);

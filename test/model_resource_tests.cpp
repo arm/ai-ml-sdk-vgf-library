@@ -17,7 +17,28 @@
 
 using namespace mlsdk::vgflib;
 
+namespace {
 const uint16_t pretendVulkanHeaderVersion = 123;
+
+constexpr bool DataViewTests() {
+    static_assert(DataView<uint8_t>().empty(), "Default constructor should create an empty view");
+    static_assert(DataView<uint8_t>().size() == 0, "Default constructor should create a view of size 0");
+    static_assert(DataView<uint8_t>(nullptr, 0).empty(),
+                  "Constructor with nullptr and size 0 should create an empty view");
+    static_assert(DataView<uint32_t>() == DataView<uint32_t>(nullptr, 0),
+                  "Two DataViews constructed with nullptr and size 0 should be equal");
+
+    int i = 42;
+    DataView<int> dv(&i, 1);
+    return dv[0] == i;
+}
+
+} // namespace
+
+TEST(DataView, Basic) {
+    static_assert(DataViewTests(), "DataView tests");
+    ASSERT_TRUE(DataViewTests());
+}
 
 TEST(CppModelResourceTable, EmptyTable) {
     std::stringstream buffer;
@@ -86,9 +107,11 @@ TEST(CppModelResourceTable, EncodeDecode) {
 
     ResourceCategory category = mrtDecoder->getCategory(mrtIndex);
     DataView<int64_t> shape = mrtDecoder->getTensorShape(mrtIndex);
+    ASSERT_FALSE(shape.empty());
     std::optional<DescriptorType> type = mrtDecoder->getDescriptorType(mrtIndex);
     FormatType format = mrtDecoder->getVkFormat(mrtIndex);
     DataView<int64_t> stride = mrtDecoder->getTensorStride(mrtIndex);
+    ASSERT_FALSE(stride.empty());
     // ...
     //! [MrtDecodingSample0 end]
 
@@ -143,6 +166,7 @@ TEST(CppModelResourceTable, UnknownDimensions) {
 
     ResourceCategory category = mrtDecoder->getCategory(mrtIndex);
     DataView<int64_t> shape = mrtDecoder->getTensorShape(mrtIndex);
+    ASSERT_FALSE(shape.empty());
     std::optional<DescriptorType> type = mrtDecoder->getDescriptorType(mrtIndex);
     FormatType format = mrtDecoder->getVkFormat(mrtIndex);
 

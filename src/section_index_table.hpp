@@ -8,12 +8,26 @@
 #include <cassert>
 #include <list>
 #include <ostream>
+#include <string_view>
 #include <vector>
 
 #include "header.hpp"
 #include "internal_logging.hpp"
 
 namespace mlsdk::vgflib {
+
+constexpr std::string_view rdStateToStr(std::ios::iostate state) {
+    if (state & std::ios::eofbit) {
+        return "eof";
+    }
+    if (state & std::ios::failbit) {
+        return "fail";
+    }
+    if (state & std::ios::badbit) {
+        return "bad";
+    }
+    return "good";
+}
 
 struct SectionIndexTable {
     struct SectionIndex : public SectionEntry {
@@ -43,14 +57,15 @@ struct SectionIndexTable {
         bool Write(std::basic_ostream<char> &file, void *data) const {
             file.write(reinterpret_cast<const char *>(data), static_cast<std::streamsize>(size));
             if (file.fail()) {
-                logging::error("Failed to write section index, rdstate: " + std::to_string(file.rdstate()));
+                logging::error("Failed to write section index, rdstate: " + std::string(rdStateToStr(file.rdstate())));
                 return false;
             }
             if (_padding) {
                 std::vector<char> padArray(_padding, 0);
                 file.write(padArray.data(), static_cast<std::streamsize>(padArray.size()));
                 if (file.fail()) {
-                    logging::error("Failed to write section index padding, rdstate: " + std::to_string(file.rdstate()));
+                    logging::error("Failed to write section index padding, rdstate: " +
+                                   std::string(rdStateToStr(file.rdstate())));
                     return false;
                 }
             }

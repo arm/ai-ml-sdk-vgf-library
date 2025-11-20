@@ -6,12 +6,13 @@
 #pragma once
 
 #include "vgf/decoder.hpp"
+#include <vgf/types.hpp>
+
 #include <cstdint>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <vgf/types.hpp>
 
 #define VGFLIB_VK_HELPERS // Avoid need to include Vulkan headers
 #include <vgf/vulkan_helpers.generated.hpp>
@@ -22,6 +23,7 @@ struct BindingSlot {
     BindingSlot() = default;
     BindingSlot(uint32_t index, uint32_t binding, uint32_t mrtIndex)
         : mIndex(index), mBinding(binding), mMrtIndex(mrtIndex) {}
+
     uint32_t mIndex{0};
     uint32_t mBinding{0};
     uint32_t mMrtIndex{0};
@@ -31,21 +33,23 @@ struct Resource {
     Resource() = default;
     Resource(uint32_t index, mlsdk::vgflib::ResourceCategory category,
              std::optional<mlsdk::vgflib::DescriptorType> descriptorType, mlsdk::vgflib::VkFormat vkFormat,
-             mlsdk::vgflib::DataView<int64_t> &&shape, mlsdk::vgflib::DataView<int64_t> &&stride)
+             mlsdk::vgflib::DataView<int64_t> shape, mlsdk::vgflib::DataView<int64_t> stride)
         : mIndex(index), mCategory(category), mDescriptorType(descriptorType), mVkFormat(vkFormat),
           mShape(shape.begin(), shape.end()), mStride(stride.begin(), stride.end()) {}
+
     uint32_t mIndex{0};
     mlsdk::vgflib::ResourceCategory mCategory{mlsdk::vgflib::ResourceCategory::INPUT};
     std::optional<mlsdk::vgflib::DescriptorType> mDescriptorType{std::nullopt};
     mlsdk::vgflib::FormatType mVkFormat{mlsdk::vgflib::UndefinedFormat()};
-    std::vector<int64_t> mShape{};
-    std::vector<int64_t> mStride{};
+    std::vector<int64_t> mShape;
+    std::vector<int64_t> mStride;
 };
 
 struct PushConstantRange {
     PushConstantRange() = default;
     PushConstantRange(uint32_t index, uint32_t stageFlags, uint32_t offset, uint32_t size)
         : mIndex(index), mStageFlags(stageFlags), mOffset(offset), mSize(size) {}
+
     uint32_t mIndex{0};
     uint32_t mStageFlags{0};
     uint32_t mOffset{0};
@@ -55,24 +59,24 @@ struct PushConstantRange {
 struct Segment {
     Segment() = default;
     Segment(uint32_t index, mlsdk::vgflib::ModuleType type, uint32_t moduleIndex, std::string_view &name,
-            std::vector<BindingSlot> &&inputs, std::vector<BindingSlot> &&outputs,
-            std::vector<std::vector<BindingSlot>> &&descriptorSetInfos,
-            std::vector<PushConstantRange> &&pushConstantRanges, std::vector<uint32_t> &&constants,
-            std::vector<uint32_t> &&dispatchShape)
+            std::vector<BindingSlot> inputs, std::vector<BindingSlot> outputs,
+            std::vector<std::vector<BindingSlot>> descriptorSetInfos, std::vector<PushConstantRange> pushConstantRanges,
+            std::vector<uint32_t> constants, std::vector<uint32_t> dispatchShape)
         : mIndex(index), mType(type), mModuleIndex(moduleIndex), mName(name), mInputs(std::move(inputs)),
           mOutputs(std::move(outputs)), mDescriptorSetInfos(std::move(descriptorSetInfos)),
           mPushConstantRanges(std::move(pushConstantRanges)), mConstants(std::move(constants)),
           mDispatchShape(std::move(dispatchShape)) {}
+
     uint32_t mIndex{0};
     mlsdk::vgflib::ModuleType mType{mlsdk::vgflib::ModuleType::COMPUTE};
     uint32_t mModuleIndex{0};
-    std::string mName{};
-    std::vector<BindingSlot> mInputs{};
-    std::vector<BindingSlot> mOutputs{};
-    std::vector<std::vector<BindingSlot>> mDescriptorSetInfos{};
-    std::vector<PushConstantRange> mPushConstantRanges{};
-    std::vector<uint32_t> mConstants{};
-    std::vector<uint32_t> mDispatchShape{};
+    std::string mName;
+    std::vector<BindingSlot> mInputs;
+    std::vector<BindingSlot> mOutputs;
+    std::vector<std::vector<BindingSlot>> mDescriptorSetInfos;
+    std::vector<PushConstantRange> mPushConstantRanges;
+    std::vector<uint32_t> mConstants;
+    std::vector<uint32_t> mDispatchShape;
 };
 
 struct NamedBindingSlot {
@@ -82,9 +86,10 @@ struct NamedBindingSlot {
 
 struct ModelSequence {
     ModelSequence() = default;
-    ModelSequence(std::vector<Segment> &&segments, std::vector<NamedBindingSlot> &&inputs,
-                  std::vector<NamedBindingSlot> &&outputs)
+    ModelSequence(std::vector<Segment> segments, std::vector<NamedBindingSlot> inputs,
+                  std::vector<NamedBindingSlot> outputs)
         : mSegments(std::move(segments)), mInputs(std::move(inputs)), mOutputs(std::move(outputs)) {}
+
     std::vector<Segment> mSegments;
     std::vector<NamedBindingSlot> mInputs;
     std::vector<NamedBindingSlot> mOutputs;
@@ -94,6 +99,7 @@ struct Constant {
     Constant() = default;
     Constant(uint32_t index, uint32_t mrtIndex, int64_t sparsityDimension)
         : mIndex(index), mMrtIndex(mrtIndex), mSparsityDimension(sparsityDimension) {}
+
     uint32_t mIndex{0};
     uint32_t mMrtIndex{0};
     int64_t mSparsityDimension{-1};

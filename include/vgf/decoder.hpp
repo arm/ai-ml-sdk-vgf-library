@@ -19,15 +19,17 @@ namespace mlsdk::vgflib {
 
 template <typename T> class DataView {
   public:
-    DataView(const T *ptr, size_t size) : _ptr(ptr), _size(size) {}
-    DataView() : _ptr(nullptr), _size(0) {}
+    constexpr DataView(const T *ptr, size_t size) noexcept : _ptr(ptr), _size(size) {}
+    constexpr DataView() noexcept = default;
 
-    size_t size() const noexcept { return _size; }
-    T const &operator[](uint32_t i) const noexcept { return _ptr[i]; };
+    constexpr size_t size() const noexcept { return _size; }
+    constexpr T const &operator[](uint32_t i) const noexcept { return _ptr[i]; };
 
-    auto begin() const { return _ptr; }
-    auto end() const { return _ptr + _size; }
-    bool operator==(const DataView<T> &other) const {
+    constexpr auto begin() const noexcept { return _ptr; }
+    constexpr auto end() const noexcept { return _ptr + _size; }
+    constexpr bool empty() const noexcept { return begin() == end(); }
+
+    constexpr bool operator==(const DataView<T> &other) const noexcept {
         if (_size != other._size) {
             return false;
         }
@@ -44,8 +46,8 @@ template <typename T> class DataView {
     }
 
   private:
-    const T *_ptr;
-    size_t _size;
+    const T *_ptr = nullptr;
+    size_t _size = 0;
 };
 
 /**
