@@ -97,12 +97,16 @@ struct ModelSequence {
 
 struct Constant {
     Constant() = default;
-    Constant(uint32_t index, uint32_t mrtIndex, int64_t sparsityDimension)
-        : mIndex(index), mMrtIndex(mrtIndex), mSparsityDimension(sparsityDimension) {}
+    Constant(uint32_t index, uint32_t mrtIndex, int64_t sparsityDimension, const void *data = nullptr,
+             size_t constantSize = {})
+        : mIndex(index), mMrtIndex(mrtIndex), mSparsityDimension(sparsityDimension), mConstantData(data),
+          mConstantSize(constantSize) {}
 
     uint32_t mIndex{0};
     uint32_t mMrtIndex{0};
     int64_t mSparsityDimension{-1};
+    const void *mConstantData{};
+    size_t mConstantSize{};
 };
 
 ModelSequence parseModelSequenceTable(const void *data);

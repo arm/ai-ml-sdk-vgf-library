@@ -36,7 +36,6 @@ class Builder:
 
     def __init__(self, args) -> None:
         self.build_dir = str(pathlib.Path(args.build_dir).resolve())
-        self.test_dir = pathlib.Path(self.build_dir) / "test"
         self.prefix_path = args.prefix_path
 
         self.threads = args.threads
@@ -321,7 +320,7 @@ class Builder:
                 test_cmd = [
                     "ctest",
                     "--test-dir",
-                    str(self.test_dir),
+                    str(self.build_dir),
                     "-j",
                     str(self.threads),
                     "--output-on-failure",
