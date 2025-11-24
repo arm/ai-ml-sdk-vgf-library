@@ -39,11 +39,28 @@ add_custom_command(
   COMMENT "Generating vgf_dump --help text"
 )
 
+# Generate a text file with the VGF_CONVERTER tool help text
+set(VGF_CONVERTER_ARG_HELP_TXT ${SPHINX_GEN_DIR}/vgf_converter_help.txt)
+add_custom_command(
+    OUTPUT "${VGF_CONVERTER_ARG_HELP_TXT}"
+  COMMAND ${CMAKE_COMMAND}
+          -Dcmd=$<IF:$<PLATFORM_ID:Windows>,.\\,./>$<TARGET_FILE_NAME:${VGF_NAMESPACE}::vgf_converter>
+          -Dargs=--help
+          -Dwd=$<TARGET_FILE_DIR:${VGF_NAMESPACE}::vgf_converter>
+          -Dout=${VGF_CONVERTER_ARG_HELP_TXT}
+          -P ${CMAKE_CURRENT_LIST_DIR}/redirect-output.cmake
+  COMMAND_EXPAND_LISTS
+  DEPENDS ${VGF_NAMESPACE}::vgf_converter
+  VERBATIM
+  COMMENT "Generating vgf_converter --help text"
+)
+
 set(DOC_SRC_FILES_FULL_PATHS
         ${SPHINX_GEN_DIR}/CONTRIBUTING.md
         ${SPHINX_GEN_DIR}/README.md
         ${SPHINX_GEN_DIR}/SECURITY.md
-        ${VGF_DUMP_ARG_HELP_TXT})
+        ${VGF_DUMP_ARG_HELP_TXT}
+        ${VGF_CONVERTER_ARG_HELP_TXT})
 
 # set source inputs list
 file(GLOB_RECURSE  DOC_SRC_FILES CONFIGURE_DEPENDS RELATIVE ${SPHINX_SRC_DIR_IN} ${SPHINX_SRC_DIR_IN}/*)
