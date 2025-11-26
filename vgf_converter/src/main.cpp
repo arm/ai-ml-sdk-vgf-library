@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     try {
         mlsdk::vgf_converter::convert(input, output);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
