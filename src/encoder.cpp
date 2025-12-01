@@ -288,20 +288,20 @@ class EncoderImpl : public Encoder {
         output.write(reinterpret_cast<const char *>(&numConsts), CONSTANT_SECTION_COUNT_SIZE);
         output.write(reinterpret_cast<const char *>(_constsMetaData.data()),
                      static_cast<std::streamsize>(numConsts * sizeof(ConstantMetaData_V00)));
-        bool result = true;
-        for (const auto &constsData : _constsData) {
+        for (auto &constsData : _constsData) {
             output.write(reinterpret_cast<const char *>(constsData.data()),
                          static_cast<std::streamsize>(constsData.size()));
+            // Erasing each constant immediately after writing it to disk to release memory
+            constsData.clear();
             if (output.fail()) {
                 logging::error("Failed to write constant section, rdstate: " +
                                std::string(rdStateToStr(output.rdstate())));
-                result = false;
-                break;
+                return false;
             }
         }
         _constsData.clear();
 
-        return result;
+        return true;
     }
 
   private:
