@@ -163,9 +163,16 @@ python3 $SDK_PATH/sw/vgf-lib/scripts/build.py -j $(nproc) --target-platform aarc
 ```
 
 To enable and run tests, use the `--test` option. To lint the tests, use the
-`--lint` option. To build the documentation, use the `--doc` option. To build
-the documentation, you must have `sphinx` and `doxygen` installed on your
-machine.
+`--lint` option. To enable tests and documentation building python dependencies
+must be installed:
+
+```bash
+pip install -r requirements.txt
+pip install -r tooling_requirements.txt
+```
+
+To build the documentation, use the `--doc` option. To build the documentation,
+you must have `sphinx` and `doxygen` installed on your machine.
 
 You can install the build artifacts for this project into a specified location.
 To install the build artifacts, pass the `--install` option with the required
