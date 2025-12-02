@@ -10,4 +10,4 @@ import sys
 def main():
     binary_name = "vgf_dump.exe" if sys.platform.startswith("win") else "vgf_dump"
     binary_path = os.path.join(os.path.dirname(__file__), "binaries/bin", binary_name)
-    subprocess.run([binary_path] + sys.argv[1:])
+    return subprocess.run([binary_path] + sys.argv[1:])
