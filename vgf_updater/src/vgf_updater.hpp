@@ -7,6 +7,6 @@
 
 #include <string>
 
-namespace mlsdk::vgf_converter {
-void convert(const std::string &inputPath, const std::string &outputPath);
-} // namespace mlsdk::vgf_converter
+namespace mlsdk::vgf_updater {
+void update(const std::string &inputPath, const std::string &outputPath);
+} // namespace mlsdk::vgf_updater

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "vgf_converter.hpp"
+#include "vgf_updater.hpp"
 #include <argparse/argparse.hpp>
 #include <filesystem>
 #include <iostream>
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
-        mlsdk::vgf_converter::convert(input, output);
+        mlsdk::vgf_updater::update(input, output);
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;

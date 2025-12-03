@@ -4,7 +4,7 @@
  */
 
 #include "vgf-utils/temp_folder.hpp"
-#include "vgf_converter.hpp"
+#include "vgf_updater.hpp"
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
@@ -54,7 +54,7 @@ namespace {
 }
 } // namespace
 
-class VGFConverterTest : public ::testing::Test {
+class VGFUpdaterTest : public ::testing::Test {
   protected:
     const fs::path dataDirectory = TEST_DATA_DIR;
     const fs::path singleMaxpoolVgfOutdated = dataDirectory / "single_maxpool_graph_pre_v0_4_0.vgf";
@@ -64,7 +64,7 @@ class VGFConverterTest : public ::testing::Test {
     const fs::path simpleConv2dVgfLatest = dataDirectory / "simple_conv2d_rescale_graph.vgf";
 };
 
-TEST_F(VGFConverterTest, fileOfLatestVersion) {
+TEST_F(VGFUpdaterTest, fileOfLatestVersion) {
 
     ASSERT_TRUE(fs::exists(singleMaxpoolVgfLatest));
 
@@ -72,13 +72,13 @@ TEST_F(VGFConverterTest, fileOfLatestVersion) {
     const fs::path outputPath = tempFolder.relative("single_maxpool_graph_noconversion.vgf");
 
     testing::internal::CaptureStdout();
-    mlsdk::vgf_converter::convert(singleMaxpoolVgfLatest.string(), outputPath.string());
+    mlsdk::vgf_updater::update(singleMaxpoolVgfLatest.string(), outputPath.string());
     const auto out = testing::internal::GetCapturedStdout();
     EXPECT_FALSE(fs::exists(outputPath));
     EXPECT_EQ(out, "VGF file is already at the latest version: 0.4.0\n");
 }
 
-TEST_F(VGFConverterTest, simpleMaxpoolGraph) {
+TEST_F(VGFUpdaterTest, simpleMaxpoolGraph) {
 
     ASSERT_TRUE(fs::exists(singleMaxpoolVgfOutdated));
     ASSERT_TRUE(fs::exists(singleMaxpoolVgfLatest));
@@ -86,13 +86,13 @@ TEST_F(VGFConverterTest, simpleMaxpoolGraph) {
     TempFolder tempFolder("simpleMaxpoolGraph");
     const fs::path outputPath = tempFolder.relative("single_maxpool_graph_output.vgf");
 
-    ASSERT_NO_THROW({ mlsdk::vgf_converter::convert(singleMaxpoolVgfOutdated.string(), outputPath.string()); });
+    ASSERT_NO_THROW({ mlsdk::vgf_updater::update(singleMaxpoolVgfOutdated.string(), outputPath.string()); });
     EXPECT_TRUE(fs::exists(outputPath));
 
     EXPECT_TRUE(compareFiles(singleMaxpoolVgfLatest, outputPath));
 }
 
-TEST_F(VGFConverterTest, graphWithConstants) {
+TEST_F(VGFUpdaterTest, graphWithConstants) {
 
     ASSERT_TRUE(fs::exists(simpleConv2dVgfOutdated));
     ASSERT_TRUE(fs::exists(simpleConv2dVgfLatest));
@@ -100,7 +100,7 @@ TEST_F(VGFConverterTest, graphWithConstants) {
     TempFolder tempFolder("graphWithConstants");
     const fs::path outputPath = tempFolder.relative("simple_conv2d_output.vgf");
 
-    ASSERT_NO_THROW({ mlsdk::vgf_converter::convert(simpleConv2dVgfOutdated.string(), outputPath.string()); });
+    ASSERT_NO_THROW({ mlsdk::vgf_updater::update(simpleConv2dVgfOutdated.string(), outputPath.string()); });
     EXPECT_TRUE(fs::exists(outputPath));
 
     EXPECT_TRUE(compareFiles(simpleConv2dVgfLatest, outputPath));
