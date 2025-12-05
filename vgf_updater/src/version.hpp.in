@@ -7,7 +7,7 @@
 
 #include <string>
 
-namespace mlsdk::vgf_converter::details {
+namespace mlsdk::vgf_updater::details {
 
 const std::string version{R""""({
   "version": "@GIT_REVISION@",
@@ -16,4 +16,4 @@ const std::string version{R""""({
   ]
 })""""};
 
-} // namespace mlsdk::vgf_converter::details
+} // namespace mlsdk::vgf_updater::details

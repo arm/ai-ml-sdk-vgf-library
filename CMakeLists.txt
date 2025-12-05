@@ -56,7 +56,7 @@ endif()
 
 if(ML_SDK_VGF_LIB_BUILD_TOOLS OR ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)
     add_subdirectory(vgf_dump)
-    add_subdirectory(vgf_converter)
+    add_subdirectory(vgf_updater)
 endif()
 
 if(ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "vgf_converter.hpp"
+#include "vgf_updater.hpp"
 #include "parse_vgf.hpp"
 #include "vgf-utils/memory_map.hpp"
 #include "vgf/decoder.hpp"
@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace mlsdk::vgf_converter {
+namespace mlsdk::vgf_updater {
 
 using namespace vgflib;
 using namespace vgfutils;
@@ -225,7 +225,7 @@ void writeOutput(const std::string &outputPath, Encoder &encoder) {
 
 } // namespace
 
-void convert(const std::string &inputPath, const std::string &outputPath) {
+void update(const std::string &inputPath, const std::string &outputPath) {
     MemoryMap mapped(inputPath);
     const auto headerDecoder = loadHeaderSafely(mapped);
 
@@ -268,4 +268,4 @@ void convert(const std::string &inputPath, const std::string &outputPath) {
     encoder->Finish();
     writeOutput(outputPath, *encoder);
 }
-} // namespace mlsdk::vgf_converter
+} // namespace mlsdk::vgf_updater
