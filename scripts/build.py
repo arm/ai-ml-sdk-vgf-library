@@ -47,7 +47,6 @@ class Builder:
         self.doc = args.doc
         self.target_platform = args.target_platform
         self.cmake_toolchain_for_android = args.cmake_toolchain_for_android
-        self.flatc_path = args.flatc_path
         self.argparse_path = args.argparse_path
         self.json_path = args.json_path
         self.gtest_path = args.gtest_path
@@ -197,9 +196,6 @@ class Builder:
 
         if self.prefix_path:
             cmake_setup_cmd.append(f"-DCMAKE_PREFIX_PATH={self.prefix_path}")
-
-        if self.flatc_path:
-            cmake_setup_cmd.append(f"-DFLATC_PATH={self.flatc_path}")
 
         if self.run_tests:
             cmake_setup_cmd.append("-DML_SDK_VGF_LIB_BUILD_TESTS=ON")
@@ -444,11 +440,6 @@ def parse_arguments():
         "--build-type",
         help="Type of build to perform. Default: %(default)s",
         default="Release",
-    )
-    parser.add_argument(
-        "--flatc-path",
-        help="Path to the flatc compiler",
-        default="",
     )
     parser.add_argument(
         "--doc",
