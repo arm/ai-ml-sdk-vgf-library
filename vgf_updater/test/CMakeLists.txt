@@ -22,6 +22,10 @@ target_include_directories(VGFupdaterTests PRIVATE
 )
 target_compile_options(VGFupdaterTests PRIVATE ${ML_SDK_VGF_LIB_COMPILE_OPTIONS})
 
-gtest_discover_tests(VGFupdaterTests PROPERTIES LABELS VGFupdaterTests)
+gtest_discover_tests(VGFupdaterTests
+    PROPERTIES
+        LABELS VGFupdaterTests
+        # Avoid concurrent file access issues
+        RUN_SERIAL TRUE)
 
 enable_testing()
