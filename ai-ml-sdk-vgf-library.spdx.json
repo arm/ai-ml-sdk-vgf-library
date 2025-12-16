@@ -504,7 +504,7 @@
                 },
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
-                    "referenceLocator": "pkg:pypi/iniconfig@2.1.0",
+                    "referenceLocator": "pkg:pypi/iniconfig@2.3.0",
                     "referenceType": "purl"
                 },
                 {
@@ -518,7 +518,7 @@
             "licenseDeclared": "MIT",
             "name": "RonnyPfannschmidt/iniconfig",
             "supplier": "Organization: pypi",
-            "versionInfo": "2.1.0"
+            "versionInfo": "2.3.0"
         },
         {
             "SPDXID": "SPDXRef-package-7244dee8-6675-4803-84f7-457f0340346c",
@@ -536,7 +536,7 @@
                 },
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
-                    "referenceLocator": "pkg:pypi/tomli@2.2.1",
+                    "referenceLocator": "pkg:pypi/tomli@2.3.0",
                     "referenceType": "purl"
                 },
                 {
@@ -550,7 +550,7 @@
             "licenseDeclared": "MIT",
             "name": "tomli",
             "supplier": "Organization: pypi",
-            "versionInfo": "2.2.1"
+            "versionInfo": "2.3.0"
         },
         {
             "SPDXID": "SPDXRef-package-18e36ba3-5553-495c-afa3-ef67a7b417c1",
@@ -576,7 +576,7 @@
             "licenseConcluded": "BSD-3-Clause",
             "licenseDeclared": "BSD-3-Clause",
             "name": "CMake",
-            "supplier": "Organization: conan",
+            "supplier": "Organization: CMake",
             "versionInfo": "v3.31.8"
         }
     ],
