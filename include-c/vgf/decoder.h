@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -683,7 +683,7 @@ MLSDKAPI void mlsdk_decoder_model_resource_table_get_tensor_strides(
  *
  * @param constantTableData The pointer to the data
  * @param size The size in bytes of the data
- * @return True if the data is a valid section, false otherwise
+ * @return True if the data is a valid constant section, false otherwise
  */
 MLSDKAPI bool mlsdk_decoder_is_valid_constant_table(const void *constantTableData, uint64_t size);
 
@@ -691,11 +691,13 @@ MLSDKAPI bool mlsdk_decoder_is_valid_constant_table(const void *constantTableDat
  * @brief Create the constant table decoder
  *
  * @param constantTableData The pointer to the constant table data
+ * @param size The size in bytes of the constant table data
  * @param constantDecoderMemory Memory allocated to be used to create the decoder
  * @return The pointer to the newly created decoder
  */
 MLSDKAPI mlsdk_decoder_constant_table_decoder *
-mlsdk_decoder_create_constant_table_decoder(const void *const constantTableData, void *constantDecoderMemory);
+mlsdk_decoder_create_constant_table_decoder(const void *const constantTableData, uint64_t size,
+                                            void *constantDecoderMemory);
 
 /**
  * @brief Returns the memory requirements in bytes to allocate memory for creating the constant tabledecoder

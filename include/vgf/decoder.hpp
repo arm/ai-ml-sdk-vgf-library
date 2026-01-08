@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -368,16 +368,18 @@ bool VerifyConstant(const void *data, uint64_t size);
  * @brief Constructs a Constant section decoder
  *
  * @param data Pointer to the Constants section data
+ * @param size Size of the Constants section data
  */
-std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *data);
+std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *data, uint64_t size);
 
 /**
  * @brief Constructs a Constant section decoder in-place using preallocated memory
  *
  * @param data Pointer to the Constants section data
+ * @param size Size of the Constants section data
  * @param decoderMem memory in which to create the decoder
  */
-ConstantDecoder *CreateConstantDecoderInPlace(const void *data, void *decoderMem);
+ConstantDecoder *CreateConstantDecoderInPlace(const void *data, uint64_t size, void *decoderMem);
 
 // Binding Slot Array Handle
 struct BindingSlotArrayHandle_s {};

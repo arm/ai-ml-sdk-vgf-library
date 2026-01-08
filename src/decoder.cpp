@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -12,13 +12,15 @@
 #include "vgf_generated.h"
 
 #include <cassert>
+#include <optional>
+#include <tuple>
 
 namespace mlsdk::vgflib {
 namespace {
 
 template <typename T> inline T ReadBytesAs(const void *const baseAddr, size_t offset) {
-    const uint8_t *bytes = reinterpret_cast<const uint8_t *const>(baseAddr) + offset;
-    return *reinterpret_cast<const T *const>(bytes);
+    const auto *bytes = static_cast<const uint8_t *>(baseAddr) + offset;
+    return *reinterpret_cast<const T *>(bytes);
 }
 
 ModuleType fromVGF(VGF::ModuleType type) {
@@ -75,7 +77,7 @@ const char *getConstantSectionVersion(const void *data) {
 // Header Decoder
 class HeaderDecoderImpl : public HeaderDecoder {
   public:
-    explicit HeaderDecoderImpl(const void *const data) : _header(reinterpret_cast<const Header *>(data)) {}
+    explicit HeaderDecoderImpl(const void *const data) : _header(static_cast<const Header *>(data)) {}
 
     [[nodiscard]] bool IsLatestVersion() const override {
         return IsValid() && GetMajor() == HEADER_MAJOR_VERSION_VALUE && GetMinor() == HEADER_MINOR_VERSION_VALUE &&
@@ -471,17 +473,23 @@ class ConstantDecoderImpl : public ConstantDecoder {
 
     [[nodiscard]] uint32_t getConstantMrtIndex(uint32_t idx) const override {
         const auto *constants = _constantSection->data();
-        return constants == nullptr ? 0 : constants->Get(idx)->mrt_index();
+        return constants == nullptr ? CONSTANT_INVALID_MRT_INDEX : constants->Get(idx)->mrt_index();
     }
 
     [[nodiscard]] bool isSparseConstant(uint32_t idx) const override {
-        const auto *constants = _constantSection->data();
-        return constants == nullptr ? false : constants->Get(idx)->sparsity_dimension() != -1;
+        return getConstantSparsityDimension(idx) > CONSTANT_NOT_SPARSE_DIMENSION;
     }
 
     [[nodiscard]] int64_t getConstantSparsityDimension(uint32_t idx) const override {
         const auto *constants = _constantSection->data();
-        return constants == nullptr ? -1 : constants->Get(idx)->sparsity_dimension();
+        if (constants == nullptr) {
+            return CONSTANT_INVALID_SPARSITY_DIMENSION;
+        }
+        const auto dim = constants->Get(idx)->sparsity_dimension();
+        if (dim < CONSTANT_NOT_SPARSE_DIMENSION) {
+            return CONSTANT_INVALID_SPARSITY_DIMENSION;
+        }
+        return dim;
     }
 
   private:
@@ -490,74 +498,199 @@ class ConstantDecoderImpl : public ConstantDecoder {
 
 class ConstantDecoder_V00_Impl : public ConstantDecoder {
   public:
-    explicit ConstantDecoder_V00_Impl(const void *const data) {
-        _count = ReadBytesAs<uint64_t>(data, CONSTANT_SECTION_COUNT_OFFSET);
-        _metaData = reinterpret_cast<const uint8_t *>(data) + CONSTANT_SECTION_METADATA_OFFSET;
-        _data = _metaData + _count * sizeof(ConstantMetaData_V00);
+    static std::unique_ptr<ConstantDecoder_V00_Impl> Create(const void *const data, const uint64_t sectionSize) {
+        const auto verified = _verify(data, sectionSize);
+        if (!verified.has_value()) {
+            return nullptr;
+        }
+        const auto &[count, metaData, dataStart, dataSize] = verified.value();
+        return std::unique_ptr<ConstantDecoder_V00_Impl>(
+            new ConstantDecoder_V00_Impl(count, metaData, dataStart, dataSize));
+    }
+
+    static ConstantDecoder_V00_Impl *CreateInPlace(const void *const data, const uint64_t sectionSize,
+                                                   void *const decoderMem) {
+        const auto verified = _verify(data, sectionSize);
+        if (!verified.has_value()) {
+            return nullptr;
+        }
+        const auto &[count, metaData, dataStart, dataSize] = verified.value();
+        return new (decoderMem) ConstantDecoder_V00_Impl(count, metaData, dataStart, dataSize);
     }
 
     [[nodiscard]] size_t size() const override { return static_cast<size_t>(_count); }
 
     [[nodiscard]] DataView<uint8_t> getConstant(uint32_t idx) const override {
-        if (!_count)
-            return DataView<uint8_t>();
-        auto metaData = reinterpret_cast<const ConstantMetaData_V00 *>(_metaData + idx * sizeof(ConstantMetaData_V00));
-        return DataView<uint8_t>(_data + metaData->offset, metaData->size);
+        const auto *metaData = _getPtrToMetaData(idx);
+        if (metaData == nullptr) {
+            return {};
+        }
+
+        if (!_constantDataWithinBounds(metaData, _dataSize)) {
+            return {};
+        }
+
+        return DataView<uint8_t>(_data + metaData->offset, static_cast<size_t>(metaData->size));
     }
 
     [[nodiscard]] uint32_t getConstantMrtIndex(uint32_t idx) const override {
-        auto metaData = reinterpret_cast<const ConstantMetaData_V00 *>(_metaData + idx * sizeof(ConstantMetaData_V00));
-        return metaData->mrtIndex;
+        const auto *metaData = _getPtrToMetaData(idx);
+        return metaData == nullptr ? CONSTANT_INVALID_MRT_INDEX : metaData->mrtIndex;
     }
 
     [[nodiscard]] int64_t getConstantSparsityDimension(uint32_t idx) const override {
-        auto metaData = reinterpret_cast<const ConstantMetaData_V00 *>(_metaData + idx * sizeof(ConstantMetaData_V00));
-        return metaData->sparsityDimension;
+        const auto *metaData = _getPtrToMetaData(idx);
+        if (metaData == nullptr) {
+            return CONSTANT_INVALID_SPARSITY_DIMENSION;
+        }
+        const auto dim = metaData->sparsityDimension;
+        if (dim < CONSTANT_NOT_SPARSE_DIMENSION) {
+            return CONSTANT_INVALID_SPARSITY_DIMENSION;
+        }
+        return dim;
     }
 
-    [[nodiscard]] bool isSparseConstant(uint32_t idx) const override { return getConstantSparsityDimension(idx) != -1; }
+    [[nodiscard]] bool isSparseConstant(uint32_t idx) const override {
+        return getConstantSparsityDimension(idx) > CONSTANT_NOT_SPARSE_DIMENSION;
+    }
 
   private:
-    uint64_t _count;
-    const uint8_t *_metaData;
-    const uint8_t *_data;
+    explicit ConstantDecoder_V00_Impl(uint64_t count, const uint8_t *metaData, const uint8_t *data, uint64_t dataSize)
+        : _count(count), _metaData(metaData), _data(data), _dataSize(dataSize) {}
+
+    using VerifiedLayout = std::tuple<uint64_t, const uint8_t *, const uint8_t *, uint64_t>;
+
+    [[nodiscard]] static std::optional<VerifiedLayout> _verify(const void *const data, const uint64_t sectionSize) {
+        if (sectionSize < CONSTANT_SECTION_METADATA_OFFSET) {
+            logging::error("Constant section too small to contain metadata");
+            return std::nullopt;
+        }
+
+        const auto declaredCount = ReadBytesAs<uint64_t>(data, CONSTANT_SECTION_COUNT_OFFSET);
+        const uint64_t maxEntries = (sectionSize - CONSTANT_SECTION_METADATA_OFFSET) / sizeof(ConstantMetaData_V00);
+        if (declaredCount > maxEntries) {
+            logging::error("Constant section declares more entries than fit in the buffer");
+            return std::nullopt;
+        }
+
+        const uint64_t dataOffset = CONSTANT_SECTION_METADATA_OFFSET + declaredCount * sizeof(ConstantMetaData_V00);
+        if (dataOffset > std::numeric_limits<size_t>::max()) {
+            logging::error("Constant data offset exceeds addressable size");
+            return std::nullopt;
+        }
+        if (dataOffset > sectionSize) {
+            logging::error("Constant metadata exceeds section size");
+            return std::nullopt;
+        }
+
+        const auto *metaData = static_cast<const uint8_t *>(data) + CONSTANT_SECTION_METADATA_OFFSET;
+        const auto *dataStart = static_cast<const uint8_t *>(data) + static_cast<size_t>(dataOffset);
+        const uint64_t dataSize = sectionSize - dataOffset;
+
+        for (uint64_t idx = 0; idx < declaredCount; ++idx) {
+            const auto *entry =
+                reinterpret_cast<const ConstantMetaData_V00 *>(metaData + idx * sizeof(ConstantMetaData_V00));
+            if (!_constantDataWithinBounds(entry, dataSize)) {
+                logging::error("Constant metadata offset/size exceeds section bounds at index " + std::to_string(idx));
+                return std::nullopt;
+            }
+        }
+
+        return VerifiedLayout{declaredCount, metaData, dataStart, dataSize};
+    }
+
+    [[nodiscard]] const ConstantMetaData_V00 *_getPtrToMetaData(uint32_t idx) const {
+        if (_metaData == nullptr || static_cast<uint64_t>(idx) >= _count) {
+            return nullptr;
+        }
+        return reinterpret_cast<const ConstantMetaData_V00 *>(_metaData + idx * sizeof(ConstantMetaData_V00));
+    }
+
+    [[nodiscard]] static bool _constantDataWithinBounds(const ConstantMetaData_V00 *metaData, uint64_t dataSize) {
+        if (metaData == nullptr) {
+            return false;
+        }
+        const uint64_t offset = metaData->offset;
+        const uint64_t entrySize = metaData->size;
+        const uint64_t sizeMax = std::numeric_limits<size_t>::max();
+        if (offset > sizeMax || entrySize > sizeMax || offset + entrySize > sizeMax) {
+            return false;
+        }
+
+        if (offset > dataSize || entrySize > dataSize || entrySize > dataSize - offset) {
+            return false;
+        }
+        return true;
+    }
+
+    uint64_t _count = 0;
+    const uint8_t *_metaData = nullptr;
+    const uint8_t *_data = nullptr;
+    uint64_t _dataSize = 0;
 };
 size_t ConstantDecoderSize() { return std::max(sizeof(ConstantDecoderImpl), sizeof(ConstantDecoder_V00_Impl)); }
 
 bool VerifyConstant(const void *data, const uint64_t size) {
     assert(data != nullptr && "data is null");
+    std::unique_ptr<ConstantDecoder> decoder;
+
     if ((size >= CONSTANT_SECTION_VERSION_SIZE) &&
         strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
-        if (size < CONSTANT_SECTION_METADATA_OFFSET) {
-            logging::error("Constant section size is too small to contain metadata");
+        auto decoderV00 = ConstantDecoder_V00_Impl::Create(data, size);
+        if (decoderV00 == nullptr) {
+            logging::error("Constant section could not be decoded safely");
             return false;
         }
-        const auto decoder = std::make_unique<ConstantDecoder_V00_Impl>(data);
-        for (size_t i = 0; i < decoder->size(); ++i) {
-            if (decoder->getConstantSparsityDimension(static_cast<uint32_t>(i)) < -1) {
-                logging::error("Constant sparsity dimension is invalid");
-                return false;
-            }
+        decoder = std::move(decoderV00);
+    } else {
+        if (!VerifyImpl<VGF::ConstantSection>(data, size)) {
+            logging::error("Constant section could not be decoded safely");
+            return false;
         }
-
-        return true;
+        decoder = std::make_unique<ConstantDecoderImpl>(data);
     }
-    return VerifyImpl<VGF::ConstantSection>(data, size);
+
+    for (size_t i = 0; i < decoder->size(); ++i) {
+        if (decoder->getConstantSparsityDimension(static_cast<uint32_t>(i)) == CONSTANT_INVALID_SPARSITY_DIMENSION) {
+            logging::error("Constant sparsity dimension is invalid at index " + std::to_string(i));
+            return false;
+        }
+    }
+
+    return true;
 }
 
-std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *const data) {
+std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *const data, const uint64_t size) {
     assert(data != nullptr && "data is null");
+    if (size < CONSTANT_SECTION_VERSION_SIZE) {
+        logging::error("Constant section too small to contain version");
+        return {};
+    }
     if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
-        return std::make_unique<ConstantDecoder_V00_Impl>(data);
+        auto decoder = ConstantDecoder_V00_Impl::Create(data, size);
+        if (decoder == nullptr) {
+            logging::error("Constant section verification failed");
+            return {};
+        }
+        return decoder;
     }
     return std::make_unique<ConstantDecoderImpl>(data);
 }
 
-ConstantDecoder *CreateConstantDecoderInPlace(const void *const data, void *decoderMem) {
+ConstantDecoder *CreateConstantDecoderInPlace(const void *const data, const uint64_t size, void *decoderMem) {
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
+    if (size < CONSTANT_SECTION_VERSION_SIZE) {
+        logging::error("Constant section too small to contain version");
+        return nullptr;
+    }
     if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
-        return new (decoderMem) ConstantDecoder_V00_Impl(data);
+        auto *decoder = ConstantDecoder_V00_Impl::CreateInPlace(data, size, decoderMem);
+        if (decoder == nullptr) {
+            logging::error("Constant section verification failed");
+            return nullptr;
+        }
+        return decoder;
     }
     return new (decoderMem) ConstantDecoderImpl(data);
 }

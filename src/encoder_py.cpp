@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -142,7 +142,7 @@ void pyInitEncoder(py::module m) {
                                            size_t(buffer.request().itemsize) * size_t(buffer.request().size),
                                            sparsityDimension);
             },
-            py::arg("resourceRef"), py::arg("buffer"), py::arg("sparsityDimension") = -1)
+            py::arg("resourceRef"), py::arg("buffer"), py::arg("sparsityDimension") = CONSTANT_NOT_SPARSE_DIMENSION)
         .def("Finish", &Encoder::Finish)
         .def(
             "WriteTo",

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -464,8 +464,9 @@ void pyInitConstantDecoder(py::module m) {
         [](const py::buffer &buffer, uint64_t size) { return VerifyConstant(buffer.request().ptr, size); },
         py::arg("data"), py::arg("size"));
     m.def(
-        "CreateConstantDecoder", [](const py::buffer &buffer) { return CreateConstantDecoder(buffer.request().ptr); },
-        py::arg("data"));
+        "CreateConstantDecoder",
+        [](const py::buffer &buffer, uint64_t size) { return CreateConstantDecoder(buffer.request().ptr, size); },
+        py::arg("data"), py::arg("size"));
 }
 
 // Python Binding Module Decoder Setup

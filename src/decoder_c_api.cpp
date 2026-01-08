@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -405,11 +405,12 @@ bool mlsdk_decoder_is_valid_constant_table(const void *constantTableData, const 
 }
 
 mlsdk_decoder_constant_table_decoder *mlsdk_decoder_create_constant_table_decoder(const void *const constantTableData,
+                                                                                  const uint64_t size,
                                                                                   void *constantDecoderMemory) {
     assert(constantTableData != nullptr && "constantTableData is null");
     assert(constantDecoderMemory != nullptr && "constantDecoderMemory is null");
     return reinterpret_cast<mlsdk_decoder_constant_table_decoder *>(
-        CreateConstantDecoderInPlace(constantTableData, constantDecoderMemory));
+        CreateConstantDecoderInPlace(constantTableData, size, constantDecoderMemory));
 }
 
 size_t mlsdk_decoder_constant_table_decoder_mem_reqs() { return ConstantDecoderSize(); }
@@ -432,7 +433,7 @@ uint32_t mlsdk_decoder_constant_table_get_mrt_index(const mlsdk_decoder_constant
 bool mlsdk_decoder_constant_table_is_sparse(const mlsdk_decoder_constant_table_decoder *const constantDecoder,
                                             uint32_t constidx) {
     assert(constantDecoder != nullptr && "constantDecoder is null");
-    return reinterpret_cast<const ConstantDecoder *>(constantDecoder)->getConstantSparsityDimension(constidx) != -1;
+    return reinterpret_cast<const ConstantDecoder *>(constantDecoder)->isSparseConstant(constidx);
 }
 
 int64_t

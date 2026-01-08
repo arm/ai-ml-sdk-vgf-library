@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -118,7 +118,7 @@ class Encoder {
     /// \param sparsityDimension Dimension on which the constant is sparse
     /// \return ConstantRef type containing information for the added constant
     virtual ConstantRef AddConstant(ResourceRef resource, const void *data, size_t sizeInBytes,
-                                    int64_t sparsityDimension = -1) = 0;
+                                    int64_t sparsityDimension = CONSTANT_NOT_SPARSE_DIMENSION) = 0;
 
     /// \brief Add a binding slot and associate to resource in the model resource table
     ///

@@ -176,6 +176,12 @@ void writeOutputJSON(const std::string &path, json &json) {
     writeOutputText(path, jsonContents.c_str(), jsonContents.size());
 }
 
+void ensureMappedRange(const MemoryMap &mapped, uint64_t offset, uint64_t size, std::string_view section) {
+    if ((offset > mapped.size()) || (size > mapped.size() - offset)) {
+        throw std::runtime_error(std::string(section) + " section exceeds available file size");
+    }
+}
+
 struct ScenarioTensorResource {
     ScenarioTensorResource(const std::string &name, const std::string &uid, const std::string &path, bool isSrc,
                            VkFormat format, const DataView<int64_t> &dims)
@@ -389,16 +395,21 @@ void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint
     MemoryMap mapped(inputFile);
     const auto headerDecoder = parseHeader(mapped.ptr());
 
-    if (!VerifyConstant(mapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize())) {
+    const auto constantsOffset = headerDecoder->GetConstantsOffset();
+    const auto constantsSize = headerDecoder->GetConstantsSize();
+    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
+    if (!VerifyConstant(mapped.ptr(constantsOffset), constantsSize)) {
         throw std::runtime_error("Invalid header data");
     }
-    if (!VerifyModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()),
-                                  headerDecoder->GetModelResourceTableSize())) {
+    const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
+    const auto resourceSize = headerDecoder->GetModelResourceTableSize();
+    ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
+    if (!VerifyModelResourceTable(mapped.ptr(resourceOffset), resourceSize)) {
         throw std::runtime_error("Invalid header data");
     }
 
-    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(headerDecoder->GetConstantsOffset()));
-    const auto mrtDecoder = CreateModelResourceTableDecoder(mapped.ptr(headerDecoder->GetModelResourceTableOffset()));
+    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
+    const auto mrtDecoder = CreateModelResourceTableDecoder(mapped.ptr(resourceOffset));
 
     if (index >= constantDecoder->size()) {
         throw std::runtime_error("Constant index " + std::to_string(index) +
@@ -432,12 +443,14 @@ void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(c
     MemoryMap mapped(inputFile);
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
 
-    if (!VerifyModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
+    const auto moduleOffset = headerDecoder->GetModuleTableOffset();
+    const auto moduleSize = headerDecoder->GetModuleTableSize();
+    ensureMappedRange(mapped, moduleOffset, moduleSize, "Module table");
+    if (!VerifyModuleTable(mapped.ptr(moduleOffset), moduleSize)) {
         throw std::runtime_error("Invalid module table");
     }
 
-    std::unique_ptr<ModuleTableDecoder> decoder =
-        CreateModuleTableDecoder(mapped.ptr(headerDecoder->GetModuleTableOffset()));
+    std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(mapped.ptr(moduleOffset));
 
     if (index >= decoder->size()) {
         throw std::runtime_error("Module index " + std::to_string(index) +
@@ -454,11 +467,14 @@ void getConstant(const std::string &inputFile, uint32_t index, std::function<voi
     MemoryMap mapped(inputFile);
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
 
-    if (!VerifyConstant(mapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize())) {
+    const auto constantsOffset = headerDecoder->GetConstantsOffset();
+    const auto constantsSize = headerDecoder->GetConstantsSize();
+    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
+    if (!VerifyConstant(mapped.ptr(constantsOffset), constantsSize)) {
         throw std::runtime_error("Invalid header data");
     }
 
-    std::unique_ptr<ConstantDecoder> decoder = CreateConstantDecoder(mapped.ptr(headerDecoder->GetConstantsOffset()));
+    std::unique_ptr<ConstantDecoder> decoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
 
     if (index >= decoder->size()) {
         throw std::runtime_error("Constant index " + std::to_string(index) +
@@ -479,19 +495,23 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     graphResources.push_back(
         ScenarioGraphResource("vgf_graph_ref", std::filesystem::path(inputFile).filename().string()));
 
-    if (!VerifyModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()),
-                                  headerDecoder->GetModelResourceTableSize())) {
+    const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
+    const auto resourceSize = headerDecoder->GetModelResourceTableSize();
+    ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
+    if (!VerifyModelResourceTable(mapped.ptr(resourceOffset), resourceSize)) {
         throw std::runtime_error("Invalid model resource table");
     }
-    if (!VerifyModelSequenceTable(mapped.ptr(headerDecoder->GetModelSequenceTableOffset()),
-                                  headerDecoder->GetModelSequenceTableSize())) {
+    const auto sequenceOffset = headerDecoder->GetModelSequenceTableOffset();
+    const auto sequenceSize = headerDecoder->GetModelSequenceTableSize();
+    ensureMappedRange(mapped, sequenceOffset, sequenceSize, "Model sequence table");
+    if (!VerifyModelSequenceTable(mapped.ptr(sequenceOffset), sequenceSize)) {
         throw std::runtime_error("Invalid model sequeqnce table");
     }
 
     std::unique_ptr<ModelResourceTableDecoder> modelResourceDecoder =
-        CreateModelResourceTableDecoder(mapped.ptr(headerDecoder->GetModelResourceTableOffset()));
+        CreateModelResourceTableDecoder(mapped.ptr(resourceOffset));
     std::unique_ptr<ModelSequenceTableDecoder> modelSequenceDecoder =
-        CreateModelSequenceTableDecoder(mapped.ptr(headerDecoder->GetModelSequenceTableOffset()));
+        CreateModelSequenceTableDecoder(mapped.ptr(sequenceOffset));
 
     std::vector<ScenarioTensorResource> tensorResources;
     BindingSlotArrayHandle seqInputsHandle = modelSequenceDecoder->getModelSequenceInputBindingSlotsHandle();
@@ -594,32 +614,45 @@ json getFile(const std::string &inputFile) {
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
     Header header(headerDecoder->GetMajor(), headerDecoder->GetMinor(), headerDecoder->GetPatch());
 
-    if (!VerifyModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
+    const auto moduleOffset = headerDecoder->GetModuleTableOffset();
+    const auto moduleSize = headerDecoder->GetModuleTableSize();
+    ensureMappedRange(mapped, moduleOffset, moduleSize, "Module table");
+    if (!VerifyModuleTable(mapped.ptr(moduleOffset), moduleSize)) {
         throw std::runtime_error("Invalid module table");
     }
-    if (!VerifyModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()),
-                                  headerDecoder->GetModelResourceTableSize())) {
+    const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
+    const auto resourceSize = headerDecoder->GetModelResourceTableSize();
+    ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
+    if (!VerifyModelResourceTable(mapped.ptr(resourceOffset), resourceSize)) {
         throw std::runtime_error("Invalid model resource table");
     }
-    if (!VerifyModelSequenceTable(mapped.ptr(headerDecoder->GetModelSequenceTableOffset()),
-                                  headerDecoder->GetModelSequenceTableSize())) {
+    const auto sequenceOffset = headerDecoder->GetModelSequenceTableOffset();
+    const auto sequenceSize = headerDecoder->GetModelSequenceTableSize();
+    ensureMappedRange(mapped, sequenceOffset, sequenceSize, "Model sequence table");
+    if (!VerifyModelSequenceTable(mapped.ptr(sequenceOffset), sequenceSize)) {
         throw std::runtime_error("Invalid model sequence table");
     }
-    if (!VerifyConstant(mapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize())) {
+    const auto constantsOffset = headerDecoder->GetConstantsOffset();
+    const auto constantsSize = headerDecoder->GetConstantsSize();
+    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
+    if (!VerifyConstant(mapped.ptr(constantsOffset), constantsSize)) {
         throw std::runtime_error("Invalid constant section");
     }
 
-    const auto modules = parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()));
-    const auto resources = vgfutils::parseModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()));
-    const auto modelSequence =
-        vgfutils::parseModelSequenceTable(mapped.ptr(headerDecoder->GetModelSequenceTableOffset()));
+    const auto modules = parseModuleTable(mapped.ptr(moduleOffset));
+    const auto resources = vgfutils::parseModelResourceTable(mapped.ptr(resourceOffset));
+    const auto modelSequence = vgfutils::parseModelSequenceTable(mapped.ptr(sequenceOffset));
 
-    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(headerDecoder->GetConstantsOffset()));
+    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
     std::vector<vgfutils::Constant> constants;
     constants.reserve(constantDecoder->size());
     for (uint32_t i = 0; i < constantDecoder->size(); ++i) {
-        constants.emplace_back(i, constantDecoder->getConstantMrtIndex(i),
-                               constantDecoder->getConstantSparsityDimension(i));
+        auto mrtIndex = constantDecoder->getConstantMrtIndex(i);
+        auto sparsity = constantDecoder->getConstantSparsityDimension(i);
+        if (mrtIndex == CONSTANT_INVALID_MRT_INDEX || sparsity == CONSTANT_INVALID_SPARSITY_DIMENSION) {
+            throw std::runtime_error("Invalid constant metadata at index " + std::to_string(i));
+        }
+        constants.emplace_back(i, mrtIndex, sparsity);
     }
 
     json json;

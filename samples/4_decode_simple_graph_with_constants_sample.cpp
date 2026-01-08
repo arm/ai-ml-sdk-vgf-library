@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -99,7 +99,7 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
 
         // Create the ConstantsDecoder from the section in memory
         std::unique_ptr<vgflib::ConstantDecoder> constants_decoder =
-            vgflib::CreateConstantDecoder(constants_data.data());
+            vgflib::CreateConstantDecoder(constants_data.data(), constants_data.size());
 
         assert(constants_decoder->size() == 1); // There should be 1 constant
         [[maybe_unused]] vgflib::DataView<uint8_t> weights_bytes =
