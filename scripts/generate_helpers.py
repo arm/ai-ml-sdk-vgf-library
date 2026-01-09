@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 import argparse
@@ -280,7 +280,11 @@ def parse_numeric_format(
     format_type_to_numeric_format = defaultdict(dict)
 
     for line in vk_format_traits:
-        if not read_format and "componentNumericFormat" in line:
+        if (
+            not read_format
+            and "VULKAN_HPP_INLINE" in line
+            and "componentNumericFormat" in line
+        ):
             read_format = True
         elif read_format:
             if 'default: return "";' in line:
@@ -312,7 +316,7 @@ def parse_block_size(
     format_type_to_block_size = {}
 
     for line in vk_format_traits:
-        if not read_switch and "blockSize" in line:
+        if not read_switch and "VULKAN_HPP_INLINE" in line and "blockSize" in line:
             read_switch = True
         if read_switch:
             if "}" in line:
