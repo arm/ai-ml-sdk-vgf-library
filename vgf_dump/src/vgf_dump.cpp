@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -300,17 +300,14 @@ void to_json(json &j, const ScenarioShaderSubstitutions &shader_substitution) {
 }
 
 struct Boundary {
-    Boundary(std::vector<std::string> resources, uint32_t index)
-        : mResources(std::move(resources)), mIndex(std::move(index)) {}
+    explicit Boundary(std::vector<std::string> resources) : mResources(std::move(resources)) {}
     std::vector<std::string> mResources;
-    uint32_t mIndex;
 };
 
 void to_json(json &j, const Boundary &boundary) {
     j = json{{"mark_boundary",
               {
                   {"resources", boundary.mResources},
-                  {"frame_id", boundary.mIndex},
               }}};
 }
 
@@ -565,7 +562,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
     std::vector<json> commands;
     if (add_boundaries) {
-        commands.push_back(Boundary(std::vector<std::string>{}, 0));
+        commands.push_back(Boundary(std::vector<std::string>{}));
     }
     commands.push_back(json{{"dispatch_graph",
                              {
@@ -574,7 +571,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
                                  {"graph_ref", "vgf_graph_ref"},
                              }}});
     if (add_boundaries) {
-        commands.push_back(Boundary(outputs, 1));
+        commands.push_back(Boundary(outputs));
     }
 
     json json;
