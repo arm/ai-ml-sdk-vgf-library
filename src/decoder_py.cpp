@@ -99,8 +99,9 @@ void pyInitHeaderDecoder(py::module m) {
     m.def("HeaderSize", &HeaderSize);
     m.def("HeaderDecoderSize", &HeaderDecoderSize);
     m.def(
-        "CreateHeaderDecoder", [](const py::buffer &buffer) { return CreateHeaderDecoder(buffer.request().ptr); },
-        py::arg("data"));
+        "CreateHeaderDecoder",
+        [](const py::buffer &buffer, uint64_t size) { return CreateHeaderDecoder(buffer.request().ptr, size); },
+        py::arg("data"), py::arg("size"));
 
     m.attr("HEADER_MAGIC_VALUE_OLD") = HEADER_MAGIC_VALUE_OLD;
     m.attr("HEADER_MAGIC_VALUE") = HEADER_MAGIC_VALUE;
@@ -185,7 +186,8 @@ void pyInitModuleTableDecoder(py::module m) {
         py::arg("data"), py::arg("size"));
     m.def(
         "CreateModuleTableDecoder",
-        [](const py::buffer &buffer) { return CreateModuleTableDecoder(buffer.request().ptr); }, py::arg("data"));
+        [](const py::buffer &buffer, uint64_t size) { return CreateModuleTableDecoder(buffer.request().ptr, size); },
+        py::arg("data"), py::arg("size"));
 }
 
 // Model Sequence Decoder
@@ -356,8 +358,10 @@ void pyInitModelSequenceTableDecoder(py::module m) {
         py::arg("data"), py::arg("size"));
     m.def(
         "CreateModelSequenceTableDecoder",
-        [](const py::buffer &buffer) { return CreateModelSequenceTableDecoder(buffer.request().ptr); },
-        py::arg("data"));
+        [](const py::buffer &buffer, uint64_t size) {
+            return CreateModelSequenceTableDecoder(buffer.request().ptr, size);
+        },
+        py::arg("data"), py::arg("size"));
 }
 
 // Model Resource Table Decoder
@@ -416,8 +420,10 @@ void pyInitModelResourceTableDecoder(py::module m) {
         py::arg("data"), py::arg("size"));
     m.def(
         "CreateModelResourceTableDecoder",
-        [](const py::buffer &buffer) { return CreateModelResourceTableDecoder(buffer.request().ptr); },
-        py::arg("data"));
+        [](const py::buffer &buffer, uint64_t size) {
+            return CreateModelResourceTableDecoder(buffer.request().ptr, size);
+        },
+        py::arg("data"), py::arg("size"));
 }
 
 // Constant Decoder

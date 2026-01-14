@@ -150,17 +150,19 @@ size_t HeaderDecoderSize();
 /**
  * @brief Constructs a Header decoder
  *
- * @param data
+ * @param data Pointer to the Header section data
+ * @param size Size in bytes of the header buffer
  */
-std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *data);
+std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *data, uint64_t size);
 
 /**
  * @brief Constructs a Header decoder in-place using pre-allocated memory
  *
- * @param data
- * @param decoderMem
+ * @param data Pointer to the Header section data
+ * @param size Size in bytes of the header buffer
+ * @param decoderMem Memory to place the decoder into
  */
-HeaderDecoder *CreateHeaderDecoderInPlace(const void *data, void *decoderMem);
+HeaderDecoder *CreateHeaderDecoderInPlace(const void *data, uint64_t size, void *decoderMem);
 
 // ModuleTableDecoder
 class ModuleTableDecoder {
@@ -224,17 +226,19 @@ bool VerifyModuleTable(const void *data, uint64_t size);
 /**
  * @brief Constructs a Module Table decoder
  *
- * @param data
+ * @param data Pointer to Module Table section data
+ * @param size Size in bytes of the section
  */
-std::unique_ptr<ModuleTableDecoder> CreateModuleTableDecoder(const void *data);
+std::unique_ptr<ModuleTableDecoder> CreateModuleTableDecoder(const void *data, uint64_t size);
 
 /**
  * @brief Constructs a Module Table decoder in-place using pre-allocated memory
  *
- * @param data
- * @param decoderMem
+ * @param data Pointer to Module Table section data
+ * @param size Size in bytes of the section
+ * @param decoderMem Memory to place the decoder into
  */
-ModuleTableDecoder *CreateModuleTableDecoderInPlace(const void *data, void *decoderMem);
+ModuleTableDecoder *CreateModuleTableDecoderInPlace(const void *data, uint64_t size, void *decoderMem);
 
 // ModelResourceTableDecoder
 class ModelResourceTableDecoder {
@@ -299,17 +303,19 @@ bool VerifyModelResourceTable(const void *data, uint64_t size);
 /**
  * @brief Constructs a Model Resource Table decoder
  *
- * @param data
+ * @param data Pointer to Model Resource Table section data
+ * @param size Size in bytes of the section
  */
-std::unique_ptr<ModelResourceTableDecoder> CreateModelResourceTableDecoder(const void *data);
+std::unique_ptr<ModelResourceTableDecoder> CreateModelResourceTableDecoder(const void *data, uint64_t size);
 
 /**
  * @brief Constructs a Model Resource Table decoder in-place using pre-allocated memory
  *
- * @param data
- * @param decoderMem
+ * @param data Pointer to Model Resource Table section data
+ * @param size Size in bytes of the section
+ * @param decoderMem Memory to place the decoder into
  */
-ModelResourceTableDecoder *CreateModelResourceTableDecoderInPlace(const void *data, void *decoderMem);
+ModelResourceTableDecoder *CreateModelResourceTableDecoderInPlace(const void *data, uint64_t size, void *decoderMem);
 
 // ConstantDecoder
 class ConstantDecoder {
@@ -368,7 +374,7 @@ bool VerifyConstant(const void *data, uint64_t size);
  * @brief Constructs a Constant section decoder
  *
  * @param data Pointer to the Constants section data
- * @param size Size of the Constants section data
+ * @param size Size in bytes of the section
  */
 std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *data, uint64_t size);
 
@@ -376,8 +382,8 @@ std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *data, uint64_
  * @brief Constructs a Constant section decoder in-place using preallocated memory
  *
  * @param data Pointer to the Constants section data
- * @param size Size of the Constants section data
- * @param decoderMem memory in which to create the decoder
+ * @param size Size in bytes of the section
+ * @param decoderMem Memory to place the decoder into
  */
 ConstantDecoder *CreateConstantDecoderInPlace(const void *data, uint64_t size, void *decoderMem);
 
@@ -592,17 +598,19 @@ bool VerifyModelSequenceTable(const void *data, uint64_t size);
 /**
  * @brief Constructs a Model Sequence Table decoder
  *
- * @param data
+ * @param data Pointer to Model Sequence Table section data
+ * @param size Size in bytes of the section
  */
-std::unique_ptr<ModelSequenceTableDecoder> CreateModelSequenceTableDecoder(const void *data);
+std::unique_ptr<ModelSequenceTableDecoder> CreateModelSequenceTableDecoder(const void *data, uint64_t size);
 
 /**
  * @brief Constructs a Model Sequence Table decoder in-place using pre-allocated memory
  *
- * @param data
- * @param decoderMem
+ * @param data Pointer to Model Sequence Table section data
+ * @param size Size in bytes of the section
+ * @param decoderMem Memory to place the decoder into
  */
-ModelSequenceTableDecoder *CreateModelSequenceTableDecoderInPlace(const void *data, void *decoderMem);
+ModelSequenceTableDecoder *CreateModelSequenceTableDecoderInPlace(const void *data, uint64_t size, void *decoderMem);
 
 /**@}*/
 } // namespace mlsdk::vgflib

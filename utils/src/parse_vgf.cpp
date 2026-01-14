@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -49,8 +49,8 @@ std::vector<uint32_t> dataViewToVector(DataView<uint32_t> dataView) { return {da
 
 } // namespace
 
-std::vector<Resource> parseModelResourceTable(const void *const data) {
-    const auto decoder = CreateModelResourceTableDecoder(data);
+std::vector<Resource> parseModelResourceTable(const void *const data, uint64_t size) {
+    const auto decoder = CreateModelResourceTableDecoder(data, size);
 
     std::vector<Resource> resources;
     resources.reserve(decoder->size());
@@ -61,8 +61,8 @@ std::vector<Resource> parseModelResourceTable(const void *const data) {
     return resources;
 }
 
-ModelSequence parseModelSequenceTable(const void *data) {
-    const auto decoder = CreateModelSequenceTableDecoder(data);
+ModelSequence parseModelSequenceTable(const void *data, uint64_t size) {
+    const auto decoder = CreateModelSequenceTableDecoder(data, size);
 
     const auto inputsHandle = decoder->getModelSequenceInputBindingSlotsHandle();
     std::vector<BindingSlot> inputs = parseBindingSlots(*decoder, inputsHandle);

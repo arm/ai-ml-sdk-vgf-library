@@ -1,11 +1,12 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #pragma once
 
 #include "vgf/decoder.hpp"
+#include <cstdint>
 #include <vgf/types.hpp>
 
 #include <cstdint>
@@ -109,8 +110,8 @@ struct Constant {
     size_t mConstantSize{};
 };
 
-ModelSequence parseModelSequenceTable(const void *data);
+ModelSequence parseModelSequenceTable(const void *data, uint64_t size);
 
-std::vector<Resource> parseModelResourceTable(const void *data);
+std::vector<Resource> parseModelResourceTable(const void *data, uint64_t size);
 
 } // namespace mlsdk::vgfutils

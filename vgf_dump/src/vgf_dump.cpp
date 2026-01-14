@@ -116,8 +116,11 @@ void to_json(json &j, const Module &m) {
     };
 }
 
-std::unique_ptr<HeaderDecoder> parseHeader(const void *const headerData) {
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(headerData);
+std::unique_ptr<HeaderDecoder> parseHeader(const void *const headerData, uint64_t size) {
+    if (size < HeaderSize()) {
+        throw std::runtime_error("File too small to contain VGF header");
+    }
+    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(headerData, size);
     if (!headerDecoder->IsValid()) {
         throw std::runtime_error("Invalid VGF header, bad magic value");
     }
@@ -129,8 +132,8 @@ std::unique_ptr<HeaderDecoder> parseHeader(const void *const headerData) {
     return headerDecoder;
 }
 
-std::vector<Module> parseModuleTable(const void *const data) {
-    std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(data);
+std::vector<Module> parseModuleTable(const void *const data, uint64_t size) {
+    std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(data, size);
 
     std::vector<Module> modules;
     modules.reserve(decoder->size());
@@ -393,7 +396,7 @@ void dumpConstant(const std::string &inputFile, const std::string &outputFile, u
 
 void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
     MemoryMap mapped(inputFile);
-    const auto headerDecoder = parseHeader(mapped.ptr());
+    const auto headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
 
     const auto constantsOffset = headerDecoder->GetConstantsOffset();
     const auto constantsSize = headerDecoder->GetConstantsSize();
@@ -409,7 +412,8 @@ void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint
     }
 
     const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
-    const auto mrtDecoder = CreateModelResourceTableDecoder(mapped.ptr(resourceOffset));
+    const auto mrtDecoder =
+        CreateModelResourceTableDecoder(mapped.ptr(resourceOffset), headerDecoder->GetModelResourceTableSize());
 
     if (index >= constantDecoder->size()) {
         throw std::runtime_error("Constant index " + std::to_string(index) +
@@ -441,7 +445,7 @@ void dumpFile(const std ::string &inputFile, const std::string &outputFile) {
 
 void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(const uint32_t *, size_t)> callback) {
     MemoryMap mapped(inputFile);
-    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
+    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
 
     const auto moduleOffset = headerDecoder->GetModuleTableOffset();
     const auto moduleSize = headerDecoder->GetModuleTableSize();
@@ -450,7 +454,8 @@ void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(c
         throw std::runtime_error("Invalid module table");
     }
 
-    std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(mapped.ptr(moduleOffset));
+    std::unique_ptr<ModuleTableDecoder> decoder =
+        CreateModuleTableDecoder(mapped.ptr(moduleOffset), headerDecoder->GetModuleTableSize());
 
     if (index >= decoder->size()) {
         throw std::runtime_error("Module index " + std::to_string(index) +
@@ -465,7 +470,7 @@ void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(c
 
 void getConstant(const std::string &inputFile, uint32_t index, std::function<void(const uint8_t *, size_t)> callback) {
     MemoryMap mapped(inputFile);
-    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
+    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
 
     const auto constantsOffset = headerDecoder->GetConstantsOffset();
     const auto constantsSize = headerDecoder->GetConstantsSize();
@@ -488,7 +493,7 @@ void getConstant(const std::string &inputFile, uint32_t index, std::function<voi
 json getScenario(const std::string &inputFile, bool add_boundaries) {
     MemoryMap mapped(inputFile);
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
+    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
 
     std::vector<ScenarioBinding> bindings;
     std::vector<ScenarioGraphResource> graphResources;
@@ -509,9 +514,9 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     }
 
     std::unique_ptr<ModelResourceTableDecoder> modelResourceDecoder =
-        CreateModelResourceTableDecoder(mapped.ptr(resourceOffset));
+        CreateModelResourceTableDecoder(mapped.ptr(resourceOffset), headerDecoder->GetModelResourceTableSize());
     std::unique_ptr<ModelSequenceTableDecoder> modelSequenceDecoder =
-        CreateModelSequenceTableDecoder(mapped.ptr(sequenceOffset));
+        CreateModelSequenceTableDecoder(mapped.ptr(sequenceOffset), headerDecoder->GetModelSequenceTableSize());
 
     std::vector<ScenarioTensorResource> tensorResources;
     BindingSlotArrayHandle seqInputsHandle = modelSequenceDecoder->getModelSequenceInputBindingSlotsHandle();
@@ -568,7 +573,8 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     uint32_t shaderIdx = 0;
     std::vector<ScenarioShaderSubstitutions> shader_substitutions;
     std::vector<ScenarioShaderResource> shaderResources;
-    for (auto &module : parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()))) {
+    for (auto &module :
+         parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
 
         if (module.mType == ModuleType::COMPUTE) {
             std::string shaderRef = "shader_" + std::to_string(shaderIdx) + "_ref";
@@ -611,7 +617,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 json getFile(const std::string &inputFile) {
     MemoryMap mapped(inputFile);
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr());
+    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
     Header header(headerDecoder->GetMajor(), headerDecoder->GetMinor(), headerDecoder->GetPatch());
 
     const auto moduleOffset = headerDecoder->GetModuleTableOffset();
@@ -639,9 +645,11 @@ json getFile(const std::string &inputFile) {
         throw std::runtime_error("Invalid constant section");
     }
 
-    const auto modules = parseModuleTable(mapped.ptr(moduleOffset));
-    const auto resources = vgfutils::parseModelResourceTable(mapped.ptr(resourceOffset));
-    const auto modelSequence = vgfutils::parseModelSequenceTable(mapped.ptr(sequenceOffset));
+    const auto modules = parseModuleTable(mapped.ptr(moduleOffset), headerDecoder->GetModuleTableSize());
+    const auto resources =
+        vgfutils::parseModelResourceTable(mapped.ptr(resourceOffset), headerDecoder->GetModelResourceTableSize());
+    const auto modelSequence =
+        vgfutils::parseModelSequenceTable(mapped.ptr(sequenceOffset), headerDecoder->GetModelSequenceTableSize());
 
     const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
     std::vector<vgfutils::Constant> constants;

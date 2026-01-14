@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 """ Tests for VGF Model Resource. """
@@ -28,7 +28,7 @@ def test_encode_decode_model_resource_table_empty():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -37,7 +37,8 @@ def test_encode_decode_model_resource_table_empty():
         headerDecoder.GetModelResourceTableSize(),
     )
     resTableDecoder = vgf.CreateModelResourceTableDecoder(
-        buffer[headerDecoder.GetModelResourceTableOffset() :]
+        buffer[headerDecoder.GetModelResourceTableOffset() :],
+        headerDecoder.GetModelResourceTableSize(),
     )
 
     assert resTableDecoder.size() == 0
@@ -72,7 +73,7 @@ def test_encode_decode_model_resource_table():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -83,7 +84,8 @@ def test_encode_decode_model_resource_table():
         headerDecoder.GetModelResourceTableSize(),
     )
     mrtDecoder = vgf.CreateModelResourceTableDecoder(
-        buffer[headerDecoder.GetModelResourceTableOffset() :]
+        buffer[headerDecoder.GetModelResourceTableOffset() :],
+        headerDecoder.GetModelResourceTableSize(),
     )
 
     assert mrtDecoder.size() == 2
@@ -131,7 +133,7 @@ def test_encode_decode_model_resource_table_with_unknown_dimensions():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -142,7 +144,8 @@ def test_encode_decode_model_resource_table_with_unknown_dimensions():
         headerDecoder.GetModelResourceTableSize(),
     )
     mrtDecoder = vgf.CreateModelResourceTableDecoder(
-        buffer[headerDecoder.GetModelResourceTableOffset() :]
+        buffer[headerDecoder.GetModelResourceTableOffset() :],
+        headerDecoder.GetModelResourceTableSize(),
     )
 
     assert mrtDecoder.size() == 2

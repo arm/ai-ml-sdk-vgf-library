@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -29,7 +29,8 @@ TEST(CppEncodeDecode, HeaderTest) {
     ASSERT_TRUE(vgf_data.size() >= HeaderSize());
 
     //! [HeaderDecodingSample0 begin]
-    std::unique_ptr<HeaderDecoder> decoder = CreateHeaderDecoder(vgf_data.c_str());
+    std::unique_ptr<HeaderDecoder> decoder =
+        CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
     //! [HeaderDecodingSample0 end]
 
     //! [HeaderDecodingSample1 begin]
@@ -61,7 +62,7 @@ TEST(CppEncodeDecode, HeaderTest) {
 
 TEST(CppDecode, WrongMagic) {
     std::array<char, HEADER_HEADER_SIZE_VALUE> data = {0};
-    std::unique_ptr<HeaderDecoder> decoder = CreateHeaderDecoder(data.data());
+    std::unique_ptr<HeaderDecoder> decoder = CreateHeaderDecoder(data.data(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(decoder->IsValid() == false);
     ASSERT_TRUE(decoder->CheckVersion() == false);
 
@@ -97,7 +98,8 @@ TEST(CDecode, HeaderTest) {
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *decoder = mlsdk_decoder_create_header_decoder(data.c_str(), decoderMemory.data());
+    mlsdk_decoder_header_decoder *decoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(data.size()), decoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(decoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(decoder));
 
@@ -139,7 +141,8 @@ TEST(CDecode, WrongMagic) {
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *decoder = mlsdk_decoder_create_header_decoder(data.data(), decoderMemory.data());
+    mlsdk_decoder_header_decoder *decoder =
+        mlsdk_decoder_create_header_decoder(data.data(), static_cast<uint64_t>(data.size()), decoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(decoder) == false);
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(decoder) == false);
 }

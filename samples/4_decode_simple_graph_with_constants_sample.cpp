@@ -26,7 +26,8 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
     assert(vgf_file);
 
     // Lets create an object to decode the bytes we have just read from file.
-    std::unique_ptr<vgflib::HeaderDecoder> header_decoder = vgflib::CreateHeaderDecoder(header.data());
+    std::unique_ptr<vgflib::HeaderDecoder> header_decoder =
+        vgflib::CreateHeaderDecoder(header.data(), static_cast<uint64_t>(header.size()));
 
     // Check that the header has decoded a valid VGF file
     assert(header_decoder->IsValid());
@@ -58,7 +59,7 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
 
         // Create the decoder for the Model Sequence Table
         std::unique_ptr<vgflib::ModelSequenceTableDecoder> mst_decoder =
-            vgflib::CreateModelSequenceTableDecoder(model_sequence_table_data.data());
+            vgflib::CreateModelSequenceTableDecoder(model_sequence_table_data.data(), model_sequence_table_data.size());
 
         // We know this file was written based on tutorial 3, so lets verify some things we expect.
         assert(mst_decoder->modelSequenceTableSize() == 1);                       // We should only have 1 segment

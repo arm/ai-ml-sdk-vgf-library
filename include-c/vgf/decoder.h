@@ -202,10 +202,11 @@ MLSDKAPI size_t mlsdk_decoder_header_decoder_mem_reqs();
  * @brief Creates the header decoder
  *
  * @param headerData The pointer to the header data
+ * @param size The size in bytes of the header data
  * @param decoderMemory Memory allocated to be used to create the decoder
  * @return The pointer to the newly created decoder
  */
-MLSDKAPI mlsdk_decoder_header_decoder *mlsdk_decoder_create_header_decoder(const void *const headerData,
+MLSDKAPI mlsdk_decoder_header_decoder *mlsdk_decoder_create_header_decoder(const void *const headerData, uint64_t size,
                                                                            void *decoderMemory);
 
 /**
@@ -273,11 +274,12 @@ MLSDKAPI bool mlsdk_decoder_is_valid_module_table(const void *moduleTableData, u
  * @brief Creates the module table decoder
  *
  * @param moduleTableData The pointer to the module table data
+ * @param size The size in bytes of the module table section
  * @param decoderMemory Memory allocated to be used to create the decoder
  * @return The pointer to the newly created decoder
  */
 MLSDKAPI mlsdk_decoder_module_table_decoder *
-mlsdk_decoder_create_module_table_decoder(const void *const moduleTableData, void *decoderMemory);
+mlsdk_decoder_create_module_table_decoder(const void *const moduleTableData, uint64_t size, void *decoderMemory);
 
 /**
  * @brief Returns the number of entries in the module table
@@ -443,11 +445,13 @@ MLSDKAPI bool mlsdk_decoder_is_valid_model_sequence(const void *modelSequenceDat
  * @brief Create the model sequence decoder
  *
  * @param modelSequenceData The pointer to the model sequence data
+ * @param size The size in bytes of the model sequence section
  * @param modelSequenceDecoderMemory Memory allocated to be used to create the decoder
  * @return The pointer to the newly created model sequence decoder
  */
 MLSDKAPI mlsdk_decoder_model_sequence_decoder *
-mlsdk_decoder_create_model_sequence_decoder(const void *const modelSequenceData, void *modelSequenceDecoderMemory);
+mlsdk_decoder_create_model_sequence_decoder(const void *const modelSequenceData, uint64_t size,
+                                            void *modelSequenceDecoderMemory);
 
 /**
  * @brief Returns the memory requirements in bytes to allocate memory for creating the model sequence decoder
@@ -608,11 +612,13 @@ MLSDKAPI bool mlsdk_decoder_is_valid_model_resource_table(const void *modelResou
  * @brief Create the model resource table decoder
  *
  * @param modelResourceTableData The pointer to the module resource table data
+ * @param size The size in bytes of the model resource table section
  * @param decoderMemory Memory allocated to be used to create the decoder
  * @return The pointer to the newly created decoder
  */
 MLSDKAPI mlsdk_decoder_model_resource_table_decoder *
-mlsdk_decoder_create_model_resource_table_decoder(const void *const modelResourceTableData, void *decoderMemory);
+mlsdk_decoder_create_model_resource_table_decoder(const void *const modelResourceTableData, uint64_t size,
+                                                  void *decoderMemory);
 
 /**
  * @brief Returns the number of entries in the model resource table

@@ -61,7 +61,8 @@ void ensureMappedRange(const MemoryMap &mapped, uint64_t offset, uint64_t size, 
 }
 
 std::unique_ptr<HeaderDecoder> loadHeaderSafely(const MemoryMap &mapped) {
-    auto headerDecoder = CreateHeaderDecoder(mapped.ptr());
+    ensureMappedRange(mapped, 0, HeaderSize(), "Header");
+    auto headerDecoder = CreateHeaderDecoder(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
     if (!headerDecoder || !headerDecoder->IsValid()) {
         throw std::runtime_error("Invalid VGF header, bad magic value");
     }
@@ -98,7 +99,8 @@ std::unique_ptr<HeaderDecoder> loadHeaderSafely(const MemoryMap &mapped) {
 }
 
 std::vector<ModuleRef> extractModules(const HeaderDecoder &headerDecoder, const MemoryMap &mapped, Encoder &encoder) {
-    auto moduleDecoder = CreateModuleTableDecoder(mapped.ptr(headerDecoder.GetModuleTableOffset()));
+    auto moduleDecoder =
+        CreateModuleTableDecoder(mapped.ptr(headerDecoder.GetModuleTableOffset()), headerDecoder.GetModuleTableSize());
     const auto numModules = moduleDecoder->size();
     std::vector<ModuleRef> moduleRefs;
     moduleRefs.reserve(numModules);
@@ -261,11 +263,13 @@ void update(const std::string &inputPath, const std::string &outputPath) {
 
     const auto moduleRefs = extractModules(*headerDecoder, mapped, *encoder);
 
-    const auto resourceTable = parseModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()));
+    const auto resourceTable = parseModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()),
+                                                       headerDecoder->GetModelResourceTableSize());
     const auto resourceRefs = collectResources(resourceTable, *encoder);
 
     const auto modelSequenceTableOffset = headerDecoder->GetModelSequenceTableOffset();
-    const auto sequenceTable = parseModelSequenceTable(mapped.ptr(modelSequenceTableOffset));
+    const auto modelSequenceTableSize = headerDecoder->GetModelSequenceTableSize();
+    const auto sequenceTable = parseModelSequenceTable(mapped.ptr(modelSequenceTableOffset), modelSequenceTableSize);
 
     const auto constantsByIndex = decodeConstants(*headerDecoder, mapped, sequenceTable);
 

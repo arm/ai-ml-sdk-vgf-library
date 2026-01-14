@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -49,14 +49,15 @@ TEST(CppModelResourceTable, EmptyTable) {
 
     std::string data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelResourceTable(data.c_str() + headerDecoder->GetModelResourceTableOffset(),
                                          headerDecoder->GetModelResourceTableSize()));
-    std::unique_ptr<ModelResourceTableDecoder> decoder =
-        CreateModelResourceTableDecoder(data.c_str() + headerDecoder->GetModelResourceTableOffset());
+    std::unique_ptr<ModelResourceTableDecoder> decoder = CreateModelResourceTableDecoder(
+        data.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
 
     ASSERT_TRUE(decoder->size() == 0);
 }
@@ -90,7 +91,8 @@ TEST(CppModelResourceTable, EncodeDecode) {
 
     std::string vgf_data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(vgf_data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
@@ -98,8 +100,8 @@ TEST(CppModelResourceTable, EncodeDecode) {
     //! [MrtDecodingSample0 begin]
     ASSERT_TRUE(VerifyModelResourceTable(vgf_data.c_str() + headerDecoder->GetModelResourceTableOffset(),
                                          headerDecoder->GetModelResourceTableSize()));
-    std::unique_ptr<ModelResourceTableDecoder> mrtDecoder =
-        CreateModelResourceTableDecoder(vgf_data.c_str() + headerDecoder->GetModelResourceTableOffset());
+    std::unique_ptr<ModelResourceTableDecoder> mrtDecoder = CreateModelResourceTableDecoder(
+        vgf_data.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
 
     size_t numEntries = mrtDecoder->size();
 
@@ -150,15 +152,16 @@ TEST(CppModelResourceTable, UnknownDimensions) {
 
     std::string vgf_data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(vgf_data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelResourceTable(vgf_data.c_str() + headerDecoder->GetModelResourceTableOffset(),
                                          headerDecoder->GetModelResourceTableSize()));
     uint32_t mrtIndex = resource0.reference;
-    std::unique_ptr<ModelResourceTableDecoder> mrtDecoder =
-        CreateModelResourceTableDecoder(vgf_data.c_str() + headerDecoder->GetModelResourceTableOffset());
+    std::unique_ptr<ModelResourceTableDecoder> mrtDecoder = CreateModelResourceTableDecoder(
+        vgf_data.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
 
     size_t numEntries = mrtDecoder->size();
 
@@ -196,8 +199,8 @@ TEST(CModelResourceTable, EmptyTable) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -207,8 +210,8 @@ TEST(CModelResourceTable, EmptyTable) {
 
     std::vector<uint8_t> resourceTableMemory;
     resourceTableMemory.resize(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
-    mlsdk_decoder_model_resource_table_decoder *decoder =
-        mlsdk_decoder_create_model_resource_table_decoder(data.c_str() + section.offset, resourceTableMemory.data());
+    mlsdk_decoder_model_resource_table_decoder *decoder = mlsdk_decoder_create_model_resource_table_decoder(
+        data.c_str() + section.offset, section.size, resourceTableMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_resource_table_num_entries(decoder) == 0);
 }
@@ -240,8 +243,8 @@ TEST(CModelResourceTable, EncodeDecode) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -252,7 +255,7 @@ TEST(CModelResourceTable, EncodeDecode) {
     std::vector<uint8_t> resourceTableDecoderMemory;
     resourceTableDecoderMemory.resize(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
     mlsdk_decoder_model_resource_table_decoder *resourceTableDecoder =
-        mlsdk_decoder_create_model_resource_table_decoder(data.c_str() + section.offset,
+        mlsdk_decoder_create_model_resource_table_decoder(data.c_str() + section.offset, section.size,
                                                           resourceTableDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_resource_table_num_entries(resourceTableDecoder) == 2);
@@ -317,8 +320,8 @@ TEST(CModelResourceTable, UnknownDimensions) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -329,7 +332,7 @@ TEST(CModelResourceTable, UnknownDimensions) {
     std::vector<uint8_t> resourceTableDecoderMemory;
     resourceTableDecoderMemory.resize(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
     mlsdk_decoder_model_resource_table_decoder *resourceTableDecoder =
-        mlsdk_decoder_create_model_resource_table_decoder(data.c_str() + section.offset,
+        mlsdk_decoder_create_model_resource_table_decoder(data.c_str() + section.offset, section.size,
                                                           resourceTableDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_resource_table_num_entries(resourceTableDecoder) == 2);

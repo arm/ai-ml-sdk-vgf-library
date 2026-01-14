@@ -130,22 +130,33 @@ class HeaderDecoderImpl : public HeaderDecoder {
 size_t HeaderSize() { return HEADER_HEADER_SIZE_VALUE; }
 size_t HeaderDecoderSize() { return sizeof(HeaderDecoderImpl); }
 
-std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *const data) {
+std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *const data, const uint64_t size) {
     assert(data != nullptr && "data is null");
+
+    if (size < HeaderSize()) {
+        logging::error("Header size is smaller than expected");
+        return nullptr;
+    }
     return std::make_unique<HeaderDecoderImpl>(data);
 }
 
-HeaderDecoder *CreateHeaderDecoderInPlace(const void *const data, void *decoderMem) {
+HeaderDecoder *CreateHeaderDecoderInPlace(const void *const data, const uint64_t size, void *decoderMem) {
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
+    if (size < HeaderSize()) {
+        logging::error("Header size is smaller than expected");
+        return nullptr;
+    }
     return new (decoderMem) HeaderDecoderImpl(data);
 }
 
 // Module Table decoder
 class ModuleTableDecoderImpl : public ModuleTableDecoder {
   public:
-    explicit ModuleTableDecoderImpl(const void *const data)
-        : _moduleTable(flatbuffers::GetRoot<const VGF::ModuleTable>(data)) {}
+    explicit ModuleTableDecoderImpl(const void *const data, uint64_t size)
+        : _moduleTable(flatbuffers::GetRoot<const VGF::ModuleTable>(data)) {
+        (void)size;
+    }
 
     [[nodiscard]] size_t size() const override {
         const auto *modules = _moduleTable->modules();
@@ -191,15 +202,15 @@ bool VerifyModuleTable(const void *data, const uint64_t size) {
     return VerifyImpl<VGF::ModuleTable>(data, size);
 }
 
-std::unique_ptr<ModuleTableDecoder> CreateModuleTableDecoder(const void *const data) {
+std::unique_ptr<ModuleTableDecoder> CreateModuleTableDecoder(const void *const data, const uint64_t size) {
     assert(data != nullptr && "data is null");
-    return std::make_unique<ModuleTableDecoderImpl>(data);
+    return std::make_unique<ModuleTableDecoderImpl>(data, size);
 }
 
-ModuleTableDecoder *CreateModuleTableDecoderInPlace(const void *const data, void *decoderMem) {
+ModuleTableDecoder *CreateModuleTableDecoderInPlace(const void *const data, const uint64_t size, void *decoderMem) {
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
-    return new (decoderMem) ModuleTableDecoderImpl(data);
+    return new (decoderMem) ModuleTableDecoderImpl(data, size);
 }
 
 namespace {
@@ -232,8 +243,10 @@ PushConstantRangeHandle ToHandle(const flatbuffers::Vector<flatbuffers::Offset<V
 // Model Sequence Table Decoder
 class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
   public:
-    explicit ModelSequenceTableDecoderImpl(const void *const data)
-        : _modelSequenceTable(flatbuffers::GetRoot<const VGF::ModelSequenceTable>(data)) {}
+    explicit ModelSequenceTableDecoderImpl(const void *const data, uint64_t size)
+        : _modelSequenceTable(flatbuffers::GetRoot<const VGF::ModelSequenceTable>(data)) {
+        (void)size;
+    }
 
     [[nodiscard]] size_t modelSequenceTableSize() const override {
         const auto *segments = _modelSequenceTable->segments();
@@ -367,22 +380,26 @@ bool VerifyModelSequenceTable(const void *data, const uint64_t size) {
     return VerifyImpl<VGF::ModelSequenceTable>(data, size);
 }
 
-std::unique_ptr<ModelSequenceTableDecoder> CreateModelSequenceTableDecoder(const void *const data) {
+std::unique_ptr<ModelSequenceTableDecoder> CreateModelSequenceTableDecoder(const void *const data,
+                                                                           const uint64_t size) {
     assert(data != nullptr && "data is null");
-    return std::make_unique<ModelSequenceTableDecoderImpl>(data);
+    return std::make_unique<ModelSequenceTableDecoderImpl>(data, size);
 }
 
-ModelSequenceTableDecoder *CreateModelSequenceTableDecoderInPlace(const void *const data, void *decoderMem) {
+ModelSequenceTableDecoder *CreateModelSequenceTableDecoderInPlace(const void *const data, const uint64_t size,
+                                                                  void *decoderMem) {
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
-    return new (decoderMem) ModelSequenceTableDecoderImpl(data);
+    return new (decoderMem) ModelSequenceTableDecoderImpl(data, size);
 }
 
 // Model Resource Table Decoder
 class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
   public:
-    explicit ModelResourceTableDecoderImpl(const void *const data)
-        : _modelRecTable(flatbuffers::GetRoot<const VGF::ModelResourceTable>(data)) {}
+    explicit ModelResourceTableDecoderImpl(const void *const data, uint64_t size)
+        : _modelRecTable(flatbuffers::GetRoot<const VGF::ModelResourceTable>(data)) {
+        (void)size;
+    }
 
     [[nodiscard]] size_t size() const override {
         const auto *entries = _modelRecTable->mrt_entry();
@@ -443,15 +460,17 @@ bool VerifyModelResourceTable(const void *data, const uint64_t size) {
     return VerifyImpl<VGF::ModelResourceTable>(data, size);
 }
 
-std::unique_ptr<ModelResourceTableDecoder> CreateModelResourceTableDecoder(const void *const data) {
+std::unique_ptr<ModelResourceTableDecoder> CreateModelResourceTableDecoder(const void *const data,
+                                                                           const uint64_t size) {
     assert(data != nullptr && "data is null");
-    return std::make_unique<ModelResourceTableDecoderImpl>(data);
+    return std::make_unique<ModelResourceTableDecoderImpl>(data, size);
 }
 
-ModelResourceTableDecoder *CreateModelResourceTableDecoderInPlace(const void *const data, void *decoderMem) {
+ModelResourceTableDecoder *CreateModelResourceTableDecoderInPlace(const void *const data, const uint64_t size,
+                                                                  void *decoderMem) {
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
-    return new (decoderMem) ModelResourceTableDecoderImpl(data);
+    return new (decoderMem) ModelResourceTableDecoderImpl(data, size);
 }
 
 class ConstantDecoderImpl : public ConstantDecoder {
