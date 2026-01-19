@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -166,6 +166,9 @@ char numpyTypeEncoding(std::string_view numeric) {
     }
     if (numeric == "SFLOAT" || numeric == "UFLOAT") {
         return 'f';
+    }
+    if (numeric == "BFLOAT16") {
+        return 'V';
     }
 
     throw std::runtime_error("Unable to classify NumPy encoding");

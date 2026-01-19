@@ -26,7 +26,7 @@
 namespace mlsdk::vgflib {
 
 // Record the VK_HEADER_VERSION from the vulkan_core.h used to generate this file
-const int32_t HEADER_VERSION_USED_FOR_HELPER_GENERATION = 305;
+const int32_t HEADER_VERSION_USED_FOR_HELPER_GENERATION = 338;
 
 #if defined(VGFLIB_VK_HELPERS)
 using VkDescriptorType = int32_t;
@@ -76,8 +76,6 @@ inline std::string DescriptorTypeToName(DescriptorType e) {
         return "VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM";
     case 1000440001:
         return "VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM";
-    case 1000452000:
-        return "VK_DESCRIPTOR_TYPE_WEIGHTS_ARM";
     case 1000460000:
         return "VK_DESCRIPTOR_TYPE_TENSOR_ARM";
     case 1000351000:
@@ -142,9 +140,6 @@ inline DescriptorType NameToDescriptorType(const std::string &str) {
     if (str == "VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM") {
         return 1000440001;
     }
-    if (str == "VK_DESCRIPTOR_TYPE_WEIGHTS_ARM") {
-        return 1000452000;
-    }
     if (str == "VK_DESCRIPTOR_TYPE_TENSOR_ARM") {
         return 1000460000;
     }
@@ -180,7 +175,6 @@ inline bool ValidateDecodedDescriptorType(DescriptorType e) {
     case 1000165000: // VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV
     case 1000440000: // VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM
     case 1000440001: // VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM
-    case 1000452000: // VK_DESCRIPTOR_TYPE_WEIGHTS_ARM
     case 1000460000: // VK_DESCRIPTOR_TYPE_TENSOR_ARM
     case 1000351000: // VK_DESCRIPTOR_TYPE_MUTABLE_EXT / VK_DESCRIPTOR_TYPE_MUTABLE_VALVE
     case 0x7FFFFFFF: // VK_DESCRIPTOR_TYPE_MAX_ENUM
@@ -735,12 +729,106 @@ inline std::string FormatTypeToName(FormatType e) {
         return "VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG";
     case 1000054007:
         return "VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG";
-    case 1000452000:
-        return "VK_FORMAT_SBS80_ARM";
+    case 1000288000:
+        return "VK_FORMAT_ASTC_3x3x3_UNORM_BLOCK_EXT";
+    case 1000288001:
+        return "VK_FORMAT_ASTC_3x3x3_SRGB_BLOCK_EXT";
+    case 1000288002:
+        return "VK_FORMAT_ASTC_3x3x3_SFLOAT_BLOCK_EXT";
+    case 1000288003:
+        return "VK_FORMAT_ASTC_4x3x3_UNORM_BLOCK_EXT";
+    case 1000288004:
+        return "VK_FORMAT_ASTC_4x3x3_SRGB_BLOCK_EXT";
+    case 1000288005:
+        return "VK_FORMAT_ASTC_4x3x3_SFLOAT_BLOCK_EXT";
+    case 1000288006:
+        return "VK_FORMAT_ASTC_4x4x3_UNORM_BLOCK_EXT";
+    case 1000288007:
+        return "VK_FORMAT_ASTC_4x4x3_SRGB_BLOCK_EXT";
+    case 1000288008:
+        return "VK_FORMAT_ASTC_4x4x3_SFLOAT_BLOCK_EXT";
+    case 1000288009:
+        return "VK_FORMAT_ASTC_4x4x4_UNORM_BLOCK_EXT";
+    case 1000288010:
+        return "VK_FORMAT_ASTC_4x4x4_SRGB_BLOCK_EXT";
+    case 1000288011:
+        return "VK_FORMAT_ASTC_4x4x4_SFLOAT_BLOCK_EXT";
+    case 1000288012:
+        return "VK_FORMAT_ASTC_5x4x4_UNORM_BLOCK_EXT";
+    case 1000288013:
+        return "VK_FORMAT_ASTC_5x4x4_SRGB_BLOCK_EXT";
+    case 1000288014:
+        return "VK_FORMAT_ASTC_5x4x4_SFLOAT_BLOCK_EXT";
+    case 1000288015:
+        return "VK_FORMAT_ASTC_5x5x4_UNORM_BLOCK_EXT";
+    case 1000288016:
+        return "VK_FORMAT_ASTC_5x5x4_SRGB_BLOCK_EXT";
+    case 1000288017:
+        return "VK_FORMAT_ASTC_5x5x4_SFLOAT_BLOCK_EXT";
+    case 1000288018:
+        return "VK_FORMAT_ASTC_5x5x5_UNORM_BLOCK_EXT";
+    case 1000288019:
+        return "VK_FORMAT_ASTC_5x5x5_SRGB_BLOCK_EXT";
+    case 1000288020:
+        return "VK_FORMAT_ASTC_5x5x5_SFLOAT_BLOCK_EXT";
+    case 1000288021:
+        return "VK_FORMAT_ASTC_6x5x5_UNORM_BLOCK_EXT";
+    case 1000288022:
+        return "VK_FORMAT_ASTC_6x5x5_SRGB_BLOCK_EXT";
+    case 1000288023:
+        return "VK_FORMAT_ASTC_6x5x5_SFLOAT_BLOCK_EXT";
+    case 1000288024:
+        return "VK_FORMAT_ASTC_6x6x5_UNORM_BLOCK_EXT";
+    case 1000288025:
+        return "VK_FORMAT_ASTC_6x6x5_SRGB_BLOCK_EXT";
+    case 1000288026:
+        return "VK_FORMAT_ASTC_6x6x5_SFLOAT_BLOCK_EXT";
+    case 1000288027:
+        return "VK_FORMAT_ASTC_6x6x6_UNORM_BLOCK_EXT";
+    case 1000288028:
+        return "VK_FORMAT_ASTC_6x6x6_SRGB_BLOCK_EXT";
+    case 1000288029:
+        return "VK_FORMAT_ASTC_6x6x6_SFLOAT_BLOCK_EXT";
     case 1000460000:
         return "VK_FORMAT_R8_BOOL_ARM";
+    case 1000460001:
+        return "VK_FORMAT_R16_SFLOAT_FPENCODING_BFLOAT16_ARM";
+    case 1000460002:
+        return "VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM";
+    case 1000460003:
+        return "VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E5M2_ARM";
     case 1000464000:
         return "VK_FORMAT_R16G16_SFIXED5_NV / VK_FORMAT_R16G16_S10_5_NV";
+    case 1000609000:
+        return "VK_FORMAT_R10X6_UINT_PACK16_ARM";
+    case 1000609001:
+        return "VK_FORMAT_R10X6G10X6_UINT_2PACK16_ARM";
+    case 1000609002:
+        return "VK_FORMAT_R10X6G10X6B10X6A10X6_UINT_4PACK16_ARM";
+    case 1000609003:
+        return "VK_FORMAT_R12X4_UINT_PACK16_ARM";
+    case 1000609004:
+        return "VK_FORMAT_R12X4G12X4_UINT_2PACK16_ARM";
+    case 1000609005:
+        return "VK_FORMAT_R12X4G12X4B12X4A12X4_UINT_4PACK16_ARM";
+    case 1000609006:
+        return "VK_FORMAT_R14X2_UINT_PACK16_ARM";
+    case 1000609007:
+        return "VK_FORMAT_R14X2G14X2_UINT_2PACK16_ARM";
+    case 1000609008:
+        return "VK_FORMAT_R14X2G14X2B14X2A14X2_UINT_4PACK16_ARM";
+    case 1000609009:
+        return "VK_FORMAT_R14X2_UNORM_PACK16_ARM";
+    case 1000609010:
+        return "VK_FORMAT_R14X2G14X2_UNORM_2PACK16_ARM";
+    case 1000609011:
+        return "VK_FORMAT_R14X2G14X2B14X2A14X2_UNORM_4PACK16_ARM";
+    case 1000609012:
+        return "VK_FORMAT_G14X2_B14X2R14X2_2PLANE_420_UNORM_3PACK16_ARM";
+    case 1000609013:
+        return "VK_FORMAT_G14X2_B14X2R14X2_2PLANE_422_UNORM_3PACK16_ARM";
+    case 1000658000:
+        return "VK_FORMAT_SBS80_ARM";
     case 0x7FFFFFFF:
         return "VK_FORMAT_MAX_ENUM";
     default: {
@@ -1500,14 +1588,155 @@ inline FormatType NameToFormatType(const std::string &str) {
     if (str == "VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG") {
         return 1000054007;
     }
-    if (str == "VK_FORMAT_SBS80_ARM") {
-        return 1000452000;
+    if (str == "VK_FORMAT_ASTC_3x3x3_UNORM_BLOCK_EXT") {
+        return 1000288000;
+    }
+    if (str == "VK_FORMAT_ASTC_3x3x3_SRGB_BLOCK_EXT") {
+        return 1000288001;
+    }
+    if (str == "VK_FORMAT_ASTC_3x3x3_SFLOAT_BLOCK_EXT") {
+        return 1000288002;
+    }
+    if (str == "VK_FORMAT_ASTC_4x3x3_UNORM_BLOCK_EXT") {
+        return 1000288003;
+    }
+    if (str == "VK_FORMAT_ASTC_4x3x3_SRGB_BLOCK_EXT") {
+        return 1000288004;
+    }
+    if (str == "VK_FORMAT_ASTC_4x3x3_SFLOAT_BLOCK_EXT") {
+        return 1000288005;
+    }
+    if (str == "VK_FORMAT_ASTC_4x4x3_UNORM_BLOCK_EXT") {
+        return 1000288006;
+    }
+    if (str == "VK_FORMAT_ASTC_4x4x3_SRGB_BLOCK_EXT") {
+        return 1000288007;
+    }
+    if (str == "VK_FORMAT_ASTC_4x4x3_SFLOAT_BLOCK_EXT") {
+        return 1000288008;
+    }
+    if (str == "VK_FORMAT_ASTC_4x4x4_UNORM_BLOCK_EXT") {
+        return 1000288009;
+    }
+    if (str == "VK_FORMAT_ASTC_4x4x4_SRGB_BLOCK_EXT") {
+        return 1000288010;
+    }
+    if (str == "VK_FORMAT_ASTC_4x4x4_SFLOAT_BLOCK_EXT") {
+        return 1000288011;
+    }
+    if (str == "VK_FORMAT_ASTC_5x4x4_UNORM_BLOCK_EXT") {
+        return 1000288012;
+    }
+    if (str == "VK_FORMAT_ASTC_5x4x4_SRGB_BLOCK_EXT") {
+        return 1000288013;
+    }
+    if (str == "VK_FORMAT_ASTC_5x4x4_SFLOAT_BLOCK_EXT") {
+        return 1000288014;
+    }
+    if (str == "VK_FORMAT_ASTC_5x5x4_UNORM_BLOCK_EXT") {
+        return 1000288015;
+    }
+    if (str == "VK_FORMAT_ASTC_5x5x4_SRGB_BLOCK_EXT") {
+        return 1000288016;
+    }
+    if (str == "VK_FORMAT_ASTC_5x5x4_SFLOAT_BLOCK_EXT") {
+        return 1000288017;
+    }
+    if (str == "VK_FORMAT_ASTC_5x5x5_UNORM_BLOCK_EXT") {
+        return 1000288018;
+    }
+    if (str == "VK_FORMAT_ASTC_5x5x5_SRGB_BLOCK_EXT") {
+        return 1000288019;
+    }
+    if (str == "VK_FORMAT_ASTC_5x5x5_SFLOAT_BLOCK_EXT") {
+        return 1000288020;
+    }
+    if (str == "VK_FORMAT_ASTC_6x5x5_UNORM_BLOCK_EXT") {
+        return 1000288021;
+    }
+    if (str == "VK_FORMAT_ASTC_6x5x5_SRGB_BLOCK_EXT") {
+        return 1000288022;
+    }
+    if (str == "VK_FORMAT_ASTC_6x5x5_SFLOAT_BLOCK_EXT") {
+        return 1000288023;
+    }
+    if (str == "VK_FORMAT_ASTC_6x6x5_UNORM_BLOCK_EXT") {
+        return 1000288024;
+    }
+    if (str == "VK_FORMAT_ASTC_6x6x5_SRGB_BLOCK_EXT") {
+        return 1000288025;
+    }
+    if (str == "VK_FORMAT_ASTC_6x6x5_SFLOAT_BLOCK_EXT") {
+        return 1000288026;
+    }
+    if (str == "VK_FORMAT_ASTC_6x6x6_UNORM_BLOCK_EXT") {
+        return 1000288027;
+    }
+    if (str == "VK_FORMAT_ASTC_6x6x6_SRGB_BLOCK_EXT") {
+        return 1000288028;
+    }
+    if (str == "VK_FORMAT_ASTC_6x6x6_SFLOAT_BLOCK_EXT") {
+        return 1000288029;
     }
     if (str == "VK_FORMAT_R8_BOOL_ARM") {
         return 1000460000;
     }
+    if (str == "VK_FORMAT_R16_SFLOAT_FPENCODING_BFLOAT16_ARM") {
+        return 1000460001;
+    }
+    if (str == "VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM") {
+        return 1000460002;
+    }
+    if (str == "VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E5M2_ARM") {
+        return 1000460003;
+    }
     if (str == "VK_FORMAT_R16G16_SFIXED5_NV") {
         return 1000464000;
+    }
+    if (str == "VK_FORMAT_R10X6_UINT_PACK16_ARM") {
+        return 1000609000;
+    }
+    if (str == "VK_FORMAT_R10X6G10X6_UINT_2PACK16_ARM") {
+        return 1000609001;
+    }
+    if (str == "VK_FORMAT_R10X6G10X6B10X6A10X6_UINT_4PACK16_ARM") {
+        return 1000609002;
+    }
+    if (str == "VK_FORMAT_R12X4_UINT_PACK16_ARM") {
+        return 1000609003;
+    }
+    if (str == "VK_FORMAT_R12X4G12X4_UINT_2PACK16_ARM") {
+        return 1000609004;
+    }
+    if (str == "VK_FORMAT_R12X4G12X4B12X4A12X4_UINT_4PACK16_ARM") {
+        return 1000609005;
+    }
+    if (str == "VK_FORMAT_R14X2_UINT_PACK16_ARM") {
+        return 1000609006;
+    }
+    if (str == "VK_FORMAT_R14X2G14X2_UINT_2PACK16_ARM") {
+        return 1000609007;
+    }
+    if (str == "VK_FORMAT_R14X2G14X2B14X2A14X2_UINT_4PACK16_ARM") {
+        return 1000609008;
+    }
+    if (str == "VK_FORMAT_R14X2_UNORM_PACK16_ARM") {
+        return 1000609009;
+    }
+    if (str == "VK_FORMAT_R14X2G14X2_UNORM_2PACK16_ARM") {
+        return 1000609010;
+    }
+    if (str == "VK_FORMAT_R14X2G14X2B14X2A14X2_UNORM_4PACK16_ARM") {
+        return 1000609011;
+    }
+    if (str == "VK_FORMAT_G14X2_B14X2R14X2_2PLANE_420_UNORM_3PACK16_ARM") {
+        return 1000609012;
+    }
+    if (str == "VK_FORMAT_G14X2_B14X2R14X2_2PLANE_422_UNORM_3PACK16_ARM") {
+        return 1000609013;
+    }
+    if (str == "VK_FORMAT_SBS80_ARM") {
+        return 1000658000;
     }
     if (str == "VK_FORMAT_MAX_ENUM") {
         return 0x7FFFFFFF;
@@ -1787,9 +2016,56 @@ inline bool ValidateDecodedFormatType(FormatType e) {
     case 1000054005: // VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG
     case 1000054006: // VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG
     case 1000054007: // VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG
-    case 1000452000: // VK_FORMAT_SBS80_ARM
+    case 1000288000: // VK_FORMAT_ASTC_3x3x3_UNORM_BLOCK_EXT
+    case 1000288001: // VK_FORMAT_ASTC_3x3x3_SRGB_BLOCK_EXT
+    case 1000288002: // VK_FORMAT_ASTC_3x3x3_SFLOAT_BLOCK_EXT
+    case 1000288003: // VK_FORMAT_ASTC_4x3x3_UNORM_BLOCK_EXT
+    case 1000288004: // VK_FORMAT_ASTC_4x3x3_SRGB_BLOCK_EXT
+    case 1000288005: // VK_FORMAT_ASTC_4x3x3_SFLOAT_BLOCK_EXT
+    case 1000288006: // VK_FORMAT_ASTC_4x4x3_UNORM_BLOCK_EXT
+    case 1000288007: // VK_FORMAT_ASTC_4x4x3_SRGB_BLOCK_EXT
+    case 1000288008: // VK_FORMAT_ASTC_4x4x3_SFLOAT_BLOCK_EXT
+    case 1000288009: // VK_FORMAT_ASTC_4x4x4_UNORM_BLOCK_EXT
+    case 1000288010: // VK_FORMAT_ASTC_4x4x4_SRGB_BLOCK_EXT
+    case 1000288011: // VK_FORMAT_ASTC_4x4x4_SFLOAT_BLOCK_EXT
+    case 1000288012: // VK_FORMAT_ASTC_5x4x4_UNORM_BLOCK_EXT
+    case 1000288013: // VK_FORMAT_ASTC_5x4x4_SRGB_BLOCK_EXT
+    case 1000288014: // VK_FORMAT_ASTC_5x4x4_SFLOAT_BLOCK_EXT
+    case 1000288015: // VK_FORMAT_ASTC_5x5x4_UNORM_BLOCK_EXT
+    case 1000288016: // VK_FORMAT_ASTC_5x5x4_SRGB_BLOCK_EXT
+    case 1000288017: // VK_FORMAT_ASTC_5x5x4_SFLOAT_BLOCK_EXT
+    case 1000288018: // VK_FORMAT_ASTC_5x5x5_UNORM_BLOCK_EXT
+    case 1000288019: // VK_FORMAT_ASTC_5x5x5_SRGB_BLOCK_EXT
+    case 1000288020: // VK_FORMAT_ASTC_5x5x5_SFLOAT_BLOCK_EXT
+    case 1000288021: // VK_FORMAT_ASTC_6x5x5_UNORM_BLOCK_EXT
+    case 1000288022: // VK_FORMAT_ASTC_6x5x5_SRGB_BLOCK_EXT
+    case 1000288023: // VK_FORMAT_ASTC_6x5x5_SFLOAT_BLOCK_EXT
+    case 1000288024: // VK_FORMAT_ASTC_6x6x5_UNORM_BLOCK_EXT
+    case 1000288025: // VK_FORMAT_ASTC_6x6x5_SRGB_BLOCK_EXT
+    case 1000288026: // VK_FORMAT_ASTC_6x6x5_SFLOAT_BLOCK_EXT
+    case 1000288027: // VK_FORMAT_ASTC_6x6x6_UNORM_BLOCK_EXT
+    case 1000288028: // VK_FORMAT_ASTC_6x6x6_SRGB_BLOCK_EXT
+    case 1000288029: // VK_FORMAT_ASTC_6x6x6_SFLOAT_BLOCK_EXT
     case 1000460000: // VK_FORMAT_R8_BOOL_ARM
+    case 1000460001: // VK_FORMAT_R16_SFLOAT_FPENCODING_BFLOAT16_ARM
+    case 1000460002: // VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM
+    case 1000460003: // VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E5M2_ARM
     case 1000464000: // VK_FORMAT_R16G16_SFIXED5_NV / VK_FORMAT_R16G16_S10_5_NV
+    case 1000609000: // VK_FORMAT_R10X6_UINT_PACK16_ARM
+    case 1000609001: // VK_FORMAT_R10X6G10X6_UINT_2PACK16_ARM
+    case 1000609002: // VK_FORMAT_R10X6G10X6B10X6A10X6_UINT_4PACK16_ARM
+    case 1000609003: // VK_FORMAT_R12X4_UINT_PACK16_ARM
+    case 1000609004: // VK_FORMAT_R12X4G12X4_UINT_2PACK16_ARM
+    case 1000609005: // VK_FORMAT_R12X4G12X4B12X4A12X4_UINT_4PACK16_ARM
+    case 1000609006: // VK_FORMAT_R14X2_UINT_PACK16_ARM
+    case 1000609007: // VK_FORMAT_R14X2G14X2_UINT_2PACK16_ARM
+    case 1000609008: // VK_FORMAT_R14X2G14X2B14X2A14X2_UINT_4PACK16_ARM
+    case 1000609009: // VK_FORMAT_R14X2_UNORM_PACK16_ARM
+    case 1000609010: // VK_FORMAT_R14X2G14X2_UNORM_2PACK16_ARM
+    case 1000609011: // VK_FORMAT_R14X2G14X2B14X2A14X2_UNORM_4PACK16_ARM
+    case 1000609012: // VK_FORMAT_G14X2_B14X2R14X2_2PLANE_420_UNORM_3PACK16_ARM
+    case 1000609013: // VK_FORMAT_G14X2_B14X2R14X2_2PLANE_422_UNORM_3PACK16_ARM
+    case 1000658000: // VK_FORMAT_SBS80_ARM
     case 0x7FFFFFFF: // VK_FORMAT_MAX_ENUM
         return true;
     default:
@@ -1862,10 +2138,24 @@ inline uint8_t blockSize(FormatType e) {
         return 2;
     case 1000470001:
         return 1;
-    case 1000452000:
-        return 10;
     case 1000460000:
         return 1;
+    case 1000460001:
+        return 2;
+    case 1000460002:
+        return 1;
+    case 1000460003:
+        return 1;
+    case 1000609000:
+        return 2;
+    case 1000609003:
+        return 2;
+    case 1000609006:
+        return 2;
+    case 1000609009:
+        return 2;
+    case 1000658000:
+        return 10;
 
     default:
         return 0;
@@ -1937,10 +2227,24 @@ inline std::string componentNumericFormat(FormatType e) {
         return "UNORM";
     case 1000470001:
         return "UNORM";
-    case 1000452000:
-        return "UINT";
     case 1000460000:
         return "BOOL";
+    case 1000460001:
+        return "SFLOAT";
+    case 1000460002:
+        return "SFLOAT";
+    case 1000460003:
+        return "SFLOAT";
+    case 1000609000:
+        return "UINT";
+    case 1000609003:
+        return "UINT";
+    case 1000609006:
+        return "UINT";
+    case 1000609009:
+        return "UNORM";
+    case 1000658000:
+        return "UINT";
 
     default:
         return "";
