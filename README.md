@@ -141,7 +141,7 @@ must be installed:
 
 ```bash
 pip install -r requirements.txt
-pip install -r tooling_requirements.txt
+pip install -r tooling-requirements.txt
 ```
 
 To build the documentation, use the `--doc` option. To build the documentation,
