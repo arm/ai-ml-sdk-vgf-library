@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -54,27 +54,43 @@ ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
     throw std::runtime_error("Unsupported resource category");
 }
 
+void ensureMappedRange(const MemoryMap &mapped, uint64_t offset, uint64_t size, std::string_view section) {
+    if ((offset > mapped.size()) || (size > mapped.size() - offset)) {
+        throw std::runtime_error(std::string(section) + " section exceeds available file size");
+    }
+}
+
 std::unique_ptr<HeaderDecoder> loadHeaderSafely(const MemoryMap &mapped) {
     auto headerDecoder = CreateHeaderDecoder(mapped.ptr());
     if (!headerDecoder || !headerDecoder->IsValid()) {
         throw std::runtime_error("Invalid VGF header, bad magic value");
     }
 
-    if (!VerifyModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
+    const auto moduleOffset = headerDecoder->GetModuleTableOffset();
+    const auto moduleSize = headerDecoder->GetModuleTableSize();
+    ensureMappedRange(mapped, moduleOffset, moduleSize, "Module table");
+    if (!VerifyModuleTable(mapped.ptr(moduleOffset), moduleSize)) {
         throw std::runtime_error("Invalid module table section");
     }
 
-    if (!VerifyModelResourceTable(mapped.ptr(headerDecoder->GetModelResourceTableOffset()),
-                                  headerDecoder->GetModelResourceTableSize())) {
+    const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
+    const auto resourceSize = headerDecoder->GetModelResourceTableSize();
+    ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
+    if (!VerifyModelResourceTable(mapped.ptr(resourceOffset), resourceSize)) {
         throw std::runtime_error("Invalid model resource table section");
     }
 
-    if (!VerifyModelSequenceTable(mapped.ptr(headerDecoder->GetModelSequenceTableOffset()),
-                                  headerDecoder->GetModelSequenceTableSize())) {
+    const auto sequenceOffset = headerDecoder->GetModelSequenceTableOffset();
+    const auto sequenceSize = headerDecoder->GetModelSequenceTableSize();
+    ensureMappedRange(mapped, sequenceOffset, sequenceSize, "Model sequence table");
+    if (!VerifyModelSequenceTable(mapped.ptr(sequenceOffset), sequenceSize)) {
         throw std::runtime_error("Invalid model sequence table section");
     }
 
-    if (!VerifyConstant(mapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize())) {
+    const auto constantsOffset = headerDecoder->GetConstantsOffset();
+    const auto constantsSize = headerDecoder->GetConstantsSize();
+    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
+    if (!VerifyConstant(mapped.ptr(constantsOffset), constantsSize)) {
         throw std::runtime_error("Invalid constant section");
     }
 
@@ -119,17 +135,22 @@ std::unordered_map<uint32_t, Constant> decodeConstants(const HeaderDecoder &head
     }
 
     const auto constantsOffset = headerDecoder.GetConstantsOffset();
-    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset));
+    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
+    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
     for (const auto &segment : sequenceTable.mSegments) {
         for (const auto constantIdx : segment.mConstants) {
             if (constantsByIndex.find(constantIdx) != constantsByIndex.end()) {
                 continue;
             }
             const auto constantView = constantDecoder->getConstant(constantIdx);
-            constantsByIndex.emplace(constantIdx,
-                                     Constant(constantIdx, constantDecoder->getConstantMrtIndex(constantIdx),
-                                              constantDecoder->getConstantSparsityDimension(constantIdx),
-                                              constantView.begin(), constantView.size()));
+            const auto mrtIndex = constantDecoder->getConstantMrtIndex(constantIdx);
+            const auto sparsity = constantDecoder->getConstantSparsityDimension(constantIdx);
+            if (constantView.size() == 0 || mrtIndex == CONSTANT_INVALID_MRT_INDEX ||
+                sparsity == CONSTANT_INVALID_SPARSITY_DIMENSION) {
+                throw std::runtime_error("Invalid constant metadata for index " + std::to_string(constantIdx));
+            }
+            constantsByIndex.emplace(
+                constantIdx, Constant(constantIdx, mrtIndex, sparsity, constantView.begin(), constantView.size()));
         }
     }
 

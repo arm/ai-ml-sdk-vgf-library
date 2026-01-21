@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 """ Tests for VGF Constant. """
@@ -42,7 +42,8 @@ def test_encode_decode_constant():
         buffer[headerDecoder.GetConstantsOffset() :], headerDecoder.GetConstantsSize()
     )
     constantDecoder = vgf.CreateConstantDecoder(
-        buffer[headerDecoder.GetConstantsOffset() :]
+        buffer[headerDecoder.GetConstantsOffset() :],
+        headerDecoder.GetConstantsSize(),
     )
 
     assert constantDecoder.size() == 1
@@ -87,7 +88,8 @@ def test_encode_decode_non_Sparse_constant():
         buffer[headerDecoder.GetConstantsOffset() :], headerDecoder.GetConstantsSize()
     )
     constantDecoder = vgf.CreateConstantDecoder(
-        buffer[headerDecoder.GetConstantsOffset() :]
+        buffer[headerDecoder.GetConstantsOffset() :],
+        headerDecoder.GetConstantsSize(),
     )
 
     assert constantDecoder.size() == 1
@@ -120,7 +122,8 @@ def test_encode_decode_empty_constant_section():
         buffer[headerDecoder.GetConstantsOffset() :], headerDecoder.GetConstantsSize()
     )
     constantDecoder = vgf.CreateConstantDecoder(
-        buffer[headerDecoder.GetConstantsOffset() :]
+        buffer[headerDecoder.GetConstantsOffset() :],
+        headerDecoder.GetConstantsSize(),
     )
 
     assert constantDecoder.size() == 0

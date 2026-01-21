@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -12,7 +12,9 @@
 #include "section_index_table.hpp"
 #include "vgf_generated.h"
 
+#include <algorithm>
 #include <fstream>
+#include <limits>
 
 namespace mlsdk::vgflib {
 
@@ -201,9 +203,20 @@ class EncoderImpl : public Encoder {
         assert(data && "data pointer cannot be nullptr");
         assert(sizeInBytes > 0 && "sizeInBytes cannot be zero");
 
+        constexpr auto minSparsityDim = INT32_MIN_VALUE;
+        constexpr auto maxSparsityDim = INT32_MAX_VALUE;
+        int32_t sparsityDim32{};
+        if (sparsityDimension < minSparsityDim || sparsityDimension > maxSparsityDim) {
+            logging::error("sparsityDimension must fit in int32_t for on-disk metadata; clamping to range");
+            sparsityDim32 = static_cast<int32_t>(
+                std::clamp<int64_t>(sparsityDimension, int64_t{minSparsityDim}, int64_t{maxSparsityDim}));
+        } else {
+            sparsityDim32 = static_cast<int32_t>(sparsityDimension);
+        }
+
         _constsMetaData.emplace_back(ConstantMetaData_V00{
             resourceRef.reference,
-            static_cast<int32_t>(sparsityDimension),
+            sparsityDim32,
             sizeInBytes,
             _constDataOffset,
         });

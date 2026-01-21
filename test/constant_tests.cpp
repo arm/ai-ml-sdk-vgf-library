@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "vgf/decoder.h"
@@ -8,6 +8,7 @@
 #include "vgf/logging.hpp"
 #include "vgf/types.hpp"
 
+#include "constant.hpp"
 #include "header.hpp"
 #include "vgf-utils/memory_map.hpp"
 #include "vgf-utils/temp_folder.hpp"
@@ -31,6 +32,27 @@ struct Logger {
         std::cout << logLevel << " Message: " << message << std::endl;
     }
 };
+
+namespace {
+
+std::vector<uint8_t> MakeConstantSectionV00(uint64_t count, const std::vector<ConstantMetaData_V00> &metadata,
+                                            const std::vector<uint8_t> &constant) {
+    const size_t metadataBytes = metadata.size() * sizeof(ConstantMetaData_V00);
+    std::vector<uint8_t> buffer(CONSTANT_SECTION_METADATA_OFFSET + metadataBytes + constant.size(), 0);
+
+    std::memcpy(buffer.data() + CONSTANT_SECTION_VERSION_OFFSET, CONSTANT_SECTION_VERSION,
+                CONSTANT_SECTION_VERSION_SIZE);
+    std::memcpy(buffer.data() + CONSTANT_SECTION_COUNT_OFFSET, &count, sizeof(count));
+    if (!metadata.empty()) {
+        std::memcpy(buffer.data() + CONSTANT_SECTION_METADATA_OFFSET, metadata.data(), metadataBytes);
+    }
+    if (!constant.empty()) {
+        std::memcpy(buffer.data() + CONSTANT_SECTION_METADATA_OFFSET + metadataBytes, constant.data(), constant.size());
+    }
+    return buffer;
+}
+
+} // namespace
 
 TEST(CppVerify, BadData) {
 
@@ -62,13 +84,14 @@ TEST(CppEncodeDecode, AddConstant) {
 
     ASSERT_TRUE(VerifyConstant(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize()));
     std::unique_ptr<ConstantDecoder> decoder =
-        CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset());
+        CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize());
 
     ASSERT_TRUE(decoder->size() == 1);
     ASSERT_TRUE(decoder->getConstant(constantRef.reference) == DataView<uint8_t>(constant.data(), constant.size()));
     ASSERT_TRUE(decoder->getConstantMrtIndex(constantRef.reference) == resourceRef.reference);
     ASSERT_TRUE(decoder->isSparseConstant(constantRef.reference));
-    ASSERT_TRUE(decoder->getConstantSparsityDimension(constantRef.reference) == sparsityDimension);
+    ASSERT_NE(decoder->getConstantSparsityDimension(constantRef.reference), CONSTANT_INVALID_SPARSITY_DIMENSION);
+    ASSERT_EQ(decoder->getConstantSparsityDimension(constantRef.reference), sparsityDimension);
 }
 
 TEST(CppEncodeDecode, AddNonSparseConstant) {
@@ -91,7 +114,7 @@ TEST(CppEncodeDecode, AddNonSparseConstant) {
 
     ASSERT_TRUE(VerifyConstant(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize()));
     std::unique_ptr<ConstantDecoder> decoder =
-        CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset());
+        CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize());
 
     ASSERT_TRUE(decoder->size() == 1);
     ASSERT_TRUE(decoder->getConstant(constantRef.reference) == DataView<uint8_t>(constant.data(), constant.size()));
@@ -159,7 +182,8 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
     EXPECT_GT(mmapped.size(), 2 * GB);
     ASSERT_TRUE(VerifyConstant(mmapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize()));
 
-    std::unique_ptr<ConstantDecoder> decoder = CreateConstantDecoder(mmapped.ptr(headerDecoder->GetConstantsOffset()));
+    std::unique_ptr<ConstantDecoder> decoder =
+        CreateConstantDecoder(mmapped.ptr(headerDecoder->GetConstantsOffset()), headerDecoder->GetConstantsSize());
 
     ASSERT_TRUE(decoder->size() == numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts);
     const DataView<uint8_t> largeConstsDataView(largeConst.data(), largeConstsSize);
@@ -189,6 +213,74 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
     }
 }
 
+TEST(CppEncodeDecode, RejectsDeclaredCountExceedingAvailableMetadata) {
+    const std::vector<ConstantMetaData_V00> vecMetaData = {
+        ConstantMetaData_V00{
+            7,  // mrtIndex
+            -1, // sparsityDimension
+            1,  // size
+            0,  // offset
+        },
+    };
+    const std::vector<uint8_t> constant = {'a'};
+    const uint64_t declaredCount = 2;
+    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, vecMetaData, constant);
+
+    ASSERT_FALSE(VerifyConstant(section.data(), section.size()));
+    ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
+}
+
+TEST(CppEncodeDecode, RejectsOutOfRangeOffsets) {
+    const std::vector<ConstantMetaData_V00> vecMetadata = {
+        ConstantMetaData_V00{
+            3,  // mrtIndex
+            -1, // sparsityDimension
+            10, // size
+            5,  // offset
+        },
+    };
+    const std::vector<uint8_t> constant = {'a', 'b', 'c', 'd', 'e'};
+    const uint64_t declaredCount = 1;
+    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, vecMetadata, constant);
+
+    ASSERT_FALSE(VerifyConstant(section.data(), section.size()));
+    ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
+}
+
+TEST(CppEncodeDecode, RejectsSectionTooSmallForMetadata) {
+    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
+    section.resize(CONSTANT_SECTION_METADATA_OFFSET - 1);
+
+    ASSERT_FALSE(VerifyConstant(section.data(), section.size()));
+    ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
+}
+
+TEST(CppEncodeDecode, RejectsMetadataExtendingPastBuffer) {
+    const uint64_t declaredCount = 1;
+    const size_t truncatedSize = CONSTANT_SECTION_METADATA_OFFSET + sizeof(ConstantMetaData_V00) - 4;
+    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, {ConstantMetaData_V00{}}, {});
+    section.resize(truncatedSize);
+
+    ASSERT_FALSE(VerifyConstant(section.data(), section.size()));
+    ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
+}
+
+TEST(CppEncodeDecode, VerifyConstantRejectsBadSparsityDimension) {
+    const uint64_t declaredCount = 1;
+    const std::vector<ConstantMetaData_V00> vecMetaData = {
+        ConstantMetaData_V00{
+            2,  // mrtIndex
+            -5, // sparsityDimension (invalid)
+            1,  // size
+            0,  // offset
+        },
+    };
+    const std::vector<uint8_t> constant = {'a'};
+    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, vecMetaData, constant);
+
+    ASSERT_FALSE(VerifyConstant(section.data(), section.size()));
+}
+
 TEST(CppEncodeDecode, EmptyConstantSection) {
     std::stringstream buffer;
 
@@ -204,7 +296,7 @@ TEST(CppEncodeDecode, EmptyConstantSection) {
 
     ASSERT_TRUE(VerifyConstant(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize()));
     std::unique_ptr<ConstantDecoder> decoder =
-        CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset());
+        CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize());
 
     ASSERT_TRUE(decoder->size() == 0);
 }
@@ -251,7 +343,7 @@ TEST(CEncodeDecode, AddConstant) {
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
     mlsdk_decoder_constant_table_decoder *decoder = mlsdk_decoder_create_constant_table_decoder(
-        data.c_str() + modelConstantsSection.offset, constantDecoderMemory.data());
+        data.c_str() + modelConstantsSection.offset, modelConstantsSection.size, constantDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_constant_table_num_entries(decoder) == 1);
 
@@ -306,7 +398,7 @@ TEST(CEncodeDecode, AddNonSparseConstant) {
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
     mlsdk_decoder_constant_table_decoder *decoder = mlsdk_decoder_create_constant_table_decoder(
-        data.c_str() + modelConstantsSection.offset, constantDecoderMemory.data());
+        data.c_str() + modelConstantsSection.offset, modelConstantsSection.size, constantDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_constant_table_num_entries(decoder) == 1);
 
@@ -399,7 +491,7 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
     mlsdk_decoder_constant_table_decoder *decoder = mlsdk_decoder_create_constant_table_decoder(
-        mmapped.ptr(modelConstantsSection.offset), constantDecoderMemory.data());
+        mmapped.ptr(modelConstantsSection.offset), modelConstantsSection.size, constantDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_constant_table_num_entries(decoder) ==
                 numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts);
@@ -426,6 +518,78 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
         mlsdk_decoder_constant_table_get_data(decoder, i, &constantData);
         ASSERT_TRUE(DataView<uint8_t>(constantData.data, constantData.size) == verySmallConstsDataView);
     }
+}
+
+TEST(CEncodeDecode, RejectsDeclaredCountExceedingAvailableMetadata) {
+    const std::vector<ConstantMetaData_V00> vecMetaData = {
+        ConstantMetaData_V00{
+            7,  // mrtIndex
+            -1, // sparsityDimension
+            1,  // size
+            0,  // offset
+        },
+    };
+    const std::vector<uint8_t> constant = {'a'};
+    const uint64_t declaredCount = 2;
+    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, vecMetaData, constant);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
+              nullptr);
+}
+
+TEST(CEncodeDecode, RejectsSectionTooSmallForMetadata) {
+    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
+    section.resize(CONSTANT_SECTION_METADATA_OFFSET - 1);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
+              nullptr);
+}
+
+TEST(CEncodeDecode, RejectsMetadataExtendingPastBuffer) {
+    const uint64_t declaredCount = 1;
+    const size_t truncatedSize = CONSTANT_SECTION_METADATA_OFFSET + sizeof(ConstantMetaData_V00) - 4;
+    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, {ConstantMetaData_V00{}}, {});
+    section.resize(truncatedSize);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
+              nullptr);
+}
+
+TEST(CEncodeDecode, RejectsOutOfRangeOffsets) {
+    const std::vector<ConstantMetaData_V00> vecMetadata = {
+        ConstantMetaData_V00{
+            3,  // mrtIndex
+            -1, // sparsityDimension
+            10, // size
+            5,  // offset
+        },
+    };
+    const std::vector<uint8_t> constant = {'a', 'b', 'c', 'd', 'e'};
+    const uint64_t declaredCount = 1;
+    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, vecMetadata, constant);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
+              nullptr);
+}
+
+TEST(CEncodeDecode, VerifyConstantRejectsBadSparsityDimension) {
+    const uint64_t declaredCount = 1;
+    const std::vector<ConstantMetaData_V00> vecMetaData = {
+        ConstantMetaData_V00{
+            2,  // mrtIndex
+            -5, // sparsityDimension (invalid)
+            1,  // size
+            0,  // offset
+        },
+    };
+    const std::vector<uint8_t> constant = {'a'};
+    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, vecMetaData, constant);
+
+    ASSERT_FALSE(mlsdk_decoder_is_valid_constant_table(section.data(), section.size()));
 }
 
 TEST(CEncodeDecode, EmptyConstantSection) {
@@ -463,7 +627,7 @@ TEST(CEncodeDecode, EmptyConstantSection) {
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
     mlsdk_decoder_constant_table_decoder *decoder = mlsdk_decoder_create_constant_table_decoder(
-        data.c_str() + modelConstantsSection.offset, constantDecoderMemory.data());
+        data.c_str() + modelConstantsSection.offset, modelConstantsSection.size, constantDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_constant_table_num_entries(decoder) == 0);
 }
