@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -33,14 +33,15 @@ TEST(CppModelSequenceTable, SegmentInfo) {
 
     std::string data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
-    std::unique_ptr<ModelSequenceTableDecoder> decoder =
-        CreateModelSequenceTableDecoder(data.c_str() + headerDecoder->GetModelSequenceTableOffset());
+    std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
+        data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
 
     ASSERT_TRUE(decoder->modelSequenceTableSize() == 1);
     ASSERT_TRUE(decoder->getSegmentType(segment.reference) == ModuleType::GRAPH);
@@ -64,14 +65,15 @@ TEST(CppModelSequenceTable, DescripterSetInfo) {
 
     std::string data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
-    std::unique_ptr<ModelSequenceTableDecoder> decoder =
-        CreateModelSequenceTableDecoder(data.c_str() + headerDecoder->GetModelSequenceTableOffset());
+    std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
+        data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
 
     ASSERT_TRUE(decoder->modelSequenceTableSize() == 1);
     ASSERT_TRUE(decoder->getSegmentDescriptorSetInfosSize(segment.reference) == 1);
@@ -99,15 +101,16 @@ TEST(CppModelSequenceTable, DescriptorBindingSlot) {
 
     std::string vgf_data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(vgf_data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
     //! [ModelSequenceTableDecodingSample0 begin]
     ASSERT_TRUE(VerifyModelSequenceTable(vgf_data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
-    std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder =
-        CreateModelSequenceTableDecoder(vgf_data.c_str() + headerDecoder->GetModelSequenceTableOffset());
+    std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
+        vgf_data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
     //! [ModelSequenceTableDecodingSample0 end]
 
     ASSERT_TRUE(seqTableDecoder->modelSequenceTableSize() == 1);
@@ -180,14 +183,15 @@ TEST(CppModelSequenceTable, SegmentBindingSlot) {
 
     std::string data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
-    std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder =
-        CreateModelSequenceTableDecoder(data.c_str() + headerDecoder->GetModelSequenceTableOffset());
+    std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
+        data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
 
     ASSERT_TRUE(seqTableDecoder->modelSequenceTableSize() == 1);
 
@@ -226,14 +230,15 @@ TEST(CppModelSequenceTable, BindingSlot) {
 
     std::string data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
-    std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder =
-        CreateModelSequenceTableDecoder(data.c_str() + headerDecoder->GetModelSequenceTableOffset());
+    std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
+        data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
 
     ASSERT_TRUE(seqTableDecoder->modelSequenceTableSize() == 1);
 
@@ -270,14 +275,15 @@ TEST(CppModelSequenceTable, SegmentConstants) {
 
     std::string data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
-    std::unique_ptr<ModelSequenceTableDecoder> decoder =
-        CreateModelSequenceTableDecoder(data.c_str() + headerDecoder->GetModelSequenceTableOffset());
+    std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
+        data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
 
     ASSERT_TRUE(decoder->modelSequenceTableSize() == 1);
 
@@ -304,14 +310,15 @@ TEST(CppModelSequenceTable, SegmentDispatchShape) {
 
     std::string data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
-    std::unique_ptr<ModelSequenceTableDecoder> decoder =
-        CreateModelSequenceTableDecoder(data.c_str() + headerDecoder->GetModelSequenceTableOffset());
+    std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
+        data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
 
     ASSERT_TRUE(decoder->modelSequenceTableSize() == 1);
 
@@ -339,12 +346,13 @@ TEST(CppModelSequenceTable, PushConstantRange) {
 
     std::string data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
-    std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder =
-        CreateModelSequenceTableDecoder(data.c_str() + headerDecoder->GetModelSequenceTableOffset());
+    std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
+        data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
 
     ASSERT_TRUE(VerifyModelSequenceTable(data.c_str() + headerDecoder->GetModelSequenceTableOffset(),
                                          headerDecoder->GetModelSequenceTableSize()));
@@ -375,8 +383,8 @@ TEST(CModelSequenceTable, SegmentInfo) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -388,8 +396,8 @@ TEST(CModelSequenceTable, SegmentInfo) {
 
     std::vector<uint8_t> moduleTableDecoderMemory;
     moduleTableDecoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
-    mlsdk_decoder_module_table_decoder *moduleTabledecoder =
-        mlsdk_decoder_create_module_table_decoder(data.c_str() + moduleSection.offset, moduleTableDecoderMemory.data());
+    mlsdk_decoder_module_table_decoder *moduleTabledecoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, moduleTableDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(moduleTabledecoder) == 1);
 
@@ -403,7 +411,7 @@ TEST(CModelSequenceTable, SegmentInfo) {
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
-        data.c_str() + modelSequenceSection.offset, modelSequenceDecoderMemory.data());
+        data.c_str() + modelSequenceSection.offset, modelSequenceSection.size, modelSequenceDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
     ASSERT_TRUE(mlsdk_decoder_model_sequence_get_segment_type(modelSequenceDecoder, segment.reference) ==
@@ -433,8 +441,8 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -446,8 +454,8 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
 
     std::vector<uint8_t> moduleTableDecoderMemory;
     moduleTableDecoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
-    mlsdk_decoder_module_table_decoder *moduleTabledecoder =
-        mlsdk_decoder_create_module_table_decoder(data.c_str() + moduleSection.offset, moduleTableDecoderMemory.data());
+    mlsdk_decoder_module_table_decoder *moduleTabledecoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, moduleTableDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(moduleTabledecoder) == 1);
 
@@ -461,7 +469,7 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
-        data.c_str() + modelSequenceSection.offset, modelSequenceDecoderMemory.data());
+        data.c_str() + modelSequenceSection.offset, modelSequenceSection.size, modelSequenceDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
     ASSERT_TRUE(
@@ -490,8 +498,8 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -503,8 +511,8 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
 
     std::vector<uint8_t> moduleTableDecoderMemory;
     moduleTableDecoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
-    mlsdk_decoder_module_table_decoder *moduleTabledecoder =
-        mlsdk_decoder_create_module_table_decoder(data.c_str() + moduleSection.offset, moduleTableDecoderMemory.data());
+    mlsdk_decoder_module_table_decoder *moduleTabledecoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, moduleTableDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(moduleTabledecoder) == 1);
 
@@ -518,7 +526,7 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
-        data.c_str() + modelSequenceSection.offset, modelSequenceDecoderMemory.data());
+        data.c_str() + modelSequenceSection.offset, modelSequenceSection.size, modelSequenceDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
     ASSERT_TRUE(
@@ -554,8 +562,8 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -567,8 +575,8 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
 
     std::vector<uint8_t> moduleTableDecoderMemory;
     moduleTableDecoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
-    mlsdk_decoder_module_table_decoder *moduleTabledecoder =
-        mlsdk_decoder_create_module_table_decoder(data.c_str() + moduleSection.offset, moduleTableDecoderMemory.data());
+    mlsdk_decoder_module_table_decoder *moduleTabledecoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, moduleTableDecoderMemory.data());
 
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
@@ -582,7 +590,7 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
-        data.c_str() + modelSequenceSection.offset, modelSequenceDecoderMemory.data());
+        data.c_str() + modelSequenceSection.offset, modelSequenceSection.size, modelSequenceDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
 
@@ -624,8 +632,8 @@ TEST(CModelSequenceTable, BindingSlot) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -637,8 +645,8 @@ TEST(CModelSequenceTable, BindingSlot) {
 
     std::vector<uint8_t> moduleTableDecoderMemory;
     moduleTableDecoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
-    mlsdk_decoder_module_table_decoder *moduleTabledecoder =
-        mlsdk_decoder_create_module_table_decoder(data.c_str() + moduleSection.offset, moduleTableDecoderMemory.data());
+    mlsdk_decoder_module_table_decoder *moduleTabledecoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, moduleTableDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(moduleTabledecoder) == 1);
 
@@ -652,7 +660,7 @@ TEST(CModelSequenceTable, BindingSlot) {
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
-        data.c_str() + modelSequenceSection.offset, modelSequenceDecoderMemory.data());
+        data.c_str() + modelSequenceSection.offset, modelSequenceSection.size, modelSequenceDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
 
@@ -688,8 +696,8 @@ TEST(CModelSequenceTable, SegmentConstants) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -701,8 +709,8 @@ TEST(CModelSequenceTable, SegmentConstants) {
 
     std::vector<uint8_t> moduleTableDecoderMemory;
     moduleTableDecoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
-    mlsdk_decoder_module_table_decoder *moduleTabledecoder =
-        mlsdk_decoder_create_module_table_decoder(data.c_str() + moduleSection.offset, moduleTableDecoderMemory.data());
+    mlsdk_decoder_module_table_decoder *moduleTabledecoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, moduleTableDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(moduleTabledecoder) == 1);
 
@@ -716,7 +724,7 @@ TEST(CModelSequenceTable, SegmentConstants) {
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
-        data.c_str() + modelSequenceSection.offset, modelSequenceDecoderMemory.data());
+        data.c_str() + modelSequenceSection.offset, modelSequenceSection.size, modelSequenceDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
 
@@ -747,8 +755,8 @@ TEST(CModelSequenceTable, SegmentDispatchShape) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -760,8 +768,8 @@ TEST(CModelSequenceTable, SegmentDispatchShape) {
 
     std::vector<uint8_t> moduleTableDecoderMemory;
     moduleTableDecoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
-    mlsdk_decoder_module_table_decoder *moduleTabledecoder =
-        mlsdk_decoder_create_module_table_decoder(data.c_str() + moduleSection.offset, moduleTableDecoderMemory.data());
+    mlsdk_decoder_module_table_decoder *moduleTabledecoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, moduleTableDecoderMemory.data());
 
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
@@ -775,7 +783,7 @@ TEST(CModelSequenceTable, SegmentDispatchShape) {
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
-        data.c_str() + modelSequenceSection.offset, modelSequenceDecoderMemory.data());
+        data.c_str() + modelSequenceSection.offset, modelSequenceSection.size, modelSequenceDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
 
@@ -807,8 +815,8 @@ TEST(CModelSequenceTable, PushConstantRange) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -820,8 +828,8 @@ TEST(CModelSequenceTable, PushConstantRange) {
 
     std::vector<uint8_t> moduleTableDecoderMemory;
     moduleTableDecoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
-    mlsdk_decoder_module_table_decoder *moduleTabledecoder =
-        mlsdk_decoder_create_module_table_decoder(data.c_str() + moduleSection.offset, moduleTableDecoderMemory.data());
+    mlsdk_decoder_module_table_decoder *moduleTabledecoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, moduleTableDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(moduleTabledecoder) == 1);
 
@@ -835,7 +843,7 @@ TEST(CModelSequenceTable, PushConstantRange) {
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
-        data.c_str() + modelSequenceSection.offset, modelSequenceDecoderMemory.data());
+        data.c_str() + modelSequenceSection.offset, modelSequenceSection.size, modelSequenceDecoderMemory.data());
 
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
 

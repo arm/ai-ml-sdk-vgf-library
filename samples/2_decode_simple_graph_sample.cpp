@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -29,7 +29,8 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
     assert(vgf_file);
 
     // Lets create an object to decode the bytes we have just read from file.
-    std::unique_ptr<vgflib::HeaderDecoder> header_decoder = vgflib::CreateHeaderDecoder(header_mem.data());
+    std::unique_ptr<vgflib::HeaderDecoder> header_decoder =
+        vgflib::CreateHeaderDecoder(header_mem.data(), static_cast<uint64_t>(header_mem.size()));
 
     // Check that the header has decoded a valid VGF file
     assert(header_decoder->IsValid());
@@ -58,7 +59,7 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
 
     // and now create the object that will decode the contents of the section for us.
     std::unique_ptr<vgflib::ModelSequenceTableDecoder> mst_decoder =
-        vgflib::CreateModelSequenceTableDecoder(model_sequence_table_data.data());
+        vgflib::CreateModelSequenceTableDecoder(model_sequence_table_data.data(), model_sequence_table_data.size());
 
     // We know this file was written based on tutorial 1, so lets verify some things we expect.
     assert(mst_decoder->modelSequenceTableSize() == 1);                       // We should only have 1 segment
@@ -110,7 +111,7 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
 
         // and now create the object that will decode the MRT contents for us.
         std::unique_ptr<vgflib::ModelResourceTableDecoder> mrt_decoder =
-            vgflib::CreateModelResourceTableDecoder(model_resource_table_data.data());
+            vgflib::CreateModelResourceTableDecoder(model_resource_table_data.data(), model_resource_table_data.size());
 
         // All the fields are trivially accessed
         assert(mrt_decoder->size() == 2); // 2 resources, 1 input and 1 output for this use case
@@ -162,8 +163,8 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
 
         // *NEW* create the section decoder but this time using the in-place factory method variant.
         // modules_decoder is constructed inside the 'decoderMem.data()' allocation.
-        vgflib::ModuleTableDecoder *modules_decoder =
-            vgflib::CreateModuleTableDecoderInPlace(module_table_data.data(), decoder_mem.data());
+        vgflib::ModuleTableDecoder *modules_decoder = vgflib::CreateModuleTableDecoderInPlace(
+            module_table_data.data(), static_cast<uint64_t>(module_table_data.size()), decoder_mem.data());
 
         // access the fields as required
         assert(modules_decoder->size() == 1);                          // Only one graph module

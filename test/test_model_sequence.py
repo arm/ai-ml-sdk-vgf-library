@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 """ Tests for VGF Model Sequence. """
@@ -34,7 +34,7 @@ def test_encode_decode_model_sequence_table_segment_info():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -43,7 +43,8 @@ def test_encode_decode_model_sequence_table_segment_info():
         headerDecoder.GetModelSequenceTableSize(),
     )
     seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
-        buffer[headerDecoder.GetModelSequenceTableOffset() :]
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
     )
 
     assert seqTableDecoder.modelSequenceTableSize() == 1
@@ -74,7 +75,7 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_empty():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -83,7 +84,8 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_empty():
         headerDecoder.GetModelSequenceTableSize(),
     )
     seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
-        buffer[headerDecoder.GetModelSequenceTableOffset() :]
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
     )
 
     assert seqTableDecoder.modelSequenceTableSize() == 1
@@ -115,7 +117,7 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_binding_slot():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -124,7 +126,8 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_binding_slot():
         headerDecoder.GetModelSequenceTableSize(),
     )
     seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
-        buffer[headerDecoder.GetModelSequenceTableOffset() :]
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
     )
 
     assert seqTableDecoder.modelSequenceTableSize() == 1
@@ -182,7 +185,7 @@ def test_encode_decode_model_sequence_table_segment_input_output_binding_slot():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -191,7 +194,8 @@ def test_encode_decode_model_sequence_table_segment_input_output_binding_slot():
         headerDecoder.GetModelSequenceTableSize(),
     )
     seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
-        buffer[headerDecoder.GetModelSequenceTableOffset() :]
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
     )
 
     assert seqTableDecoder.modelSequenceTableSize() == 1
@@ -245,7 +249,7 @@ def test_encode_decode_model_sequence_table_input_output_binding_slot():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -254,7 +258,8 @@ def test_encode_decode_model_sequence_table_input_output_binding_slot():
         headerDecoder.GetModelSequenceTableSize(),
     )
     seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
-        buffer[headerDecoder.GetModelSequenceTableOffset() :]
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
     )
 
     assert seqTableDecoder.modelSequenceTableSize() == 1
@@ -298,7 +303,7 @@ def test_encode_decode_model_sequence_table_segment_constants():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -307,7 +312,8 @@ def test_encode_decode_model_sequence_table_segment_constants():
         headerDecoder.GetModelSequenceTableSize(),
     )
     seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
-        buffer[headerDecoder.GetModelSequenceTableOffset() :]
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
     )
 
     assert seqTableDecoder.modelSequenceTableSize() == 1
@@ -342,7 +348,7 @@ def test_encode_decode_model_sequence_table_segment_dispatch_shape():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -351,7 +357,8 @@ def test_encode_decode_model_sequence_table_segment_dispatch_shape():
         headerDecoder.GetModelSequenceTableSize(),
     )
     seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
-        buffer[headerDecoder.GetModelSequenceTableOffset() :]
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
     )
 
     assert seqTableDecoder.modelSequenceTableSize() == 1
@@ -388,7 +395,7 @@ def test_encode_decode_model_sequence_table_segment_push_constant_range():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -397,7 +404,8 @@ def test_encode_decode_model_sequence_table_segment_push_constant_range():
         headerDecoder.GetModelSequenceTableSize(),
     )
     seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
-        buffer[headerDecoder.GetModelSequenceTableOffset() :]
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
     )
 
     assert seqTableDecoder.modelSequenceTableSize() == 1

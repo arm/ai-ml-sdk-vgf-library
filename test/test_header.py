@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 """ Tests for VGF Header. """
@@ -28,7 +28,7 @@ def test_encode_decode_header():
     buffer = stream.getbuffer()
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -70,7 +70,7 @@ def test_decode_wrong_magic():
 
     buffer = stream.getbuffer()
 
-    decoder = vgf.CreateHeaderDecoder(buffer)
+    decoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert not decoder.IsValid()
     assert not decoder.CheckVersion()
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 """ Tests for VGF Module Table. """
@@ -28,7 +28,7 @@ def test_encode_decode_module_table_empty():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -37,7 +37,8 @@ def test_encode_decode_module_table_empty():
         headerDecoder.GetModuleTableSize(),
     )
     moduleDecoder = vgf.CreateModuleTableDecoder(
-        buffer[headerDecoder.GetModuleTableOffset() :]
+        buffer[headerDecoder.GetModuleTableOffset() :],
+        headerDecoder.GetModuleTableSize(),
     )
 
     assert moduleDecoder.size() == 0
@@ -60,7 +61,7 @@ def test_encode_decode_module_table_single():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -71,7 +72,8 @@ def test_encode_decode_module_table_single():
         headerDecoder.GetModuleTableSize(),
     )
     moduleDecoder = vgf.CreateModuleTableDecoder(
-        buffer[headerDecoder.GetModuleTableOffset() :]
+        buffer[headerDecoder.GetModuleTableOffset() :],
+        headerDecoder.GetModuleTableSize(),
     )
 
     numModules = moduleDecoder.size()
@@ -101,7 +103,7 @@ def test_encode_decode_module_table_single_placeholder():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
@@ -112,7 +114,8 @@ def test_encode_decode_module_table_single_placeholder():
         headerDecoder.GetModuleTableSize(),
     )
     moduleDecoder = vgf.CreateModuleTableDecoder(
-        buffer[headerDecoder.GetModuleTableOffset() :]
+        buffer[headerDecoder.GetModuleTableOffset() :],
+        headerDecoder.GetModuleTableSize(),
     )
 
     assert moduleDecoder.size() == 1

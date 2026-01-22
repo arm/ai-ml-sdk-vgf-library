@@ -78,7 +78,8 @@ TEST(CppEncodeDecode, AddConstant) {
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
@@ -108,7 +109,8 @@ TEST(CppEncodeDecode, AddNonSparseConstant) {
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
@@ -175,7 +177,8 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
 
     auto mmapped = MemoryMap(filename);
 
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(mmapped.ptr());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(mmapped.ptr(), static_cast<uint64_t>(mmapped.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
@@ -290,7 +293,8 @@ TEST(CppEncodeDecode, EmptyConstantSection) {
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
     std::string data = buffer.str();
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(data.c_str());
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
@@ -321,8 +325,8 @@ TEST(CEncodeDecode, AddConstant) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -376,8 +380,8 @@ TEST(CEncodeDecode, AddNonSparseConstant) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -468,8 +472,8 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(mmapped.ptr(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        mmapped.ptr(), static_cast<uint64_t>(mmapped.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -605,8 +609,8 @@ TEST(CEncodeDecode, EmptyConstantSection) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
+        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
