@@ -15,9 +15,11 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 using namespace mlsdk::vgflib;
 using logging::utils::Logger;
@@ -202,12 +204,45 @@ TEST(CppVerify, BadData) {
     ASSERT_EQ(CreateConstantDecoder(bad_data_ptr, sizeof(bad_data)), nullptr);
 }
 
+TEST(CppVerify, ConstantHeaderTooSmallRejected) {
+    Logger logger;
+    std::array<uint8_t, 2> buffer{0, 0};
+
+    EXPECT_EQ(nullptr, CreateConstantDecoder(buffer.data(), buffer.size()));
+    EXPECT_TRUE(logger.contains({"Constant section too small to contain version"}));
+}
+
+TEST(CppVerify, ConstantSizeCapRejected) {
+#if SIZE_MAX < UINT64_MAX
+    Logger logger;
+    const uint64_t constantSize = SIZE_MAX_VALUE;
+    std::array<uint8_t, CONSTANT_SECTION_VERSION_SIZE> section{};
+    std::memcpy(section.data(), CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
+
+    EXPECT_EQ(nullptr, CreateConstantDecoder(section.data(), constantSize));
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Size out of bounds"}));
+#else
+    GTEST_SKIP() << "Size cap guard only compiled when size_t is narrower than uint64_t";
+#endif
+}
+
 TEST(CppVerify, SectionTooSmallForMetadataRejected) {
     Logger logger;
     std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
     section.resize(CONSTANT_SECTION_METADATA_OFFSET - 1);
     ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
     EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant section too small to contain metadata"}));
+}
+
+TEST(CppVerify, ConstantDataOffsetOverflowRejected) {
+    Logger logger;
+    std::array<uint8_t, CONSTANT_SECTION_METADATA_OFFSET> buffer{};
+    std::memcpy(buffer.data(), CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
+    const uint64_t declaredCount = UINT64_MAX;
+    std::memcpy(buffer.data() + CONSTANT_SECTION_COUNT_OFFSET, &declaredCount, sizeof(declaredCount));
+
+    EXPECT_EQ(nullptr, CreateConstantDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant section declares more entries than fit in the buffer"}));
 }
 
 TEST(CppVerify, DeclaredCountExceedingAvailableMetadataRejected) {
@@ -279,6 +314,55 @@ TEST(CppVerify, EmptyConstantSection) {
     ASSERT_NE(decoder, nullptr);
 
     ASSERT_TRUE(decoder->size() == 0);
+}
+
+TEST(CppVerify, LegacyConstantSectionSizeWrapRejected) {
+    Logger logger;
+    const uint64_t constantOffset = 80;
+    const uint64_t constantSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const size_t vgfSize = 162;
+    const auto constant = std::vector<uint8_t>(40, 'a');
+
+    std::vector<uint8_t> buffer(vgfSize, 0);
+    Header header({0, 0}, {0, 0}, {0, 0}, {constantOffset, constantSize}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+    if (constantOffset + constant.size() <= vgfSize) {
+        std::memcpy(buffer.data() + constantOffset, constant.data(), constant.size());
+    }
+
+    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    EXPECT_EQ(nullptr, CreateConstantDecoder(buffer.data() + constantOffset, constantSize));
+    EXPECT_TRUE(logger.contains({"VerifyLegacyConstant", "size out of bounds"}));
+}
+
+TEST(CppVerify, LegacyConstantFlatbufferVerifyRejected) {
+    Logger logger;
+    std::array<uint8_t, 32> buffer{};
+    buffer.fill(0xFF);
+
+    EXPECT_EQ(nullptr, CreateConstantDecoder(buffer.data(), buffer.size()));
+    EXPECT_TRUE(logger.contains({"VerifyLegacyConstant", "verification failed"}));
+}
+
+TEST(CppVerify, LegacyConstantMisalignedRejected) {
+    Logger logger;
+    const uint64_t constantOffset = 87;
+    const uint64_t constantSize = UINT32_MAX_VALUE;
+    const size_t vgfSize = 144;
+    const auto constant = std::vector<uint8_t>(8, 'a');
+
+    std::vector<uint8_t> buffer(vgfSize, 0);
+    Header header({0, 0}, {0, 0}, {0, 0}, {constantOffset, constantSize}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+    if (constantOffset + constant.size() <= vgfSize) {
+        std::memcpy(buffer.data() + constantOffset, constant.data(), constant.size());
+    }
+
+    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    EXPECT_EQ(nullptr, CreateConstantDecoder(buffer.data() + constantOffset, constantSize));
+    EXPECT_TRUE(logger.contains({"VerifyLegacyConstant", "data alignment invalid"}));
 }
 
 TEST(CEncodeDecode, AddConstant) {
@@ -507,6 +591,30 @@ TEST(CVerify, BadData) {
               nullptr);
 }
 
+TEST(CVerify, ConstantHeaderTooSmallRejected) {
+    Logger logger;
+    std::array<uint8_t, 2> buffer{0, 0};
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_constant_table_decoder(buffer.data(), buffer.size(), decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"Constant section too small to contain version"}));
+}
+
+TEST(CVerify, ConstantSizeCapRejected) {
+#if SIZE_MAX < UINT64_MAX
+    Logger logger;
+    const uint64_t constantSize = SIZE_MAX_VALUE;
+    std::array<uint8_t, CONSTANT_SECTION_VERSION_SIZE> section{};
+    std::memcpy(section.data(), CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_constant_table_decoder(section.data(), constantSize, decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Size out of bounds"}));
+#else
+    GTEST_SKIP() << "Size cap guard only compiled when size_t is narrower than uint64_t";
+#endif
+}
+
 TEST(CVerify, SectionTooSmallForMetadataRejected) {
     Logger logger;
     std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
@@ -516,6 +624,19 @@ TEST(CVerify, SectionTooSmallForMetadataRejected) {
     ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
               nullptr);
     EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant section too small to contain metadata"}));
+}
+
+TEST(CVerify, ConstantDataOffsetOverflowRejected) {
+    Logger logger;
+    std::array<uint8_t, CONSTANT_SECTION_METADATA_OFFSET> buffer{};
+    std::memcpy(buffer.data(), CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
+    const uint64_t declaredCount = UINT64_MAX;
+    std::memcpy(buffer.data() + CONSTANT_SECTION_COUNT_OFFSET, &declaredCount, sizeof(declaredCount));
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_constant_table_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
+                                                                   decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant section declares more entries than fit in the buffer"}));
 }
 
 TEST(CVerify, DeclaredCountExceedingAvailableMetadataRejected) {
@@ -615,6 +736,64 @@ TEST(CVerify, EmptyConstantSection) {
     ASSERT_NE(decoder, nullptr);
 
     ASSERT_TRUE(mlsdk_decoder_get_constant_table_num_entries(decoder) == 0);
+}
+
+TEST(CVerify, LegacyConstantSectionSizeWrapRejected) {
+    Logger logger;
+    const uint64_t constantOffset = 80;
+    const uint64_t constantSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const size_t vgfSize = 162;
+    const auto constant = std::vector<uint8_t>(40, 'a');
+
+    std::vector<uint8_t> buffer(vgfSize, 0);
+    Header header({0, 0}, {0, 0}, {0, 0}, {constantOffset, constantSize}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+    if (constantOffset + constant.size() <= vgfSize) {
+        std::memcpy(buffer.data() + constantOffset, constant.data(), constant.size());
+    }
+
+    std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
+                                                           headerDecoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_constant_table_decoder(buffer.data() + constantOffset, constantSize,
+                                                                   decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyLegacyConstant", "size out of bounds"}));
+}
+
+TEST(CVerify, LegacyConstantFlatbufferVerifyRejected) {
+    Logger logger;
+    std::array<uint8_t, 32> buffer{};
+    buffer.fill(0xFF);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_constant_table_decoder(buffer.data(), buffer.size(), decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyLegacyConstant", "verification failed"}));
+}
+
+TEST(CVerify, LegacyConstantMisalignedRejected) {
+    Logger logger;
+    const uint64_t constantOffset = 87;
+    const uint64_t constantSize = UINT32_MAX_VALUE;
+    const size_t vgfSize = 144;
+    const auto constant = std::vector<uint8_t>(8, 'a');
+
+    std::vector<uint8_t> buffer(vgfSize, 0);
+    Header header({0, 0}, {0, 0}, {0, 0}, {constantOffset, constantSize}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+    if (constantOffset + constant.size() <= vgfSize) {
+        std::memcpy(buffer.data() + constantOffset, constant.data(), constant.size());
+    }
+
+    std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
+                                                           headerDecoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_constant_table_decoder(buffer.data() + constantOffset, constantSize,
+                                                                   decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyLegacyConstant", "data alignment invalid"}));
 }
 
 // TODO: different datatypes.

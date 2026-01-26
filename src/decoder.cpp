@@ -11,10 +11,13 @@
 #include "internal_types.hpp"
 #include "vgf_generated.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <limits>
 #include <optional>
 #include <tuple>
+#include <type_traits>
 
 namespace mlsdk::vgflib {
 namespace {
@@ -27,14 +30,10 @@ template <typename T> inline T ReadBytesAs(const void *const baseAddr, size_t of
 bool validateSectionsSizesInHeader(const HeaderDecoder &headerDecoder, uint64_t fileSize) {
     auto within = [fileSize](uint64_t offset, uint64_t size) {
         if (offset > fileSize) {
-            logging::error("section offset beyond file (offset=" + std::to_string(offset) +
-                           ", fileSize=" + std::to_string(fileSize) + ")");
             return false;
         }
         const uint64_t remaining = fileSize - offset;
         if (size > remaining) {
-            logging::error("section size exceeds file bounds (offset=" + std::to_string(offset) +
-                           ", size=" + std::to_string(size) + ", fileSize=" + std::to_string(fileSize) + ")");
             return false;
         }
         return true;
@@ -60,6 +59,21 @@ bool validateSectionsSizesInHeader(const HeaderDecoder &headerDecoder, uint64_t 
     }
     return true;
 }
+
+// FlatBuffers uses 32-bit offsets; cap verification to what the format can encode and what the platform can address.
+constexpr uint64_t maxFlatbufferBytes() {
+    constexpr uint64_t uoffsetMax = static_cast<uint64_t>(std::numeric_limits<flatbuffers::uoffset_t>::max());
+    return std::min<uint64_t>(SIZE_MAX_VALUE, uoffsetMax);
+}
+
+template <class T> constexpr std::string_view verifyTypeName() {
+    static_assert(!std::is_same_v<T, T>, "verifyTypeName not defined for this table type");
+    return {};
+}
+template <> constexpr std::string_view verifyTypeName<VGF::ConstantSection>() { return "VerifyLegacyConstant"; }
+template <> constexpr std::string_view verifyTypeName<VGF::ModuleTable>() { return "VerifyModuleTable"; }
+template <> constexpr std::string_view verifyTypeName<VGF::ModelSequenceTable>() { return "VerifyModelSequenceTable"; }
+template <> constexpr std::string_view verifyTypeName<VGF::ModelResourceTable>() { return "VerifyModelResourceTable"; }
 
 ModuleType fromVGF(VGF::ModuleType type) {
     switch (type) {
@@ -101,9 +115,37 @@ constexpr FourCCValue OldMagicAsFourCC() {
 }
 
 template <class T> bool VerifyImpl(const void *data, const uint64_t size) {
-    const auto *obj = flatbuffers::GetRoot<const T>(data);
-    flatbuffers::Verifier verifier(static_cast<const uint8_t *>(data), size);
-    return obj->Verify(verifier);
+    const std::string typeName{verifyTypeName<T>()};
+
+    if (data == nullptr) {
+        logging::error(typeName + ": data is null");
+        return false;
+    }
+
+    const uint64_t maxBytes = maxFlatbufferBytes();
+    if (size > maxBytes) {
+        logging::error(typeName + ": size out of bounds (size=" + std::to_string(size) +
+                       ", max=" + std::to_string(maxBytes) + ")");
+        return false;
+    }
+
+    if (size < sizeof(flatbuffers::uoffset_t)) {
+        logging::error(typeName + ": size smaller than header (size=" + std::to_string(size) + ")");
+        return false;
+    }
+
+    if (reinterpret_cast<uintptr_t>(data) % alignof(flatbuffers::uoffset_t) != 0) {
+        logging::error(typeName +
+                       ": data alignment invalid (alignment=" + std::to_string(alignof(flatbuffers::uoffset_t)) + ")");
+        return false;
+    }
+
+    flatbuffers::Verifier verifier(static_cast<const uint8_t *>(data), static_cast<size_t>(size));
+    if (!verifier.VerifyBuffer<T>()) {
+        logging::error(typeName + ": verification failed");
+        return false;
+    }
+    return true;
 }
 
 const char *getConstantSectionVersion(const void *data) {
@@ -198,7 +240,6 @@ class HeaderDecoderImpl : public HeaderDecoder {
             return false;
         }
         if (!validateSectionsSizesInHeader(*decoder, size)) {
-            logging::error("Header or sections failed validation");
             return false;
         }
         return true;
@@ -661,6 +702,14 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
     using VerifiedLayout = std::tuple<uint64_t, const uint8_t *, const uint8_t *, uint64_t>;
 
     [[nodiscard]] static std::optional<VerifiedLayout> _verify(const void *const data, const uint64_t sectionSize) {
+#if SIZE_MAX < UINT64_MAX
+        if (sectionSize > SIZE_MAX_VALUE) {
+            logging::error("VerifyConstant: Size out of bounds (" + std::to_string(sectionSize) +
+                           ", max=" + std::to_string(SIZE_MAX_VALUE) + ")");
+            return std::nullopt;
+        }
+#endif
+
         if (sectionSize < CONSTANT_SECTION_METADATA_OFFSET) {
             logging::error("VerifyConstant: Constant section too small to contain metadata");
             return std::nullopt;
@@ -718,7 +767,7 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         const uint64_t entrySize = metaData->size;
 #if SIZE_MAX < UINT64_MAX
         const uint64_t sizeMax = SIZE_MAX_VALUE;
-        if (offset > sizeMax || entrySize > sizeMax || offset + entrySize > sizeMax) {
+        if (offset > sizeMax || entrySize > sizeMax || entrySize > sizeMax - offset) {
             return false;
         }
 #endif
