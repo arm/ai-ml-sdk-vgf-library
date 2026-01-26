@@ -12,6 +12,7 @@
 #include "vgf_generated.h"
 
 #include <cassert>
+#include <cstddef>
 #include <optional>
 #include <tuple>
 
@@ -522,7 +523,7 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         if (!verified.has_value()) {
             return nullptr;
         }
-        const auto &[count, metaData, dataStart, dataSize] = verified.value();
+        const auto &[count, metaData, dataStart, dataSize] = *verified;
         return std::unique_ptr<ConstantDecoder_V00_Impl>(
             new ConstantDecoder_V00_Impl(count, metaData, dataStart, dataSize));
     }
@@ -533,7 +534,7 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         if (!verified.has_value()) {
             return nullptr;
         }
-        const auto &[count, metaData, dataStart, dataSize] = verified.value();
+        const auto &[count, metaData, dataStart, dataSize] = *verified;
         return new (decoderMem) ConstantDecoder_V00_Impl(count, metaData, dataStart, dataSize);
     }
 
@@ -593,10 +594,12 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         }
 
         const uint64_t dataOffset = CONSTANT_SECTION_METADATA_OFFSET + declaredCount * sizeof(ConstantMetaData_V00);
+#if SIZE_MAX < UINT64_MAX
         if (dataOffset > std::numeric_limits<size_t>::max()) {
             logging::error("Constant data offset exceeds addressable size");
             return std::nullopt;
         }
+#endif
         if (dataOffset > sectionSize) {
             logging::error("Constant metadata exceeds section size");
             return std::nullopt;
@@ -631,10 +634,12 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         }
         const uint64_t offset = metaData->offset;
         const uint64_t entrySize = metaData->size;
+#if SIZE_MAX < UINT64_MAX
         const uint64_t sizeMax = std::numeric_limits<size_t>::max();
         if (offset > sizeMax || entrySize > sizeMax || offset + entrySize > sizeMax) {
             return false;
         }
+#endif
 
         if (offset > dataSize || entrySize > dataSize || entrySize > dataSize - offset) {
             return false;
