@@ -54,12 +54,12 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
         // Make sure nothing went wrong
         assert(vgf_file);
 
-        // Check for valid section
-        assert(vgflib::VerifyModelSequenceTable(model_sequence_table_data.data(), model_sequence_table_data.size()));
-
         // Create the decoder for the Model Sequence Table
         std::unique_ptr<vgflib::ModelSequenceTableDecoder> mst_decoder =
             vgflib::CreateModelSequenceTableDecoder(model_sequence_table_data.data(), model_sequence_table_data.size());
+
+        // Check for valid section
+        assert(mst_decoder != nullptr);
 
         // We know this file was written based on tutorial 3, so lets verify some things we expect.
         assert(mst_decoder->modelSequenceTableSize() == 1);                       // We should only have 1 segment
@@ -95,12 +95,12 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
         vgf_file.read(constants_data.data(), static_cast<std::streamsize>(constants_data.size()));
         assert(vgf_file);
 
-        // Check for valid section
-        assert(vgflib::VerifyConstant(constants_data.data(), constants_data.size()));
-
         // Create the ConstantsDecoder from the section in memory
         std::unique_ptr<vgflib::ConstantDecoder> constants_decoder =
             vgflib::CreateConstantDecoder(constants_data.data(), constants_data.size());
+
+        // Check for valid section
+        assert(constants_decoder != nullptr);
 
         assert(constants_decoder->size() == 1); // There should be 1 constant
         [[maybe_unused]] vgflib::DataView<uint8_t> weights_bytes =

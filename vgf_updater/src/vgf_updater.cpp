@@ -70,30 +70,18 @@ std::unique_ptr<HeaderDecoder> loadHeaderSafely(const MemoryMap &mapped) {
     const auto moduleOffset = headerDecoder->GetModuleTableOffset();
     const auto moduleSize = headerDecoder->GetModuleTableSize();
     ensureMappedRange(mapped, moduleOffset, moduleSize, "Module table");
-    if (!VerifyModuleTable(mapped.ptr(moduleOffset), moduleSize)) {
-        throw std::runtime_error("Invalid module table section");
-    }
 
     const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
     const auto resourceSize = headerDecoder->GetModelResourceTableSize();
     ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
-    if (!VerifyModelResourceTable(mapped.ptr(resourceOffset), resourceSize)) {
-        throw std::runtime_error("Invalid model resource table section");
-    }
 
     const auto sequenceOffset = headerDecoder->GetModelSequenceTableOffset();
     const auto sequenceSize = headerDecoder->GetModelSequenceTableSize();
     ensureMappedRange(mapped, sequenceOffset, sequenceSize, "Model sequence table");
-    if (!VerifyModelSequenceTable(mapped.ptr(sequenceOffset), sequenceSize)) {
-        throw std::runtime_error("Invalid model sequence table section");
-    }
 
     const auto constantsOffset = headerDecoder->GetConstantsOffset();
     const auto constantsSize = headerDecoder->GetConstantsSize();
     ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
-    if (!VerifyConstant(mapped.ptr(constantsOffset), constantsSize)) {
-        throw std::runtime_error("Invalid constant section");
-    }
 
     return headerDecoder;
 }
@@ -101,6 +89,9 @@ std::unique_ptr<HeaderDecoder> loadHeaderSafely(const MemoryMap &mapped) {
 std::vector<ModuleRef> extractModules(const HeaderDecoder &headerDecoder, const MemoryMap &mapped, Encoder &encoder) {
     auto moduleDecoder =
         CreateModuleTableDecoder(mapped.ptr(headerDecoder.GetModuleTableOffset()), headerDecoder.GetModuleTableSize());
+    if (moduleDecoder == nullptr) {
+        throw std::runtime_error("Module table could not be decoded safely");
+    }
     const auto numModules = moduleDecoder->size();
     std::vector<ModuleRef> moduleRefs;
     moduleRefs.reserve(numModules);

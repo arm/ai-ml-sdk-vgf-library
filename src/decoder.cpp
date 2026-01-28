@@ -198,19 +198,22 @@ class ModuleTableDecoderImpl : public ModuleTableDecoder {
 
 size_t ModuleTableDecoderSize() { return sizeof(ModuleTableDecoderImpl); }
 
-bool VerifyModuleTable(const void *data, const uint64_t size) {
-    assert(data != nullptr && "data is null");
-    return VerifyImpl<VGF::ModuleTable>(data, size);
-}
-
 std::unique_ptr<ModuleTableDecoder> CreateModuleTableDecoder(const void *const data, const uint64_t size) {
     assert(data != nullptr && "data is null");
+    if (!VerifyImpl<VGF::ModuleTable>(data, size)) {
+        logging::error("Module table could not be decoded safely");
+        return nullptr;
+    }
     return std::make_unique<ModuleTableDecoderImpl>(data, size);
 }
 
 ModuleTableDecoder *CreateModuleTableDecoderInPlace(const void *const data, const uint64_t size, void *decoderMem) {
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
+    if (!VerifyImpl<VGF::ModuleTable>(data, size)) {
+        logging::error("Module table could not be decoded safely");
+        return nullptr;
+    }
     return new (decoderMem) ModuleTableDecoderImpl(data, size);
 }
 
@@ -378,14 +381,13 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
 
 size_t ModelSequenceTableDecoderSize() { return sizeof(ModelSequenceTableDecoderImpl); }
 
-bool VerifyModelSequenceTable(const void *data, const uint64_t size) {
-    assert(data != nullptr && "data is null");
-    return VerifyImpl<VGF::ModelSequenceTable>(data, size);
-}
-
 std::unique_ptr<ModelSequenceTableDecoder> CreateModelSequenceTableDecoder(const void *const data,
                                                                            const uint64_t size) {
     assert(data != nullptr && "data is null");
+    if (!VerifyImpl<VGF::ModelSequenceTable>(data, size)) {
+        logging::error("Model sequence table could not be decoded safely");
+        return nullptr;
+    }
     return std::make_unique<ModelSequenceTableDecoderImpl>(data, size);
 }
 
@@ -393,6 +395,10 @@ ModelSequenceTableDecoder *CreateModelSequenceTableDecoderInPlace(const void *co
                                                                   void *decoderMem) {
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
+    if (!VerifyImpl<VGF::ModelSequenceTable>(data, size)) {
+        logging::error("Model sequence table could not be decoded safely");
+        return nullptr;
+    }
     return new (decoderMem) ModelSequenceTableDecoderImpl(data, size);
 }
 
@@ -458,14 +464,13 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
 
 size_t ModelResourceTableDecoderSize() { return sizeof(ModelResourceTableDecoderImpl); }
 
-bool VerifyModelResourceTable(const void *data, const uint64_t size) {
-    assert(data != nullptr && "data is null");
-    return VerifyImpl<VGF::ModelResourceTable>(data, size);
-}
-
 std::unique_ptr<ModelResourceTableDecoder> CreateModelResourceTableDecoder(const void *const data,
                                                                            const uint64_t size) {
     assert(data != nullptr && "data is null");
+    if (!VerifyImpl<VGF::ModelResourceTable>(data, size)) {
+        logging::error("Model resource table could not be decoded safely");
+        return nullptr;
+    }
     return std::make_unique<ModelResourceTableDecoderImpl>(data, size);
 }
 
@@ -473,6 +478,10 @@ ModelResourceTableDecoder *CreateModelResourceTableDecoderInPlace(const void *co
                                                                   void *decoderMem) {
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
+    if (!VerifyImpl<VGF::ModelResourceTable>(data, size)) {
+        logging::error("Model resource table could not be decoded safely");
+        return nullptr;
+    }
     return new (decoderMem) ModelResourceTableDecoderImpl(data, size);
 }
 
@@ -618,6 +627,10 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
                 logging::error("Constant metadata offset/size exceeds section bounds at index " + std::to_string(idx));
                 return std::nullopt;
             }
+            if (entry->sparsityDimension < CONSTANT_NOT_SPARSE_DIMENSION) {
+                logging::error("Constant sparsity dimension is invalid at index " + std::to_string(idx));
+                return std::nullopt;
+            }
         }
 
         return VerifiedLayout{declaredCount, metaData, dataStart, dataSize};
@@ -656,51 +669,36 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
 };
 size_t ConstantDecoderSize() { return std::max(sizeof(ConstantDecoderImpl), sizeof(ConstantDecoder_V00_Impl)); }
 
-bool VerifyConstant(const void *data, const uint64_t size) {
-    assert(data != nullptr && "data is null");
-    std::unique_ptr<ConstantDecoder> decoder;
-
-    if ((size >= CONSTANT_SECTION_VERSION_SIZE) &&
-        strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
-        auto decoderV00 = ConstantDecoder_V00_Impl::Create(data, size);
-        if (decoderV00 == nullptr) {
-            logging::error("Constant section could not be decoded safely");
-            return false;
-        }
-        decoder = std::move(decoderV00);
-    } else {
-        if (!VerifyImpl<VGF::ConstantSection>(data, size)) {
-            logging::error("Constant section could not be decoded safely");
-            return false;
-        }
-        decoder = std::make_unique<ConstantDecoderImpl>(data);
-    }
-
-    for (size_t i = 0; i < decoder->size(); ++i) {
-        if (decoder->getConstantSparsityDimension(static_cast<uint32_t>(i)) == CONSTANT_INVALID_SPARSITY_DIMENSION) {
-            logging::error("Constant sparsity dimension is invalid at index " + std::to_string(i));
-            return false;
-        }
-    }
-
-    return true;
-}
-
 std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *const data, const uint64_t size) {
     assert(data != nullptr && "data is null");
     if (size < CONSTANT_SECTION_VERSION_SIZE) {
         logging::error("Constant section too small to contain version");
-        return {};
+        return nullptr;
     }
+    std::unique_ptr<ConstantDecoder> decoder;
     if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
-        auto decoder = ConstantDecoder_V00_Impl::Create(data, size);
+        // V00 constant section
+        decoder = ConstantDecoder_V00_Impl::Create(data, size);
         if (decoder == nullptr) {
             logging::error("Constant section verification failed");
-            return {};
+            return nullptr;
         }
-        return decoder;
+    } else {
+        // Legacy FlatBuffer constant section
+        if (!VerifyImpl<VGF::ConstantSection>(data, size)) {
+            logging::error("Constant section could not be decoded safely");
+            return nullptr;
+        }
+        decoder = std::make_unique<ConstantDecoderImpl>(data);
+        for (size_t i = 0; i < decoder->size(); ++i) {
+            if (decoder->getConstantSparsityDimension(static_cast<uint32_t>(i)) ==
+                CONSTANT_INVALID_SPARSITY_DIMENSION) {
+                logging::error("Constant sparsity dimension is invalid at index " + std::to_string(i));
+                return nullptr;
+            }
+        }
     }
-    return std::make_unique<ConstantDecoderImpl>(data);
+    return decoder;
 }
 
 ConstantDecoder *CreateConstantDecoderInPlace(const void *const data, const uint64_t size, void *decoderMem) {
@@ -711,6 +709,7 @@ ConstantDecoder *CreateConstantDecoderInPlace(const void *const data, const uint
         return nullptr;
     }
     if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
+        // V00 constant section
         auto *decoder = ConstantDecoder_V00_Impl::CreateInPlace(data, size, decoderMem);
         if (decoder == nullptr) {
             logging::error("Constant section verification failed");
@@ -718,7 +717,21 @@ ConstantDecoder *CreateConstantDecoderInPlace(const void *const data, const uint
         }
         return decoder;
     }
-    return new (decoderMem) ConstantDecoderImpl(data);
+
+    // Legacy FlatBuffer constant section
+    if (!VerifyImpl<VGF::ConstantSection>(data, size)) {
+        logging::error("Constant section could not be decoded safely");
+        return nullptr;
+    }
+    auto *decoder = new (decoderMem) ConstantDecoderImpl(data);
+    for (size_t i = 0; i < decoder->size(); ++i) {
+        if (decoder->getConstantSparsityDimension(static_cast<uint32_t>(i)) == CONSTANT_INVALID_SPARSITY_DIMENSION) {
+            logging::error("Constant sparsity dimension is invalid at index " + std::to_string(i));
+            decoder->~ConstantDecoderImpl();
+            return nullptr;
+        }
+    }
+    return decoder;
 }
 
 } // namespace mlsdk::vgflib

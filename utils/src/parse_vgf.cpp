@@ -52,6 +52,9 @@ std::vector<uint32_t> dataViewToVector(DataView<uint32_t> dataView) { return {da
 
 std::vector<Resource> parseModelResourceTable(const void *const data, uint64_t size) {
     const auto decoder = CreateModelResourceTableDecoder(data, size);
+    if (decoder == nullptr) {
+        throw std::runtime_error("Model resource table could not be decoded safely");
+    }
 
     std::vector<Resource> resources;
     resources.reserve(decoder->size());
@@ -64,6 +67,9 @@ std::vector<Resource> parseModelResourceTable(const void *const data, uint64_t s
 
 ModelSequence parseModelSequenceTable(const void *data, uint64_t size) {
     const auto decoder = CreateModelSequenceTableDecoder(data, size);
+    if (decoder == nullptr) {
+        throw std::runtime_error("Model sequence table could not be decoded safely");
+    }
 
     const auto inputsHandle = decoder->getModelSequenceInputBindingSlotsHandle();
     std::vector<BindingSlot> inputs = parseBindingSlots(*decoder, inputsHandle);
@@ -132,6 +138,10 @@ ModelSequence parseModelSequenceTable(const void *data, uint64_t size) {
 std::vector<Constant> parseConstantSection(const void *data, uint64_t size) {
     std::vector<Constant> constants;
     const auto decoder = CreateConstantDecoder(data, size);
+    if (decoder == nullptr) {
+        throw std::runtime_error("Constant section could not be decoded safely");
+    }
+
     constants.reserve(decoder->size());
     for (uint32_t i = 0; i < decoder->size(); ++i) {
         const auto constantView = decoder->getConstant(i);

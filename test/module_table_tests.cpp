@@ -33,10 +33,9 @@ TEST(CppModuleTable, Empty) {
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
-    ASSERT_TRUE(
-        VerifyModuleTable(data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize()));
     std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(
         data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize());
+    ASSERT_NE(decoder, nullptr);
 
     ASSERT_TRUE(decoder->size() == 0);
 }
@@ -60,10 +59,9 @@ TEST(CppModuleTable, Single) {
 
     uint32_t moduleIndex = module.reference;
     //! [ModuleTableDecodingSample0 begin]
-    ASSERT_TRUE(VerifyModuleTable(vgf_data.c_str() + headerDecoder->GetModuleTableOffset(),
-                                  headerDecoder->GetModuleTableSize()));
     std::unique_ptr<ModuleTableDecoder> moduleDecoder = CreateModuleTableDecoder(
         vgf_data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize());
+    ASSERT_NE(moduleDecoder, nullptr);
 
     size_t numModules = moduleDecoder->size();
 
@@ -101,10 +99,9 @@ TEST(CppModuleTable, Single2) {
     ASSERT_TRUE(headerDecoder->IsValid());
     ASSERT_TRUE(headerDecoder->CheckVersion());
 
-    ASSERT_TRUE(
-        VerifyModuleTable(data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize()));
     std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(
         data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize());
+    ASSERT_NE(decoder, nullptr);
 
     ASSERT_TRUE(decoder->size() == 1);
     ASSERT_TRUE(decoder->getModuleType(module.reference) == ModuleType::COMPUTE);
@@ -136,12 +133,12 @@ TEST(CModuleTable, Empty) {
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
     ASSERT_TRUE(moduleSection.size > 0);
     ASSERT_TRUE(moduleSection.offset == HEADER_HEADER_SIZE_VALUE);
-    ASSERT_TRUE(mlsdk_decoder_is_valid_module_table(data.c_str() + moduleSection.offset, moduleSection.size));
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
     mlsdk_decoder_module_table_decoder *decoder = mlsdk_decoder_create_module_table_decoder(
         data.c_str() + moduleSection.offset, moduleSection.size, decoderMemory.data());
+    ASSERT_NE(decoder, nullptr);
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(decoder) == 0);
 }
@@ -169,12 +166,12 @@ TEST(CModuleTable, Single) {
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
     ASSERT_TRUE(moduleSection.size > 0);
     ASSERT_TRUE(moduleSection.offset == HEADER_HEADER_SIZE_VALUE);
-    ASSERT_TRUE(mlsdk_decoder_is_valid_module_table(data.c_str() + moduleSection.offset, moduleSection.size));
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
     mlsdk_decoder_module_table_decoder *decoder = mlsdk_decoder_create_module_table_decoder(
         data.c_str() + moduleSection.offset, moduleSection.size, decoderMemory.data());
+    ASSERT_NE(decoder, nullptr);
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(decoder) == 1);
     ASSERT_TRUE(mlsdk_decoder_get_module_type(decoder, module.reference) == mlsdk_decoder_module_type_graph);
@@ -208,12 +205,12 @@ TEST(CModuleTable, Single2) {
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
     ASSERT_TRUE(moduleSection.size > 0);
     ASSERT_TRUE(moduleSection.offset == HEADER_HEADER_SIZE_VALUE);
-    ASSERT_TRUE(mlsdk_decoder_is_valid_module_table(data.c_str() + moduleSection.offset, moduleSection.size));
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
     mlsdk_decoder_module_table_decoder *decoder = mlsdk_decoder_create_module_table_decoder(
         data.c_str() + moduleSection.offset, moduleSection.size, decoderMemory.data());
+    ASSERT_NE(decoder, nullptr);
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(decoder) == 1);
     ASSERT_TRUE(mlsdk_decoder_get_module_type(decoder, module.reference) == mlsdk_decoder_module_type_compute);

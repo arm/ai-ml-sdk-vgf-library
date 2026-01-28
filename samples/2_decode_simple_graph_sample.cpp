@@ -54,12 +54,12 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
     // Make sure nothing went wrong
     assert(vgf_file);
 
-    // Check for valid section
-    assert(vgflib::VerifyModelSequenceTable(model_sequence_table_data.data(), model_sequence_table_data.size()));
-
-    // and now create the object that will decode the contents of the section for us.
+    // Now create the object that will decode the contents of the section for us.
     std::unique_ptr<vgflib::ModelSequenceTableDecoder> mst_decoder =
         vgflib::CreateModelSequenceTableDecoder(model_sequence_table_data.data(), model_sequence_table_data.size());
+
+    // Check for valid section
+    assert(mst_decoder != nullptr);
 
     // We know this file was written based on tutorial 1, so lets verify some things we expect.
     assert(mst_decoder->modelSequenceTableSize() == 1);                       // We should only have 1 segment
@@ -106,12 +106,12 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
         vgf_file.read(model_resource_table_data.data(), static_cast<std::streamsize>(model_resource_table_data.size()));
         assert(vgf_file);
 
-        // Check for valid section
-        assert(vgflib::VerifyModelResourceTable(model_resource_table_data.data(), model_resource_table_data.size()));
-
-        // and now create the object that will decode the MRT contents for us.
+        // Now create the object that will decode the MRT contents for us.
         std::unique_ptr<vgflib::ModelResourceTableDecoder> mrt_decoder =
             vgflib::CreateModelResourceTableDecoder(model_resource_table_data.data(), model_resource_table_data.size());
+
+        // Check for valid section
+        assert(mrt_decoder != nullptr);
 
         // All the fields are trivially accessed
         assert(mrt_decoder->size() == 2); // 2 resources, 1 input and 1 output for this use case
@@ -155,9 +155,6 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
         vgf_file.read(module_table_data.data(), static_cast<std::streamsize>(module_table_data.size()));
         assert(vgf_file);
 
-        // Check for valid section
-        assert(vgflib::VerifyModuleTable(module_table_data.data(), module_table_data.size()));
-
         // *NEW* Allocate some memory to hold the decoder object from a heap of your choice.
         std::vector<char> decoder_mem(vgflib::ModuleTableDecoderSize());
 
@@ -165,6 +162,9 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
         // modules_decoder is constructed inside the 'decoderMem.data()' allocation.
         vgflib::ModuleTableDecoder *modules_decoder = vgflib::CreateModuleTableDecoderInPlace(
             module_table_data.data(), static_cast<uint64_t>(module_table_data.size()), decoder_mem.data());
+
+        // Check for valid section
+        assert(modules_decoder != nullptr);
 
         // access the fields as required
         assert(modules_decoder->size() == 1);                          // Only one graph module
