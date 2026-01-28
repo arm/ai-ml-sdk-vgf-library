@@ -588,6 +588,12 @@ class ModelSequenceTableDecoder {
 };
 
 /**
+ * @brief Returns the size of Model Sequence Table decoder in memory'
+ *
+ */
+size_t ModelSequenceTableDecoderSize();
+
+/**
  * @brief Returns true if input points to a valid Model Sequence Table
  *
  * @param data

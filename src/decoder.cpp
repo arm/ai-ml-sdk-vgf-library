@@ -376,6 +376,8 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
     const VGF::ModelSequenceTable *_modelSequenceTable;
 };
 
+size_t ModelSequenceTableDecoderSize() { return sizeof(ModelSequenceTableDecoderImpl); }
+
 bool VerifyModelSequenceTable(const void *data, const uint64_t size) {
     assert(data != nullptr && "data is null");
     return VerifyImpl<VGF::ModelSequenceTable>(data, size);

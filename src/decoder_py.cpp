@@ -352,6 +352,7 @@ void pyInitModelSequenceTableDecoder(py::module m) {
         .def("getPushConstRangeSize", &ModelSequenceTableDecoder::getPushConstRangeSize, py::arg("handle"),
              py::arg("rangeIdx"));
 
+    m.def("ModelSequenceTableDecoderSize", &ModelSequenceTableDecoderSize);
     m.def(
         "VerifyModelSequenceTable",
         [](const py::buffer &buffer, uint64_t size) { return VerifyModelSequenceTable(buffer.request().ptr, size); },
