@@ -650,18 +650,7 @@ json getFile(const std::string &inputFile) {
         vgfutils::parseModelResourceTable(mapped.ptr(resourceOffset), headerDecoder->GetModelResourceTableSize());
     const auto modelSequence =
         vgfutils::parseModelSequenceTable(mapped.ptr(sequenceOffset), headerDecoder->GetModelSequenceTableSize());
-
-    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
-    std::vector<vgfutils::Constant> constants;
-    constants.reserve(constantDecoder->size());
-    for (uint32_t i = 0; i < constantDecoder->size(); ++i) {
-        auto mrtIndex = constantDecoder->getConstantMrtIndex(i);
-        auto sparsity = constantDecoder->getConstantSparsityDimension(i);
-        if (mrtIndex == CONSTANT_INVALID_MRT_INDEX || sparsity == CONSTANT_INVALID_SPARSITY_DIMENSION) {
-            throw std::runtime_error("Invalid constant metadata at index " + std::to_string(i));
-        }
-        constants.emplace_back(i, mrtIndex, sparsity);
-    }
+    const auto constants = vgfutils::parseConstantSection(mapped.ptr(constantsOffset), constantsSize);
 
     json json;
     json["header"] = header;

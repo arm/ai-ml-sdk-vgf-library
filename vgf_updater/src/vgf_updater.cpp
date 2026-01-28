@@ -138,21 +138,16 @@ std::unordered_map<uint32_t, Constant> decodeConstants(const HeaderDecoder &head
 
     const auto constantsOffset = headerDecoder.GetConstantsOffset();
     ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
-    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
+    const auto parsedConstants = parseConstantSection(mapped.ptr(constantsOffset), constantsSize);
     for (const auto &segment : sequenceTable.mSegments) {
         for (const auto constantIdx : segment.mConstants) {
             if (constantsByIndex.find(constantIdx) != constantsByIndex.end()) {
                 continue;
             }
-            const auto constantView = constantDecoder->getConstant(constantIdx);
-            const auto mrtIndex = constantDecoder->getConstantMrtIndex(constantIdx);
-            const auto sparsity = constantDecoder->getConstantSparsityDimension(constantIdx);
-            if (constantView.size() == 0 || mrtIndex == CONSTANT_INVALID_MRT_INDEX ||
-                sparsity == CONSTANT_INVALID_SPARSITY_DIMENSION) {
-                throw std::runtime_error("Invalid constant metadata for index " + std::to_string(constantIdx));
+            if (constantIdx >= parsedConstants.size()) {
+                throw std::runtime_error("Invalid constant index " + std::to_string(constantIdx));
             }
-            constantsByIndex.emplace(
-                constantIdx, Constant(constantIdx, mrtIndex, sparsity, constantView.begin(), constantView.size()));
+            constantsByIndex.emplace(constantIdx, parsedConstants.at(constantIdx));
         }
     }
 

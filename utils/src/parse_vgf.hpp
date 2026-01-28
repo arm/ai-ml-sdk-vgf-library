@@ -114,4 +114,6 @@ ModelSequence parseModelSequenceTable(const void *data, uint64_t size);
 
 std::vector<Resource> parseModelResourceTable(const void *data, uint64_t size);
 
+std::vector<Constant> parseConstantSection(const void *data, uint64_t size);
+
 } // namespace mlsdk::vgfutils
