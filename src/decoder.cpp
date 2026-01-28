@@ -24,6 +24,43 @@ template <typename T> inline T ReadBytesAs(const void *const baseAddr, size_t of
     return *reinterpret_cast<const T *>(bytes);
 }
 
+bool validateSectionsSizesInHeader(const HeaderDecoder &headerDecoder, uint64_t fileSize) {
+    auto within = [fileSize](uint64_t offset, uint64_t size) {
+        if (offset > fileSize) {
+            logging::error("section offset beyond file (offset=" + std::to_string(offset) +
+                           ", fileSize=" + std::to_string(fileSize) + ")");
+            return false;
+        }
+        const uint64_t remaining = fileSize - offset;
+        if (size > remaining) {
+            logging::error("section size exceeds file bounds (offset=" + std::to_string(offset) +
+                           ", size=" + std::to_string(size) + ", fileSize=" + std::to_string(fileSize) + ")");
+            return false;
+        }
+        return true;
+    };
+
+    const uint64_t moduleOffset = headerDecoder.GetModuleTableOffset();
+    const uint64_t moduleSize = headerDecoder.GetModuleTableSize();
+    const uint64_t sequenceOffset = headerDecoder.GetModelSequenceTableOffset();
+    const uint64_t sequenceSize = headerDecoder.GetModelSequenceTableSize();
+    const uint64_t resourceOffset = headerDecoder.GetModelResourceTableOffset();
+    const uint64_t resourceSize = headerDecoder.GetModelResourceTableSize();
+    const uint64_t constantOffset = headerDecoder.GetConstantsOffset();
+    const uint64_t constantSize = headerDecoder.GetConstantsSize();
+
+    if (!within(moduleOffset, moduleSize) || !within(sequenceOffset, sequenceSize) ||
+        !within(resourceOffset, resourceSize) || !within(constantOffset, constantSize)) {
+        logging::error("section bounds invalid (module " + std::to_string(moduleOffset) + "+" +
+                       std::to_string(moduleSize) + ", sequence " + std::to_string(sequenceOffset) + "+" +
+                       std::to_string(sequenceSize) + ", resource " + std::to_string(resourceOffset) + "+" +
+                       std::to_string(resourceSize) + ", constant " + std::to_string(constantOffset) + "+" +
+                       std::to_string(constantSize) + ", fileSize " + std::to_string(fileSize) + ")");
+        return false;
+    }
+    return true;
+}
+
 ModuleType fromVGF(VGF::ModuleType type) {
     switch (type) {
     case VGF::ModuleType::ModuleType_COMPUTE:
@@ -78,7 +115,37 @@ const char *getConstantSectionVersion(const void *data) {
 // Header Decoder
 class HeaderDecoderImpl : public HeaderDecoder {
   public:
-    explicit HeaderDecoderImpl(const void *const data) : _header(static_cast<const Header *>(data)) {}
+    static std::unique_ptr<HeaderDecoderImpl> Create(const void *const data, uint64_t size) {
+        if (data == nullptr) {
+            return nullptr;
+        }
+        if (size < HeaderSize()) {
+            logging::error("Header size is smaller than expected");
+            return nullptr;
+        }
+        auto decoder = std::unique_ptr<HeaderDecoderImpl>(new HeaderDecoderImpl(data));
+        if (!_verify(decoder.get(), size)) {
+            return nullptr;
+        }
+        return decoder;
+    }
+
+    static HeaderDecoderImpl *CreateInPlace(const void *const data, uint64_t size, void *decoderMem) {
+        assert(decoderMem != nullptr && "decoderMem is null");
+        if (data == nullptr) {
+            return nullptr;
+        }
+        if (size < HeaderSize()) {
+            logging::error("Header size is smaller than expected");
+            return nullptr;
+        }
+        auto *decoder = new (decoderMem) HeaderDecoderImpl(data);
+        if (!_verify(decoder, size)) {
+            decoder->~HeaderDecoderImpl();
+            return nullptr;
+        }
+        return decoder;
+    }
 
     [[nodiscard]] bool IsLatestVersion() const override {
         return IsValid() && GetMajor() == HEADER_MAJOR_VERSION_VALUE && GetMinor() == HEADER_MINOR_VERSION_VALUE &&
@@ -125,6 +192,20 @@ class HeaderDecoderImpl : public HeaderDecoder {
     }
 
   private:
+    [[nodiscard]] static bool _verify(HeaderDecoderImpl *decoder, uint64_t size) {
+        if (!decoder->IsValid() || !decoder->CheckVersion()) {
+            logging::error("Header failed validation");
+            return false;
+        }
+        if (!validateSectionsSizesInHeader(*decoder, size)) {
+            logging::error("Header or sections failed validation");
+            return false;
+        }
+        return true;
+    }
+
+    explicit HeaderDecoderImpl(const void *const data) : _header(static_cast<const Header *>(data)) {}
+
     const Header *const _header;
 };
 
@@ -132,23 +213,11 @@ size_t HeaderSize() { return HEADER_HEADER_SIZE_VALUE; }
 size_t HeaderDecoderSize() { return sizeof(HeaderDecoderImpl); }
 
 std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *const data, const uint64_t size) {
-    assert(data != nullptr && "data is null");
-
-    if (size < HeaderSize()) {
-        logging::error("Header size is smaller than expected");
-        return nullptr;
-    }
-    return std::make_unique<HeaderDecoderImpl>(data);
+    return HeaderDecoderImpl::Create(data, size);
 }
 
 HeaderDecoder *CreateHeaderDecoderInPlace(const void *const data, const uint64_t size, void *decoderMem) {
-    assert(data != nullptr && "data is null");
-    assert(decoderMem != nullptr && "decoderMem is null");
-    if (size < HeaderSize()) {
-        logging::error("Header size is smaller than expected");
-        return nullptr;
-    }
-    return new (decoderMem) HeaderDecoderImpl(data);
+    return HeaderDecoderImpl::CreateInPlace(data, size, decoderMem);
 }
 
 // Module Table decoder

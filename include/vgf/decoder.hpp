@@ -150,8 +150,8 @@ size_t HeaderDecoderSize();
 /**
  * @brief Constructs a Header decoder
  *
- * @param data Pointer to the Header section data
- * @param size Size in bytes of the header buffer
+ * @param data Pointer to the start of the VGF buffer (file contents)
+ * @param size Total size in bytes of the VGF buffer starting at `data`
  */
 std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *data, uint64_t size);
 

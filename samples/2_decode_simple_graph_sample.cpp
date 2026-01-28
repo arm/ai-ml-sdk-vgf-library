@@ -32,12 +32,8 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
     std::unique_ptr<vgflib::HeaderDecoder> header_decoder =
         vgflib::CreateHeaderDecoder(header_mem.data(), static_cast<uint64_t>(header_mem.size()));
 
-    // Check that the header has decoded a valid VGF file
-    assert(header_decoder->IsValid());
-
-    // Check that the Version of the VGF is compatible with the VGF decoder library being used
-    // In other words, Major version must match and minor version of the API should be same or newer than file
-    assert(header_decoder->CheckVersion());
+    // Validate that decoding succeeded
+    assert(header_decoder);
 
     // Lets first load the segment info which is part of the ModelSequenceTable section.
     // The header can tell us exactly where this section is in the file and how large it is.

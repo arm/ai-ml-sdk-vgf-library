@@ -34,8 +34,7 @@ TEST(CppEncodeDecode, HeaderTest) {
     //! [HeaderDecodingSample0 end]
 
     //! [HeaderDecodingSample1 begin]
-    ASSERT_TRUE(decoder->IsValid());
-    ASSERT_TRUE(decoder->CheckVersion());
+    ASSERT_NE(decoder, nullptr);
     //! [HeaderDecodingSample1 end]
 
     ASSERT_TRUE(decoder->GetEncoderVulkanHeadersVersion() == pretendVulkanHeaderVersion);
@@ -63,8 +62,7 @@ TEST(CppEncodeDecode, HeaderTest) {
 TEST(CppDecode, WrongMagic) {
     std::array<char, HEADER_HEADER_SIZE_VALUE> data = {0};
     std::unique_ptr<HeaderDecoder> decoder = CreateHeaderDecoder(data.data(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(decoder->IsValid() == false);
-    ASSERT_TRUE(decoder->CheckVersion() == false);
+    ASSERT_TRUE(nullptr == decoder);
 
     // Test the FourCC generator used for the magic value
     FourCCValue vgf1 = FourCC('V', 'G', 'F', '1');
@@ -100,8 +98,7 @@ TEST(CDecode, HeaderTest) {
     decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *decoder =
         mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(data.size()), decoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(decoder));
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(decoder));
+    ASSERT_NE(decoder, nullptr);
 
     mlsdk_vk_header_version vkHeaderVersion;
     mlsdk_decoder_get_encoder_vk_header_version(decoder, &vkHeaderVersion);
@@ -143,6 +140,5 @@ TEST(CDecode, WrongMagic) {
     decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *decoder =
         mlsdk_decoder_create_header_decoder(data.data(), static_cast<uint64_t>(data.size()), decoderMemory.data());
-    ASSERT_TRUE(mlsdk_decoder_is_header_valid(decoder) == false);
-    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(decoder) == false);
+    ASSERT_TRUE(nullptr == decoder);
 }

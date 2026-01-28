@@ -121,13 +121,8 @@ std::unique_ptr<HeaderDecoder> parseHeader(const void *const headerData, uint64_
         throw std::runtime_error("File too small to contain VGF header");
     }
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(headerData, size);
-    if (!headerDecoder->IsValid()) {
-        throw std::runtime_error("Invalid VGF header, bad magic value");
-    }
-    if (!headerDecoder->CheckVersion()) {
-        throw std::runtime_error("Unsupported VGF file version: " + std::to_string(headerDecoder->GetMajor()) + "." +
-                                 std::to_string(headerDecoder->GetMinor()) + "." +
-                                 std::to_string(headerDecoder->GetPatch()));
+    if (headerDecoder == nullptr) {
+        throw std::runtime_error("Invalid VGF file: header or section verification failed");
     }
     return headerDecoder;
 }
@@ -180,12 +175,6 @@ void writeOutputBinary(const std::string &path, const char *ptr, size_t size) {
 void writeOutputJSON(const std::string &path, json &json) {
     std::string jsonContents = json.dump(/*indent=*/4);
     writeOutputText(path, jsonContents.c_str(), jsonContents.size());
-}
-
-void ensureMappedRange(const MemoryMap &mapped, uint64_t offset, uint64_t size, std::string_view section) {
-    if ((offset > mapped.size()) || (size > mapped.size() - offset)) {
-        throw std::runtime_error(std::string(section) + " section exceeds available file size");
-    }
 }
 
 struct ScenarioTensorResource {
@@ -403,14 +392,15 @@ void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint
 
     const auto constantsOffset = headerDecoder->GetConstantsOffset();
     const auto constantsSize = headerDecoder->GetConstantsSize();
-    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
+
     const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
     if (constantDecoder == nullptr) {
         throw std::runtime_error("Invalid constant section");
     }
+
     const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
     const auto resourceSize = headerDecoder->GetModelResourceTableSize();
-    ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
+
     const auto mrtDecoder = CreateModelResourceTableDecoder(mapped.ptr(resourceOffset), resourceSize);
     if (mrtDecoder == nullptr) {
         throw std::runtime_error("Invalid model resource table section");
@@ -450,7 +440,6 @@ void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(c
 
     const auto moduleOffset = headerDecoder->GetModuleTableOffset();
     const auto moduleSize = headerDecoder->GetModuleTableSize();
-    ensureMappedRange(mapped, moduleOffset, moduleSize, "Module table");
     std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(mapped.ptr(moduleOffset), moduleSize);
     if (decoder == nullptr) {
         throw std::runtime_error("Invalid module table section");
@@ -473,7 +462,6 @@ void getConstant(const std::string &inputFile, uint32_t index, std::function<voi
 
     const auto constantsOffset = headerDecoder->GetConstantsOffset();
     const auto constantsSize = headerDecoder->GetConstantsSize();
-    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
     std::unique_ptr<ConstantDecoder> decoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
     if (decoder == nullptr) {
         throw std::runtime_error("Invalid constant section");
@@ -500,17 +488,15 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
     const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
     const auto resourceSize = headerDecoder->GetModelResourceTableSize();
-    ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
     std::unique_ptr<ModelResourceTableDecoder> modelResourceDecoder =
-        CreateModelResourceTableDecoder(mapped.ptr(resourceOffset), headerDecoder->GetModelResourceTableSize());
+        CreateModelResourceTableDecoder(mapped.ptr(resourceOffset), resourceSize);
     if (modelResourceDecoder == nullptr) {
         throw std::runtime_error("Invalid model resource table");
     }
     const auto sequenceOffset = headerDecoder->GetModelSequenceTableOffset();
     const auto sequenceSize = headerDecoder->GetModelSequenceTableSize();
-    ensureMappedRange(mapped, sequenceOffset, sequenceSize, "Model sequence table");
     std::unique_ptr<ModelSequenceTableDecoder> modelSequenceDecoder =
-        CreateModelSequenceTableDecoder(mapped.ptr(sequenceOffset), headerDecoder->GetModelSequenceTableSize());
+        CreateModelSequenceTableDecoder(mapped.ptr(sequenceOffset), sequenceSize);
     if (modelSequenceDecoder == nullptr) {
         throw std::runtime_error("Invalid model sequeqnce table section");
     }
@@ -616,22 +602,16 @@ json getFile(const std::string &inputFile) {
 
     const auto moduleOffset = headerDecoder->GetModuleTableOffset();
     const auto moduleSize = headerDecoder->GetModuleTableSize();
-    ensureMappedRange(mapped, moduleOffset, moduleSize, "Module table");
     const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
     const auto resourceSize = headerDecoder->GetModelResourceTableSize();
-    ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
     const auto sequenceOffset = headerDecoder->GetModelSequenceTableOffset();
     const auto sequenceSize = headerDecoder->GetModelSequenceTableSize();
-    ensureMappedRange(mapped, sequenceOffset, sequenceSize, "Model sequence table");
     const auto constantsOffset = headerDecoder->GetConstantsOffset();
     const auto constantsSize = headerDecoder->GetConstantsSize();
-    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
 
-    const auto modules = parseModuleTable(mapped.ptr(moduleOffset), headerDecoder->GetModuleTableSize());
-    const auto resources =
-        vgfutils::parseModelResourceTable(mapped.ptr(resourceOffset), headerDecoder->GetModelResourceTableSize());
-    const auto modelSequence =
-        vgfutils::parseModelSequenceTable(mapped.ptr(sequenceOffset), headerDecoder->GetModelSequenceTableSize());
+    const auto modules = parseModuleTable(mapped.ptr(moduleOffset), moduleSize);
+    const auto resources = vgfutils::parseModelResourceTable(mapped.ptr(resourceOffset), resourceSize);
+    const auto modelSequence = vgfutils::parseModelSequenceTable(mapped.ptr(sequenceOffset), sequenceSize);
     const auto constants = vgfutils::parseConstantSection(mapped.ptr(constantsOffset), constantsSize);
 
     json json;

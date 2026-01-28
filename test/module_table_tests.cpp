@@ -30,8 +30,7 @@ TEST(CppModuleTable, Empty) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(
         data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize());
@@ -54,8 +53,7 @@ TEST(CppModuleTable, Single) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     uint32_t moduleIndex = module.reference;
     //! [ModuleTableDecodingSample0 begin]
@@ -96,8 +94,7 @@ TEST(CppModuleTable, Single2) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(
         data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize());
