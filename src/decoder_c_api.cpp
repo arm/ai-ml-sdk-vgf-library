@@ -259,7 +259,7 @@ mlsdk_decoder_model_sequence_decoder *mlsdk_decoder_create_model_sequence_decode
         CreateModelSequenceTableDecoderInPlace(modelSequenceData, size, modelSequenceDecoderMemory));
 }
 
-size_t mlsdk_decoder_model_sequence_decoder_mem_reqs() { return ModelResourceTableDecoderSize(); }
+size_t mlsdk_decoder_model_sequence_decoder_mem_reqs() { return ModelSequenceTableDecoderSize(); }
 
 size_t
 mlsdk_decoder_get_model_sequence_table_size(const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder) {
