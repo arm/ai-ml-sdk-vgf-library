@@ -6,6 +6,7 @@
 #include "parse_vgf.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -126,6 +127,25 @@ ModelSequence parseModelSequenceTable(const void *data, uint64_t size) {
     }
 
     return {std::move(segments), std::move(namedInputs), std::move(namedOutputs)};
+}
+
+std::vector<Constant> parseConstantSection(const void *data, uint64_t size) {
+    std::vector<Constant> constants;
+    const auto decoder = CreateConstantDecoder(data, size);
+    constants.reserve(decoder->size());
+    for (uint32_t i = 0; i < decoder->size(); ++i) {
+        const auto constantView = decoder->getConstant(i);
+        const auto mrtIndex = decoder->getConstantMrtIndex(i);
+        const auto sparsityDimension = decoder->getConstantSparsityDimension(i);
+        if (constantView.size() == 0 || mrtIndex == CONSTANT_INVALID_MRT_INDEX ||
+            sparsityDimension == CONSTANT_INVALID_SPARSITY_DIMENSION) {
+            throw std::runtime_error("Invalid constant metadata at index " + std::to_string(i));
+        }
+
+        constants.emplace_back(i, mrtIndex, sparsityDimension, constantView.begin(), constantView.size());
+    }
+
+    return constants;
 }
 
 } // namespace mlsdk::vgfutils
