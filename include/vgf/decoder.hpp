@@ -216,15 +216,7 @@ class ModuleTableDecoder {
 size_t ModuleTableDecoderSize();
 
 /**
- * @brief Returns true if input points to a valid Module Table
- *
- * @param data
- * @param size Max count of read bytes
- */
-bool VerifyModuleTable(const void *data, uint64_t size);
-
-/**
- * @brief Constructs a Module Table decoder
+ * @brief Constructs a Module Table decoder (returns nullptr if the section is invalid)
  *
  * @param data Pointer to Module Table section data
  * @param size Size in bytes of the section
@@ -232,7 +224,8 @@ bool VerifyModuleTable(const void *data, uint64_t size);
 std::unique_ptr<ModuleTableDecoder> CreateModuleTableDecoder(const void *data, uint64_t size);
 
 /**
- * @brief Constructs a Module Table decoder in-place using pre-allocated memory
+ * @brief Constructs a Module Table decoder in-place using pre-allocated memory (returns nullptr if the section is
+ * invalid)
  *
  * @param data Pointer to Module Table section data
  * @param size Size in bytes of the section
@@ -293,15 +286,7 @@ class ModelResourceTableDecoder {
 size_t ModelResourceTableDecoderSize();
 
 /**
- * @brief Returns true if input points to a valid Model Resource Table
- *
- * @param data
- * @param size Max count of read bytes
- */
-bool VerifyModelResourceTable(const void *data, uint64_t size);
-
-/**
- * @brief Constructs a Model Resource Table decoder
+ * @brief Constructs a Model Resource Table decoder (returns nullptr if the section is invalid)
  *
  * @param data Pointer to Model Resource Table section data
  * @param size Size in bytes of the section
@@ -309,7 +294,8 @@ bool VerifyModelResourceTable(const void *data, uint64_t size);
 std::unique_ptr<ModelResourceTableDecoder> CreateModelResourceTableDecoder(const void *data, uint64_t size);
 
 /**
- * @brief Constructs a Model Resource Table decoder in-place using pre-allocated memory
+ * @brief Constructs a Model Resource Table decoder in-place using pre-allocated memory (returns nullptr if the section
+ * is invalid)
  *
  * @param data Pointer to Model Resource Table section data
  * @param size Size in bytes of the section
@@ -363,15 +349,7 @@ class ConstantDecoder {
 size_t ConstantDecoderSize();
 
 /**
- * @brief Returns true if input points to a valid Constant section
- *
- * @param data Pointer to the Constants section data
- * @param size Max count of read bytes
- */
-bool VerifyConstant(const void *data, uint64_t size);
-
-/**
- * @brief Constructs a Constant section decoder
+ * @brief Constructs a Constant section decoder (returns nullptr if the section is invalid)
  *
  * @param data Pointer to the Constants section data
  * @param size Size in bytes of the section
@@ -379,7 +357,8 @@ bool VerifyConstant(const void *data, uint64_t size);
 std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *data, uint64_t size);
 
 /**
- * @brief Constructs a Constant section decoder in-place using preallocated memory
+ * @brief Constructs a Constant section decoder in-place using preallocated memory (returns nullptr if the section is
+ * invalid)
  *
  * @param data Pointer to the Constants section data
  * @param size Size in bytes of the section
@@ -594,15 +573,7 @@ class ModelSequenceTableDecoder {
 size_t ModelSequenceTableDecoderSize();
 
 /**
- * @brief Returns true if input points to a valid Model Sequence Table
- *
- * @param data
- * @param size Max count of read bytes
- */
-bool VerifyModelSequenceTable(const void *data, uint64_t size);
-
-/**
- * @brief Constructs a Model Sequence Table decoder
+ * @brief Constructs a Model Sequence Table decoder (returns nullptr if the table is invalid)
  *
  * @param data Pointer to Model Sequence Table section data
  * @param size Size in bytes of the section
@@ -610,7 +581,8 @@ bool VerifyModelSequenceTable(const void *data, uint64_t size);
 std::unique_ptr<ModelSequenceTableDecoder> CreateModelSequenceTableDecoder(const void *data, uint64_t size);
 
 /**
- * @brief Constructs a Model Sequence Table decoder in-place using pre-allocated memory
+ * @brief Constructs a Model Sequence Table decoder in-place using pre-allocated memory (returns nullptr if the section
+ * is invalid)
  *
  * @param data Pointer to Model Sequence Table section data
  * @param size Size in bytes of the section

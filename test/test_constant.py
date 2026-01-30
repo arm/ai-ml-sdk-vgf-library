@@ -38,13 +38,11 @@ def test_encode_decode_constant():
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
-    assert vgf.VerifyConstant(
-        buffer[headerDecoder.GetConstantsOffset() :], headerDecoder.GetConstantsSize()
-    )
     constantDecoder = vgf.CreateConstantDecoder(
         buffer[headerDecoder.GetConstantsOffset() :],
         headerDecoder.GetConstantsSize(),
     )
+    assert constantDecoder is not None
 
     assert constantDecoder.size() == 1
     assert (
@@ -84,13 +82,11 @@ def test_encode_decode_non_Sparse_constant():
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
-    assert vgf.VerifyConstant(
-        buffer[headerDecoder.GetConstantsOffset() :], headerDecoder.GetConstantsSize()
-    )
     constantDecoder = vgf.CreateConstantDecoder(
         buffer[headerDecoder.GetConstantsOffset() :],
         headerDecoder.GetConstantsSize(),
     )
+    assert constantDecoder is not None
 
     assert constantDecoder.size() == 1
     assert constantDecoder.getConstant(constantRef.reference) == memoryview(constant)
@@ -118,12 +114,10 @@ def test_encode_decode_empty_constant_section():
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
-    assert vgf.VerifyConstant(
-        buffer[headerDecoder.GetConstantsOffset() :], headerDecoder.GetConstantsSize()
-    )
     constantDecoder = vgf.CreateConstantDecoder(
         buffer[headerDecoder.GetConstantsOffset() :],
         headerDecoder.GetConstantsSize(),
     )
+    assert constantDecoder is not None
 
     assert constantDecoder.size() == 0

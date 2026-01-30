@@ -32,14 +32,11 @@ def test_encode_decode_module_table_empty():
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
-    assert vgf.VerifyModuleTable(
-        buffer[headerDecoder.GetModuleTableOffset() :],
-        headerDecoder.GetModuleTableSize(),
-    )
     moduleDecoder = vgf.CreateModuleTableDecoder(
         buffer[headerDecoder.GetModuleTableOffset() :],
         headerDecoder.GetModuleTableSize(),
     )
+    assert moduleDecoder is not None
 
     assert moduleDecoder.size() == 0
 
@@ -67,14 +64,11 @@ def test_encode_decode_module_table_single():
 
     moduleIndex = module.reference
 
-    assert vgf.VerifyModuleTable(
-        buffer[headerDecoder.GetModuleTableOffset() :],
-        headerDecoder.GetModuleTableSize(),
-    )
     moduleDecoder = vgf.CreateModuleTableDecoder(
         buffer[headerDecoder.GetModuleTableOffset() :],
         headerDecoder.GetModuleTableSize(),
     )
+    assert moduleDecoder is not None
 
     numModules = moduleDecoder.size()
 
@@ -109,14 +103,11 @@ def test_encode_decode_module_table_single_placeholder():
 
     moduleIndex = module.reference
 
-    assert vgf.VerifyModuleTable(
-        buffer[headerDecoder.GetModuleTableOffset() :],
-        headerDecoder.GetModuleTableSize(),
-    )
     moduleDecoder = vgf.CreateModuleTableDecoder(
         buffer[headerDecoder.GetModuleTableOffset() :],
         headerDecoder.GetModuleTableSize(),
     )
+    assert moduleDecoder is not None
 
     assert moduleDecoder.size() == 1
     assert moduleDecoder.getModuleType(moduleIndex) == vgf.ModuleType.Compute

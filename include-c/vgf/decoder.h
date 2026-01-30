@@ -262,21 +262,12 @@ MLSDKAPI void mlsdk_decoder_get_header_section_info(const mlsdk_decoder_header_d
 MLSDKAPI size_t mlsdk_decoder_module_table_decoder_mem_reqs();
 
 /**
- * @brief Checks if pointer points to valid module table data
- *
- * @param moduleTableData The pointer to the data
- * @param size The size in bytes of the data
- * @return True if the data is a valid section, false otherwise
- */
-MLSDKAPI bool mlsdk_decoder_is_valid_module_table(const void *moduleTableData, uint64_t size);
-
-/**
  * @brief Creates the module table decoder
  *
  * @param moduleTableData The pointer to the module table data
  * @param size The size in bytes of the module table section
  * @param decoderMemory Memory allocated to be used to create the decoder
- * @return The pointer to the newly created decoder
+ * @return The pointer to the newly created decoder (nullptr if the section is invalid)
  */
 MLSDKAPI mlsdk_decoder_module_table_decoder *
 mlsdk_decoder_create_module_table_decoder(const void *const moduleTableData, uint64_t size, void *decoderMemory);
@@ -433,21 +424,12 @@ mlsdk_decoder_get_push_constant_range_size(const mlsdk_decoder_model_sequence_de
 /**********************************************************************************************************************/
 
 /**
- * @brief Checks if pointer points to valid model sequence data
- *
- * @param modelSequenceData The pointer to the data
- * @param size The size in bytes of the data
- * @return True if the data is a valid section, false otherwise
- */
-MLSDKAPI bool mlsdk_decoder_is_valid_model_sequence(const void *modelSequenceData, uint64_t size);
-
-/**
  * @brief Create the model sequence decoder
  *
  * @param modelSequenceData The pointer to the model sequence data
  * @param size The size in bytes of the model sequence section
  * @param modelSequenceDecoderMemory Memory allocated to be used to create the decoder
- * @return The pointer to the newly created model sequence decoder
+ * @return The pointer to the newly created decoder (nullptr if the section is invalid)
  */
 MLSDKAPI mlsdk_decoder_model_sequence_decoder *
 mlsdk_decoder_create_model_sequence_decoder(const void *const modelSequenceData, uint64_t size,
@@ -600,21 +582,12 @@ mlsdk_decoder_model_sequence_get_output_binding_slot(mlsdk_decoder_model_sequenc
 MLSDKAPI size_t mlsdk_decoder_model_resource_table_decoder_mem_reqs();
 
 /**
- * @brief Checks if pointer points to valid model resource table data
- *
- * @param modelResourceTableData The pointer to the data
- * @param size The size in bytes of the data
- * @return True if the data is a valid section, false otherwise
- */
-MLSDKAPI bool mlsdk_decoder_is_valid_model_resource_table(const void *modelResourceTableData, uint64_t size);
-
-/**
  * @brief Create the model resource table decoder
  *
  * @param modelResourceTableData The pointer to the module resource table data
  * @param size The size in bytes of the model resource table section
  * @param decoderMemory Memory allocated to be used to create the decoder
- * @return The pointer to the newly created decoder
+ * @return The pointer to the newly created decoder (nullptr if the section is invalid)
  */
 MLSDKAPI mlsdk_decoder_model_resource_table_decoder *
 mlsdk_decoder_create_model_resource_table_decoder(const void *const modelResourceTableData, uint64_t size,
@@ -685,21 +658,12 @@ MLSDKAPI void mlsdk_decoder_model_resource_table_get_tensor_strides(
 /**********************************************************************************************************************/
 
 /**
- * @brief Checks if pointer points to valid constant table data
- *
- * @param constantTableData The pointer to the data
- * @param size The size in bytes of the data
- * @return True if the data is a valid constant section, false otherwise
- */
-MLSDKAPI bool mlsdk_decoder_is_valid_constant_table(const void *constantTableData, uint64_t size);
-
-/**
  * @brief Create the constant table decoder
  *
  * @param constantTableData The pointer to the constant table data
  * @param size The size in bytes of the constant table data
  * @param constantDecoderMemory Memory allocated to be used to create the decoder
- * @return The pointer to the newly created decoder
+ * @return The pointer to the newly created decoder (nullptr if the section is invalid)
  */
 MLSDKAPI mlsdk_decoder_constant_table_decoder *
 mlsdk_decoder_create_constant_table_decoder(const void *const constantTableData, uint64_t size,

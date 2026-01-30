@@ -134,6 +134,9 @@ std::unique_ptr<HeaderDecoder> parseHeader(const void *const headerData, uint64_
 
 std::vector<Module> parseModuleTable(const void *const data, uint64_t size) {
     std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(data, size);
+    if (decoder == nullptr) {
+        throw std::runtime_error("Module table could not be decoded safely");
+    }
 
     std::vector<Module> modules;
     modules.reserve(decoder->size());
@@ -401,19 +404,17 @@ void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint
     const auto constantsOffset = headerDecoder->GetConstantsOffset();
     const auto constantsSize = headerDecoder->GetConstantsSize();
     ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
-    if (!VerifyConstant(mapped.ptr(constantsOffset), constantsSize)) {
-        throw std::runtime_error("Invalid header data");
+    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
+    if (constantDecoder == nullptr) {
+        throw std::runtime_error("Invalid constant section");
     }
     const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
     const auto resourceSize = headerDecoder->GetModelResourceTableSize();
     ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
-    if (!VerifyModelResourceTable(mapped.ptr(resourceOffset), resourceSize)) {
-        throw std::runtime_error("Invalid header data");
+    const auto mrtDecoder = CreateModelResourceTableDecoder(mapped.ptr(resourceOffset), resourceSize);
+    if (mrtDecoder == nullptr) {
+        throw std::runtime_error("Invalid model resource table section");
     }
-
-    const auto constantDecoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
-    const auto mrtDecoder =
-        CreateModelResourceTableDecoder(mapped.ptr(resourceOffset), headerDecoder->GetModelResourceTableSize());
 
     if (index >= constantDecoder->size()) {
         throw std::runtime_error("Constant index " + std::to_string(index) +
@@ -450,12 +451,10 @@ void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(c
     const auto moduleOffset = headerDecoder->GetModuleTableOffset();
     const auto moduleSize = headerDecoder->GetModuleTableSize();
     ensureMappedRange(mapped, moduleOffset, moduleSize, "Module table");
-    if (!VerifyModuleTable(mapped.ptr(moduleOffset), moduleSize)) {
-        throw std::runtime_error("Invalid module table");
+    std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(mapped.ptr(moduleOffset), moduleSize);
+    if (decoder == nullptr) {
+        throw std::runtime_error("Invalid module table section");
     }
-
-    std::unique_ptr<ModuleTableDecoder> decoder =
-        CreateModuleTableDecoder(mapped.ptr(moduleOffset), headerDecoder->GetModuleTableSize());
 
     if (index >= decoder->size()) {
         throw std::runtime_error("Module index " + std::to_string(index) +
@@ -475,11 +474,10 @@ void getConstant(const std::string &inputFile, uint32_t index, std::function<voi
     const auto constantsOffset = headerDecoder->GetConstantsOffset();
     const auto constantsSize = headerDecoder->GetConstantsSize();
     ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
-    if (!VerifyConstant(mapped.ptr(constantsOffset), constantsSize)) {
-        throw std::runtime_error("Invalid header data");
-    }
-
     std::unique_ptr<ConstantDecoder> decoder = CreateConstantDecoder(mapped.ptr(constantsOffset), constantsSize);
+    if (decoder == nullptr) {
+        throw std::runtime_error("Invalid constant section");
+    }
 
     if (index >= decoder->size()) {
         throw std::runtime_error("Constant index " + std::to_string(index) +
@@ -503,20 +501,19 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
     const auto resourceSize = headerDecoder->GetModelResourceTableSize();
     ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
-    if (!VerifyModelResourceTable(mapped.ptr(resourceOffset), resourceSize)) {
+    std::unique_ptr<ModelResourceTableDecoder> modelResourceDecoder =
+        CreateModelResourceTableDecoder(mapped.ptr(resourceOffset), headerDecoder->GetModelResourceTableSize());
+    if (modelResourceDecoder == nullptr) {
         throw std::runtime_error("Invalid model resource table");
     }
     const auto sequenceOffset = headerDecoder->GetModelSequenceTableOffset();
     const auto sequenceSize = headerDecoder->GetModelSequenceTableSize();
     ensureMappedRange(mapped, sequenceOffset, sequenceSize, "Model sequence table");
-    if (!VerifyModelSequenceTable(mapped.ptr(sequenceOffset), sequenceSize)) {
-        throw std::runtime_error("Invalid model sequeqnce table");
-    }
-
-    std::unique_ptr<ModelResourceTableDecoder> modelResourceDecoder =
-        CreateModelResourceTableDecoder(mapped.ptr(resourceOffset), headerDecoder->GetModelResourceTableSize());
     std::unique_ptr<ModelSequenceTableDecoder> modelSequenceDecoder =
         CreateModelSequenceTableDecoder(mapped.ptr(sequenceOffset), headerDecoder->GetModelSequenceTableSize());
+    if (modelSequenceDecoder == nullptr) {
+        throw std::runtime_error("Invalid model sequeqnce table section");
+    }
 
     std::vector<ScenarioTensorResource> tensorResources;
     BindingSlotArrayHandle seqInputsHandle = modelSequenceDecoder->getModelSequenceInputBindingSlotsHandle();
@@ -567,9 +564,6 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         }
     }
 
-    if (!VerifyModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
-        throw std::runtime_error("Invalid module table");
-    }
     uint32_t shaderIdx = 0;
     std::vector<ScenarioShaderSubstitutions> shader_substitutions;
     std::vector<ScenarioShaderResource> shaderResources;
@@ -623,27 +617,15 @@ json getFile(const std::string &inputFile) {
     const auto moduleOffset = headerDecoder->GetModuleTableOffset();
     const auto moduleSize = headerDecoder->GetModuleTableSize();
     ensureMappedRange(mapped, moduleOffset, moduleSize, "Module table");
-    if (!VerifyModuleTable(mapped.ptr(moduleOffset), moduleSize)) {
-        throw std::runtime_error("Invalid module table");
-    }
     const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
     const auto resourceSize = headerDecoder->GetModelResourceTableSize();
     ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
-    if (!VerifyModelResourceTable(mapped.ptr(resourceOffset), resourceSize)) {
-        throw std::runtime_error("Invalid model resource table");
-    }
     const auto sequenceOffset = headerDecoder->GetModelSequenceTableOffset();
     const auto sequenceSize = headerDecoder->GetModelSequenceTableSize();
     ensureMappedRange(mapped, sequenceOffset, sequenceSize, "Model sequence table");
-    if (!VerifyModelSequenceTable(mapped.ptr(sequenceOffset), sequenceSize)) {
-        throw std::runtime_error("Invalid model sequence table");
-    }
     const auto constantsOffset = headerDecoder->GetConstantsOffset();
     const auto constantsSize = headerDecoder->GetConstantsSize();
     ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
-    if (!VerifyConstant(mapped.ptr(constantsOffset), constantsSize)) {
-        throw std::runtime_error("Invalid constant section");
-    }
 
     const auto modules = parseModuleTable(mapped.ptr(moduleOffset), headerDecoder->GetModuleTableSize());
     const auto resources =

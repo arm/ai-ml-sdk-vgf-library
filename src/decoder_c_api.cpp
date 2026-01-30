@@ -92,11 +92,6 @@ void mlsdk_decoder_get_header_section_info(const mlsdk_decoder_header_decoder *c
 
 size_t mlsdk_decoder_module_table_decoder_mem_reqs() { return ModuleTableDecoderSize(); }
 
-bool mlsdk_decoder_is_valid_module_table(const void *moduleTableData, const uint64_t size) {
-    assert(moduleTableData != nullptr && "moduleTableData is null");
-    return VerifyModuleTable(moduleTableData, size);
-}
-
 mlsdk_decoder_module_table_decoder *
 mlsdk_decoder_create_module_table_decoder(const void *const moduleTableData, const uint64_t size, void *decoderMemory) {
     assert(moduleTableData != nullptr && "moduleTableData is null");
@@ -245,11 +240,6 @@ mlsdk_decoder_get_push_constant_range_size(const mlsdk_decoder_model_sequence_de
 
 /**********************************************************************************************************************/
 
-bool mlsdk_decoder_is_valid_model_sequence(const void *modelSequenceData, const uint64_t size) {
-    assert(modelSequenceData != nullptr && "modelSequenceData is null");
-    return VerifyModelSequenceTable(modelSequenceData, size);
-}
-
 mlsdk_decoder_model_sequence_decoder *mlsdk_decoder_create_model_sequence_decoder(const void *const modelSequenceData,
                                                                                   const uint64_t size,
                                                                                   void *modelSequenceDecoderMemory) {
@@ -363,11 +353,6 @@ mlsdk_decoder_model_sequence_get_output_binding_slot(mlsdk_decoder_model_sequenc
 
 size_t mlsdk_decoder_model_resource_table_decoder_mem_reqs() { return ModelResourceTableDecoderSize(); }
 
-bool mlsdk_decoder_is_valid_model_resource_table(const void *modelResourceTableData, const uint64_t size) {
-    assert(modelResourceTableData != nullptr && "modelResourceTableData is null");
-    return VerifyModelResourceTable(modelResourceTableData, size);
-}
-
 mlsdk_decoder_model_resource_table_decoder *
 mlsdk_decoder_create_model_resource_table_decoder(const void *const modelResourceTableData, const uint64_t size,
                                                   void *decoderMemory) {
@@ -402,11 +387,6 @@ mlsdk_decoder_get_vk_format(const mlsdk_decoder_model_resource_table_decoder *co
 }
 
 /**********************************************************************************************************************/
-
-bool mlsdk_decoder_is_valid_constant_table(const void *constantTableData, const uint64_t size) {
-    assert(constantTableData != nullptr && "constantTableData is null");
-    return VerifyConstant(constantTableData, size);
-}
 
 mlsdk_decoder_constant_table_decoder *mlsdk_decoder_create_constant_table_decoder(const void *const constantTableData,
                                                                                   const uint64_t size,

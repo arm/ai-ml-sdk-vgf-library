@@ -32,14 +32,11 @@ def test_encode_decode_model_resource_table_empty():
     assert headerDecoder.IsValid()
     assert headerDecoder.CheckVersion()
 
-    assert vgf.VerifyModelResourceTable(
-        buffer[headerDecoder.GetModelResourceTableOffset() :],
-        headerDecoder.GetModelResourceTableSize(),
-    )
     resTableDecoder = vgf.CreateModelResourceTableDecoder(
         buffer[headerDecoder.GetModelResourceTableOffset() :],
         headerDecoder.GetModelResourceTableSize(),
     )
+    assert resTableDecoder is not None
 
     assert resTableDecoder.size() == 0
 
@@ -79,14 +76,11 @@ def test_encode_decode_model_resource_table():
 
     mrtIndex0 = resource0.reference
 
-    assert vgf.VerifyModelResourceTable(
-        buffer[headerDecoder.GetModelResourceTableOffset() :],
-        headerDecoder.GetModelResourceTableSize(),
-    )
     mrtDecoder = vgf.CreateModelResourceTableDecoder(
         buffer[headerDecoder.GetModelResourceTableOffset() :],
         headerDecoder.GetModelResourceTableSize(),
     )
+    assert mrtDecoder is not None
 
     assert mrtDecoder.size() == 2
 
@@ -139,14 +133,11 @@ def test_encode_decode_model_resource_table_with_unknown_dimensions():
 
     mrtIndex0 = resource0.reference
 
-    assert vgf.VerifyModelResourceTable(
-        buffer[headerDecoder.GetModelResourceTableOffset() :],
-        headerDecoder.GetModelResourceTableSize(),
-    )
     mrtDecoder = vgf.CreateModelResourceTableDecoder(
         buffer[headerDecoder.GetModelResourceTableOffset() :],
         headerDecoder.GetModelResourceTableSize(),
     )
+    assert mrtDecoder is not None
 
     assert mrtDecoder.size() == 2
 
