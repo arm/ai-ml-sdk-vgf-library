@@ -2,10 +2,10 @@
  * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "common.hpp"
 #include "vgf/decoder.h"
 #include "vgf/decoder.hpp"
 #include "vgf/encoder.hpp"
-#include "vgf/logging.hpp"
 #include "vgf/types.hpp"
 
 #include "constant.hpp"
@@ -20,18 +20,10 @@
 #include <string>
 
 using namespace mlsdk::vgflib;
+using logging::utils::Logger;
 
 const uint16_t pretendVulkanHeaderVersion = 123;
 constexpr size_t GB{1024 * 1024 * 1024};
-
-struct Logger {
-    Logger() { logging::EnableLogging(Logger::log); }
-    ~Logger() { logging::DisableLogging(); }
-
-    static void log(logging::LogLevel logLevel, const std::string &message) {
-        std::cout << logLevel << " Message: " << message << std::endl;
-    }
-};
 
 namespace {
 
@@ -53,15 +45,6 @@ std::vector<uint8_t> MakeConstantSectionV00(uint64_t count, const std::vector<Co
 }
 
 } // namespace
-
-TEST(CppVerify, BadData) {
-
-    uint8_t bad_data[16] = {0xde, 0xad, 0xbe, 0xef, 0xba, 0xad, 0xf0, 0x0d,
-                            0xca, 0xfe, 0xba, 0xbe, 0x00, 0x11, 0x22, 0x33};
-
-    const void *bad_data_ptr = static_cast<const void *>(bad_data);
-    ASSERT_EQ(CreateConstantDecoder(bad_data_ptr, sizeof(bad_data)), nullptr);
-}
 
 TEST(CppEncodeDecode, AddConstant) {
     std::stringstream buffer;
@@ -128,7 +111,6 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
     std::ofstream file(filename, std::ios::binary);
     ASSERT_TRUE(file);
 
-    Logger logger;
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
 
     const size_t largeConstsSize = 25000000; // 25MB
@@ -211,8 +193,25 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
         ASSERT_TRUE(decoder->isSparseConstant(i) == false);
     }
 }
+TEST(CppVerify, BadData) {
 
-TEST(CppEncodeDecode, RejectsDeclaredCountExceedingAvailableMetadata) {
+    uint8_t bad_data[16] = {0xde, 0xad, 0xbe, 0xef, 0xba, 0xad, 0xf0, 0x0d,
+                            0xca, 0xfe, 0xba, 0xbe, 0x00, 0x11, 0x22, 0x33};
+
+    const void *bad_data_ptr = static_cast<const void *>(bad_data);
+    ASSERT_EQ(CreateConstantDecoder(bad_data_ptr, sizeof(bad_data)), nullptr);
+}
+
+TEST(CppVerify, SectionTooSmallForMetadataRejected) {
+    Logger logger;
+    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
+    section.resize(CONSTANT_SECTION_METADATA_OFFSET - 1);
+    ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant section too small to contain metadata"}));
+}
+
+TEST(CppVerify, DeclaredCountExceedingAvailableMetadataRejected) {
+    Logger logger;
     const std::vector<ConstantMetaData_V00> vecMetaData = {
         ConstantMetaData_V00{
             7,  // mrtIndex
@@ -225,9 +224,11 @@ TEST(CppEncodeDecode, RejectsDeclaredCountExceedingAvailableMetadata) {
     const uint64_t declaredCount = 2;
     std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, vecMetaData, constant);
     ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant section declares more entries than fit in the buffer"}));
 }
 
-TEST(CppEncodeDecode, RejectsOutOfRangeOffsets) {
+TEST(CppVerify, OutOfRangeOffsetsRejected) {
+    Logger logger;
     const std::vector<ConstantMetaData_V00> vecMetadata = {
         ConstantMetaData_V00{
             3,  // mrtIndex
@@ -240,23 +241,11 @@ TEST(CppEncodeDecode, RejectsOutOfRangeOffsets) {
     const uint64_t declaredCount = 1;
     std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, vecMetadata, constant);
     ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant metadata offset/size exceeds section bounds at index 0"}));
 }
 
-TEST(CppEncodeDecode, RejectsSectionTooSmallForMetadata) {
-    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
-    section.resize(CONSTANT_SECTION_METADATA_OFFSET - 1);
-    ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
-}
-
-TEST(CppEncodeDecode, RejectsMetadataExtendingPastBuffer) {
-    const uint64_t declaredCount = 1;
-    const size_t truncatedSize = CONSTANT_SECTION_METADATA_OFFSET + sizeof(ConstantMetaData_V00) - 4;
-    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, {ConstantMetaData_V00{}}, {});
-    section.resize(truncatedSize);
-    ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
-}
-
-TEST(CppEncodeDecode, RejectsBadSparsityDimension) {
+TEST(CppVerify, BadSparsityDimensionRejected) {
+    Logger logger;
     const uint64_t declaredCount = 1;
     const std::vector<ConstantMetaData_V00> vecMetaData = {
         ConstantMetaData_V00{
@@ -269,9 +258,10 @@ TEST(CppEncodeDecode, RejectsBadSparsityDimension) {
     const std::vector<uint8_t> constant = {'a'};
     std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, vecMetaData, constant);
     ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant sparsity dimension is invalid at index 0"}));
 }
 
-TEST(CppEncodeDecode, EmptyConstantSection) {
+TEST(CppVerify, EmptyConstantSection) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
@@ -405,7 +395,6 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
     std::ofstream file(filename, std::ios::binary);
     ASSERT_TRUE(file);
 
-    Logger logger;
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
 
     const size_t largeConstsSize = 25000000; // 25MB
@@ -506,7 +495,31 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
     }
 }
 
-TEST(CEncodeDecode, RejectsDeclaredCountExceedingAvailableMetadata) {
+TEST(CVerify, BadData) {
+
+    uint8_t bad_data[16] = {0xde, 0xad, 0xbe, 0xef, 0xba, 0xad, 0xf0, 0x0d,
+                            0xca, 0xfe, 0xba, 0xbe, 0x00, 0x11, 0x22, 0x33};
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+
+    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(static_cast<const void *>(bad_data), sizeof(bad_data),
+                                                          decoderMemory.data()),
+              nullptr);
+}
+
+TEST(CVerify, SectionTooSmallForMetadataRejected) {
+    Logger logger;
+    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
+    section.resize(CONSTANT_SECTION_METADATA_OFFSET - 1);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
+    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
+              nullptr);
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant section too small to contain metadata"}));
+}
+
+TEST(CVerify, DeclaredCountExceedingAvailableMetadataRejected) {
+    Logger logger;
     const std::vector<ConstantMetaData_V00> vecMetaData = {
         ConstantMetaData_V00{
             7,  // mrtIndex
@@ -522,29 +535,11 @@ TEST(CEncodeDecode, RejectsDeclaredCountExceedingAvailableMetadata) {
     std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
     ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
               nullptr);
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant section declares more entries than fit in the buffer"}));
 }
 
-TEST(CEncodeDecode, RejectsSectionTooSmallForMetadata) {
-    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
-    section.resize(CONSTANT_SECTION_METADATA_OFFSET - 1);
-
-    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
-    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
-              nullptr);
-}
-
-TEST(CEncodeDecode, RejectsMetadataExtendingPastBuffer) {
-    const uint64_t declaredCount = 1;
-    const size_t truncatedSize = CONSTANT_SECTION_METADATA_OFFSET + sizeof(ConstantMetaData_V00) - 4;
-    std::vector<uint8_t> section = MakeConstantSectionV00(declaredCount, {ConstantMetaData_V00{}}, {});
-    section.resize(truncatedSize);
-
-    std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
-    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
-              nullptr);
-}
-
-TEST(CEncodeDecode, RejectsOutOfRangeOffsets) {
+TEST(CVerify, OutOfRangeOffsetsRejected) {
+    Logger logger;
     const std::vector<ConstantMetaData_V00> vecMetadata = {
         ConstantMetaData_V00{
             3,  // mrtIndex
@@ -560,9 +555,11 @@ TEST(CEncodeDecode, RejectsOutOfRangeOffsets) {
     std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
     ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
               nullptr);
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant metadata offset/size exceeds section bounds at index 0"}));
 }
 
-TEST(CEncodeDecode, RejectsBadSparsityDimension) {
+TEST(CVerify, BadSparsityDimensionRejected) {
+    Logger logger;
     const uint64_t declaredCount = 1;
     const std::vector<ConstantMetaData_V00> vecMetaData = {
         ConstantMetaData_V00{
@@ -578,9 +575,10 @@ TEST(CEncodeDecode, RejectsBadSparsityDimension) {
     std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
     ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(section.data(), section.size(), decoderMemory.data()),
               nullptr);
+    EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant sparsity dimension is invalid at index 0"}));
 }
 
-TEST(CEncodeDecode, EmptyConstantSection) {
+TEST(CVerify, EmptyConstantSection) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
