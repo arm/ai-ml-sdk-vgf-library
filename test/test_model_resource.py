@@ -29,8 +29,7 @@ def test_encode_decode_model_resource_table_empty():
     assert buffer.nbytes >= vgf.HeaderSize()
 
     headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
-    assert headerDecoder.IsValid()
-    assert headerDecoder.CheckVersion()
+    assert headerDecoder is not None
 
     resTableDecoder = vgf.CreateModelResourceTableDecoder(
         buffer[headerDecoder.GetModelResourceTableOffset() :],
@@ -71,8 +70,7 @@ def test_encode_decode_model_resource_table():
     assert buffer.nbytes >= vgf.HeaderSize()
 
     headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
-    assert headerDecoder.IsValid()
-    assert headerDecoder.CheckVersion()
+    assert headerDecoder is not None
 
     mrtIndex0 = resource0.reference
 
@@ -128,8 +126,7 @@ def test_encode_decode_model_resource_table_with_unknown_dimensions():
     assert buffer.nbytes >= vgf.HeaderSize()
 
     headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
-    assert headerDecoder.IsValid()
-    assert headerDecoder.CheckVersion()
+    assert headerDecoder is not None
 
     mrtIndex0 = resource0.reference
 

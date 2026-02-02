@@ -54,38 +54,6 @@ ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
     throw std::runtime_error("Unsupported resource category");
 }
 
-void ensureMappedRange(const MemoryMap &mapped, uint64_t offset, uint64_t size, std::string_view section) {
-    if ((offset > mapped.size()) || (size > mapped.size() - offset)) {
-        throw std::runtime_error(std::string(section) + " section exceeds available file size");
-    }
-}
-
-std::unique_ptr<HeaderDecoder> loadHeaderSafely(const MemoryMap &mapped) {
-    ensureMappedRange(mapped, 0, HeaderSize(), "Header");
-    auto headerDecoder = CreateHeaderDecoder(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
-    if (!headerDecoder || !headerDecoder->IsValid()) {
-        throw std::runtime_error("Invalid VGF header, bad magic value");
-    }
-
-    const auto moduleOffset = headerDecoder->GetModuleTableOffset();
-    const auto moduleSize = headerDecoder->GetModuleTableSize();
-    ensureMappedRange(mapped, moduleOffset, moduleSize, "Module table");
-
-    const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
-    const auto resourceSize = headerDecoder->GetModelResourceTableSize();
-    ensureMappedRange(mapped, resourceOffset, resourceSize, "Model resource table");
-
-    const auto sequenceOffset = headerDecoder->GetModelSequenceTableOffset();
-    const auto sequenceSize = headerDecoder->GetModelSequenceTableSize();
-    ensureMappedRange(mapped, sequenceOffset, sequenceSize, "Model sequence table");
-
-    const auto constantsOffset = headerDecoder->GetConstantsOffset();
-    const auto constantsSize = headerDecoder->GetConstantsSize();
-    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
-
-    return headerDecoder;
-}
-
 std::vector<ModuleRef> extractModules(const HeaderDecoder &headerDecoder, const MemoryMap &mapped, Encoder &encoder) {
     auto moduleDecoder =
         CreateModuleTableDecoder(mapped.ptr(headerDecoder.GetModuleTableOffset()), headerDecoder.GetModuleTableSize());
@@ -128,7 +96,6 @@ std::unordered_map<uint32_t, Constant> decodeConstants(const HeaderDecoder &head
     }
 
     const auto constantsOffset = headerDecoder.GetConstantsOffset();
-    ensureMappedRange(mapped, constantsOffset, constantsSize, "Constant");
     const auto parsedConstants = parseConstantSection(mapped.ptr(constantsOffset), constantsSize);
     for (const auto &segment : sequenceTable.mSegments) {
         for (const auto constantIdx : segment.mConstants) {
@@ -236,7 +203,10 @@ void writeOutput(const std::string &outputPath, Encoder &encoder) {
 
 void update(const std::string &inputPath, const std::string &outputPath) {
     MemoryMap mapped(inputPath);
-    const auto headerDecoder = loadHeaderSafely(mapped);
+    const auto headerDecoder = CreateHeaderDecoder(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
+    if (!headerDecoder) {
+        throw std::runtime_error("Invalid VGF file: header or section verification failed");
+    }
 
     if (headerDecoder->IsLatestVersion()) {
         std::cout << "VGF file is already at the latest version: " << static_cast<unsigned>(headerDecoder->GetMajor())

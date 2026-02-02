@@ -35,8 +35,7 @@ TEST(CppModelSequenceTable, SegmentInfo) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
         data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
@@ -66,8 +65,7 @@ TEST(CppModelSequenceTable, DescripterSetInfo) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
         data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
@@ -101,8 +99,7 @@ TEST(CppModelSequenceTable, DescriptorBindingSlot) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     //! [ModelSequenceTableDecodingSample0 begin]
     std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
@@ -182,8 +179,7 @@ TEST(CppModelSequenceTable, SegmentBindingSlot) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
         data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
@@ -228,8 +224,7 @@ TEST(CppModelSequenceTable, BindingSlot) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
         data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
@@ -272,8 +267,7 @@ TEST(CppModelSequenceTable, SegmentConstants) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
         data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
@@ -306,8 +300,7 @@ TEST(CppModelSequenceTable, SegmentDispatchShape) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
         data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
@@ -341,8 +334,7 @@ TEST(CppModelSequenceTable, PushConstantRange) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
         data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());

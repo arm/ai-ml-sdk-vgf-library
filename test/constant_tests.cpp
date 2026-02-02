@@ -80,8 +80,7 @@ TEST(CppEncodeDecode, AddConstant) {
     std::string data = buffer.str();
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ConstantDecoder> decoder =
         CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize());
@@ -111,8 +110,7 @@ TEST(CppEncodeDecode, AddNonSparseConstant) {
     std::string data = buffer.str();
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ConstantDecoder> decoder =
         CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize());
@@ -179,8 +177,7 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(mmapped.ptr(), static_cast<uint64_t>(mmapped.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     EXPECT_GT(mmapped.size(), 2 * GB);
     std::unique_ptr<ConstantDecoder> decoder =
@@ -285,8 +282,7 @@ TEST(CppEncodeDecode, EmptyConstantSection) {
     std::string data = buffer.str();
     std::unique_ptr<HeaderDecoder> headerDecoder =
         CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
-    ASSERT_TRUE(headerDecoder->IsValid());
-    ASSERT_TRUE(headerDecoder->CheckVersion());
+    ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ConstantDecoder> decoder =
         CreateConstantDecoder(data.c_str() + headerDecoder->GetConstantsOffset(), headerDecoder->GetConstantsSize());
