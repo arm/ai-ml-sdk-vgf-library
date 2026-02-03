@@ -662,28 +662,24 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
 
     [[nodiscard]] static std::optional<VerifiedLayout> _verify(const void *const data, const uint64_t sectionSize) {
         if (sectionSize < CONSTANT_SECTION_METADATA_OFFSET) {
-            logging::error("Constant section too small to contain metadata");
+            logging::error("VerifyConstant: Constant section too small to contain metadata");
             return std::nullopt;
         }
 
         const auto declaredCount = ReadBytesAs<uint64_t>(data, CONSTANT_SECTION_COUNT_OFFSET);
         const uint64_t maxEntries = (sectionSize - CONSTANT_SECTION_METADATA_OFFSET) / sizeof(ConstantMetaData_V00);
         if (declaredCount > maxEntries) {
-            logging::error("Constant section declares more entries than fit in the buffer");
+            logging::error("VerifyConstant: Constant section declares more entries than fit in the buffer");
             return std::nullopt;
         }
 
         const uint64_t dataOffset = CONSTANT_SECTION_METADATA_OFFSET + declaredCount * sizeof(ConstantMetaData_V00);
 #if SIZE_MAX < UINT64_MAX
-        if (dataOffset > std::numeric_limits<size_t>::max()) {
-            logging::error("Constant data offset exceeds addressable size");
+        if (dataOffset > SIZE_MAX_VALUE) {
+            logging::error("VerifyConstant: Constant data offset exceeds addressable size");
             return std::nullopt;
         }
 #endif
-        if (dataOffset > sectionSize) {
-            logging::error("Constant metadata exceeds section size");
-            return std::nullopt;
-        }
 
         const auto *metaData = static_cast<const uint8_t *>(data) + CONSTANT_SECTION_METADATA_OFFSET;
         const auto *dataStart = static_cast<const uint8_t *>(data) + static_cast<size_t>(dataOffset);
@@ -693,11 +689,13 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
             const auto *entry =
                 reinterpret_cast<const ConstantMetaData_V00 *>(metaData + idx * sizeof(ConstantMetaData_V00));
             if (!_constantDataWithinBounds(entry, dataSize)) {
-                logging::error("Constant metadata offset/size exceeds section bounds at index " + std::to_string(idx));
+                logging::error("VerifyConstant: Constant metadata offset/size exceeds section bounds at index " +
+                               std::to_string(idx));
                 return std::nullopt;
             }
             if (entry->sparsityDimension < CONSTANT_NOT_SPARSE_DIMENSION) {
-                logging::error("Constant sparsity dimension is invalid at index " + std::to_string(idx));
+                logging::error("VerifyConstant: Constant sparsity dimension is invalid at index " +
+                               std::to_string(idx));
                 return std::nullopt;
             }
         }
@@ -719,7 +717,7 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         const uint64_t offset = metaData->offset;
         const uint64_t entrySize = metaData->size;
 #if SIZE_MAX < UINT64_MAX
-        const uint64_t sizeMax = std::numeric_limits<size_t>::max();
+        const uint64_t sizeMax = SIZE_MAX_VALUE;
         if (offset > sizeMax || entrySize > sizeMax || offset + entrySize > sizeMax) {
             return false;
         }
