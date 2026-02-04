@@ -3,20 +3,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "common.hpp"
 #include "vgf/decoder.h"
 #include "vgf/decoder.hpp"
 #include "vgf/encoder.hpp"
+#include "vgf/logging.hpp"
 #include "vgf/types.hpp"
 
 #include "header.hpp"
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 using namespace mlsdk::vgflib;
+using logging::utils::Logger;
 
 const uint16_t pretendVulkanHeaderVersion = 123;
 
@@ -348,6 +353,54 @@ TEST(CppModelSequenceTable, PushConstantRange) {
     ASSERT_TRUE(seqTableDecoder->getPushConstRangeStageFlags(handle, pushConstRange.reference) == 1);
     ASSERT_TRUE(seqTableDecoder->getPushConstRangeOffset(handle, pushConstRange.reference) == 2);
     ASSERT_TRUE(seqTableDecoder->getPushConstRangeSize(handle, pushConstRange.reference) == 3);
+}
+
+TEST(CppVerify, ModelSequenceSizeWrapRejected) {
+    Logger logger;
+    const uint64_t sequenceOffset = 32;
+    const uint64_t sequenceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const size_t fileSize = 131;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({0, 0}, {sequenceOffset, sequenceSize}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    EXPECT_EQ(nullptr, CreateModelSequenceTableDecoder(buffer.data() + sequenceOffset, sequenceSize));
+    EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "size out of bounds"}));
+}
+
+TEST(CppVerify, ModelSequenceTooSmallRejected) {
+    Logger logger;
+    std::array<uint8_t, 2> buffer{0, 0};
+
+    EXPECT_EQ(nullptr, CreateModelSequenceTableDecoder(buffer.data(), buffer.size()));
+    EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "size smaller than header"}));
+}
+
+TEST(CppVerify, ModelSequenceMisalignedRejected) {
+    Logger logger;
+    const uint64_t sequenceOffset = 129;
+    const uint64_t sequenceSize = 32;
+    const size_t fileSize = 177;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({0, 0}, {sequenceOffset, sequenceSize}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_EQ(nullptr, CreateModelSequenceTableDecoder(buffer.data() + sequenceOffset, sequenceSize));
+    EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "data alignment invalid"}));
+}
+
+TEST(CppVerify, ModelSequenceFlatbufferVerifyRejected) {
+    Logger logger;
+    std::array<uint8_t, 32> buffer{};
+    buffer.fill(0xFF);
+
+    EXPECT_EQ(nullptr, CreateModelSequenceTableDecoder(buffer.data(), buffer.size()));
+    EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "verification failed"}));
 }
 
 TEST(CModelSequenceTable, SegmentInfo) {
@@ -843,4 +896,62 @@ TEST(CModelSequenceTable, PushConstantRange) {
     ASSERT_TRUE(rangeStageFlags == 1);
     ASSERT_TRUE(rangeOffset == 2);
     ASSERT_TRUE(rangeSize == 3);
+}
+
+TEST(CVerify, ModelSequenceSizeWrapRejected) {
+    Logger logger;
+    const uint64_t sequenceOffset = 32;
+    const uint64_t sequenceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const size_t fileSize = 131;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({0, 0}, {sequenceOffset, sequenceSize}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
+                                                           headerDecoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_model_sequence_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_model_sequence_decoder(buffer.data() + sequenceOffset, sequenceSize,
+                                                                   decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "size out of bounds"}));
+}
+
+TEST(CVerify, ModelSequenceTooSmallRejected) {
+    Logger logger;
+    std::array<uint8_t, 2> buffer{0, 0};
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_model_sequence_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_model_sequence_decoder(buffer.data(), buffer.size(), decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "size smaller than header"}));
+}
+
+TEST(CVerify, ModelSequenceMisalignedRejected) {
+    Logger logger;
+    const uint64_t sequenceOffset = 129;
+    const uint64_t sequenceSize = 32;
+    const size_t fileSize = 177;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({0, 0}, {sequenceOffset, sequenceSize}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
+    EXPECT_NE(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
+                                                           headerDecoderMemory.data()));
+    std::vector<uint8_t> decoderMem(mlsdk_decoder_model_sequence_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_model_sequence_decoder(buffer.data() + sequenceOffset, sequenceSize,
+                                                                   decoderMem.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "data alignment invalid"}));
+}
+
+TEST(CVerify, ModelSequenceFlatbufferVerifyRejected) {
+    Logger logger;
+    std::array<uint8_t, 32> buffer{};
+    buffer.fill(0xFF);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_model_sequence_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_model_sequence_decoder(buffer.data(), buffer.size(), decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "verification failed"}));
 }

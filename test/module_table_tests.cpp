@@ -3,18 +3,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "common.hpp"
 #include "vgf/decoder.h"
 #include "vgf/decoder.hpp"
 #include "vgf/encoder.hpp"
+#include "vgf/logging.hpp"
 #include "vgf/types.hpp"
 
 #include "header.hpp"
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <sstream>
+#include <vector>
 
 using namespace mlsdk::vgflib;
+using logging::utils::Logger;
 
 const uint16_t pretendVulkanHeaderVersion = 123;
 
@@ -106,6 +111,54 @@ TEST(CppModuleTable, Single2) {
     ASSERT_TRUE(decoder->hasSPIRV(module.reference) == false);
     ASSERT_TRUE(decoder->getModuleEntryPoint(module.reference) == "main");
     ASSERT_TRUE(decoder->getModuleCode(module.reference) == DataView<uint32_t>());
+}
+
+TEST(CppVerify, ModuleSizeWrapRejected) {
+    Logger logger;
+    const uint64_t moduleOffset = 157;
+    const uint64_t moduleSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const size_t fileSize = 168;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({moduleOffset, moduleSize}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    EXPECT_EQ(nullptr, CreateModuleTableDecoder(buffer.data() + moduleOffset, moduleSize));
+    EXPECT_TRUE(logger.contains({"VerifyModuleTable", "size out of bounds"}));
+}
+
+TEST(CppVerify, ModuleTooSmallRejected) {
+    Logger logger;
+    std::array<uint8_t, 2> buffer{0, 0};
+
+    EXPECT_EQ(nullptr, CreateModuleTableDecoder(buffer.data(), buffer.size()));
+    EXPECT_TRUE(logger.contains({"VerifyModuleTable", "size smaller than header"}));
+}
+
+TEST(CppVerify, ModuleMisalignedRejected) {
+    Logger logger;
+    const uint64_t moduleOffset = 129;
+    const uint64_t moduleSize = 32;
+    const size_t fileSize = 177;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({moduleOffset, moduleSize}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_EQ(nullptr, CreateModuleTableDecoder(buffer.data() + moduleOffset, moduleSize));
+    EXPECT_TRUE(logger.contains({"VerifyModuleTable", "data alignment invalid"}));
+}
+
+TEST(CppVerify, ModuleFlatbufferVerifyRejected) {
+    Logger logger;
+    std::array<uint8_t, 32> buffer{};
+    buffer.fill(0xFF);
+
+    EXPECT_EQ(nullptr, CreateModuleTableDecoder(buffer.data(), buffer.size()));
+    EXPECT_TRUE(logger.contains({"VerifyModuleTable", "verification failed"}));
 }
 
 TEST(CModuleTable, Empty) {
@@ -218,4 +271,62 @@ TEST(CModuleTable, Single2) {
     mlsdk_decoder_get_module_code(decoder, module.reference, &spirv);
     ASSERT_TRUE(spirv.code == nullptr);
     ASSERT_TRUE(spirv.words == 0);
+}
+
+TEST(CVerify, ModuleSizeWrapRejected) {
+    Logger logger;
+    const uint64_t moduleOffset = 157;
+    const uint64_t moduleSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const size_t fileSize = 168;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({moduleOffset, moduleSize}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
+                                                           headerDecoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_module_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_module_table_decoder(buffer.data() + moduleOffset, moduleSize,
+                                                                 decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModuleTable", "size out of bounds"}));
+}
+
+TEST(CVerify, ModuleTooSmallRejected) {
+    Logger logger;
+    std::array<uint8_t, 2> buffer{0, 0};
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_module_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_module_table_decoder(buffer.data(), buffer.size(), decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModuleTable", "size smaller than header"}));
+}
+
+TEST(CVerify, ModuleMisalignedRejected) {
+    Logger logger;
+    const uint64_t moduleOffset = 129;
+    const uint64_t moduleSize = 32;
+    const size_t fileSize = 177;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({moduleOffset, moduleSize}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
+    EXPECT_NE(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
+                                                           headerDecoderMemory.data()));
+    std::vector<uint8_t> decoderMem(mlsdk_decoder_module_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr,
+              mlsdk_decoder_create_module_table_decoder(buffer.data() + moduleOffset, moduleSize, decoderMem.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModuleTable", "data alignment invalid"}));
+}
+
+TEST(CVerify, ModuleFlatbufferVerifyRejected) {
+    Logger logger;
+    std::array<uint8_t, 32> buffer{};
+    buffer.fill(0xFF);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_module_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_module_table_decoder(buffer.data(), buffer.size(), decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModuleTable", "verification failed"}));
 }

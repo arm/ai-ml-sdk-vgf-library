@@ -3,19 +3,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "common.hpp"
 #include "vgf/decoder.h"
 #include "vgf/decoder.hpp"
 #include "vgf/encoder.hpp"
+#include "vgf/logging.hpp"
 #include "vgf/types.hpp"
 
 #include "header.hpp"
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <sstream>
 #include <string>
+#include <vector>
 
 using namespace mlsdk::vgflib;
+using logging::utils::Logger;
 
 namespace {
 const uint16_t pretendVulkanHeaderVersion = 123;
@@ -178,6 +183,54 @@ TEST(CppModelResourceTable, UnknownDimensions) {
     ASSERT_TRUE(mrtDecoder->getDescriptorType(resource1.reference).has_value() == false);
     ASSERT_TRUE(mrtDecoder->getVkFormat(resource1.reference) == VK_FORMAT_R4G4B4A4_UNORM_PACK16);
     ASSERT_TRUE(mrtDecoder->getTensorShape(resource1.reference) == DataView<int64_t>(shape2.data(), shape2.size()));
+}
+
+TEST(CppVerify, ModelResourceSizeWrapRejected) {
+    Logger logger;
+    const uint64_t resourceOffset = 46;
+    const uint64_t resourceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const size_t fileSize = 296;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({0, 0}, {0, 0}, {resourceOffset, resourceSize}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    EXPECT_EQ(nullptr, CreateModelResourceTableDecoder(buffer.data() + resourceOffset, resourceSize));
+    EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "size out of bounds"}));
+}
+
+TEST(CppVerify, ModelResourceTooSmallRejected) {
+    Logger logger;
+    std::array<uint8_t, 2> buffer{0, 0};
+
+    EXPECT_EQ(nullptr, CreateModelResourceTableDecoder(buffer.data(), buffer.size()));
+    EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "size smaller than header"}));
+}
+
+TEST(CppVerify, ModelResourceMisalignedRejected) {
+    Logger logger;
+    const uint64_t resourceOffset = 129;
+    const uint64_t resourceSize = 32;
+    const size_t fileSize = 177;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({0, 0}, {0, 0}, {resourceOffset, resourceSize}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_EQ(nullptr, CreateModelResourceTableDecoder(buffer.data() + resourceOffset, resourceSize));
+    EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "data alignment invalid"}));
+}
+
+TEST(CppVerify, ModelResourceFlatbufferVerifyRejected) {
+    Logger logger;
+    std::array<uint8_t, 32> buffer{};
+    buffer.fill(0xFF);
+
+    EXPECT_EQ(nullptr, CreateModelResourceTableDecoder(buffer.data(), buffer.size()));
+    EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "verification failed"}));
 }
 
 TEST(CModelResourceTable, EmptyTable) {
@@ -354,4 +407,64 @@ TEST(CModelResourceTable, UnknownDimensions) {
     mlsdk_decoder_model_resource_table_get_tensor_shape(resourceTableDecoder, resource1.reference, &tensorShape2);
     ASSERT_TRUE(DataView<int64_t>(tensorShape2.data, tensorShape2.size) ==
                 DataView<int64_t>(shape2.data(), shape2.size()));
+}
+
+TEST(CVerify, ModelResourceSizeWrapRejected) {
+    Logger logger;
+    const uint64_t resourceOffset = 46;
+    const uint64_t resourceSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const size_t fileSize = 296;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({0, 0}, {0, 0}, {resourceOffset, resourceSize}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
+                                                           headerDecoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"section bounds invalid"}));
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_model_resource_table_decoder(buffer.data() + resourceOffset, resourceSize,
+                                                                         decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "size out of bounds"}));
+}
+
+TEST(CVerify, ModelResourceTooSmallRejected) {
+    Logger logger;
+    std::array<uint8_t, 2> buffer{0, 0};
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr,
+              mlsdk_decoder_create_model_resource_table_decoder(buffer.data(), buffer.size(), decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "size smaller than header"}));
+}
+
+TEST(CVerify, ModelResourceMisalignedRejected) {
+    Logger logger;
+    const uint64_t resourceOffset = 129;
+    const uint64_t resourceSize = 32;
+    const size_t fileSize = 177;
+
+    std::vector<uint8_t> buffer(fileSize, 0);
+    Header header({0, 0}, {0, 0}, {resourceOffset, resourceSize}, {0, 0}, pretendVulkanHeaderVersion);
+    std::memcpy(buffer.data(), &header, sizeof(Header));
+
+    std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
+    EXPECT_NE(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
+                                                           headerDecoderMemory.data()));
+    std::vector<uint8_t> decoderMem(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr, mlsdk_decoder_create_model_resource_table_decoder(buffer.data() + resourceOffset, resourceSize,
+                                                                         decoderMem.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "data alignment invalid"}));
+}
+
+TEST(CVerify, ModelResourceFlatbufferVerifyRejected) {
+    Logger logger;
+    std::array<uint8_t, 32> buffer{};
+    buffer.fill(0xFF);
+
+    std::vector<uint8_t> decoderMemory(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
+    EXPECT_EQ(nullptr,
+              mlsdk_decoder_create_model_resource_table_decoder(buffer.data(), buffer.size(), decoderMemory.data()));
+    EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "verification failed"}));
 }
