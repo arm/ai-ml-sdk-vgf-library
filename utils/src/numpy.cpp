@@ -167,7 +167,7 @@ char numpyTypeEncoding(std::string_view numeric) {
     if (numeric == "SFLOAT" || numeric == "UFLOAT") {
         return 'f';
     }
-    if (numeric == "BFLOAT16") {
+    if (numeric == "BFLOAT16" || numeric == "FLOAT8E4M3" || numeric == "FLOAT8E5M2") {
         return 'V';
     }
 
