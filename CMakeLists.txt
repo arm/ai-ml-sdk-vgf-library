@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 cmake_minimum_required(VERSION 3.22)
@@ -57,6 +57,7 @@ endif()
 if(ML_SDK_VGF_LIB_BUILD_TOOLS OR ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)
     add_subdirectory(vgf_dump)
     add_subdirectory(vgf_updater)
+    add_subdirectory(vgf_fuzzer)
 endif()
 
 if(ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)
