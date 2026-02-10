@@ -69,6 +69,11 @@ class HeaderDecoder {
     virtual bool IsLatestVersion() const = 0;
 
     /**
+     * @brief Gets the VGF version stored in the header
+     */
+    virtual FormatVersion GetVersion() const = 0;
+
+    /**
      * @brief Get the value of VK_HEADER_VERSION used by Encoding tool
      */
 

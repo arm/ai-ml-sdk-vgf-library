@@ -36,6 +36,11 @@ def test_encode_decode_header():
     assert headerDecoder.GetMajor() == vgf.HEADER_MAJOR_VERSION_VALUE
     assert headerDecoder.GetMinor() == vgf.HEADER_MINOR_VERSION_VALUE
     assert headerDecoder.GetPatch() == vgf.HEADER_PATCH_VERSION_VALUE
+    version = headerDecoder.GetVersion()
+    assert isinstance(version, vgf.FormatVersion)
+    assert version.major == vgf.HEADER_MAJOR_VERSION_VALUE
+    assert version.minor == vgf.HEADER_MINOR_VERSION_VALUE
+    assert version.patch == vgf.HEADER_PATCH_VERSION_VALUE
     assert headerDecoder.IsLatestVersion()
 
     assert headerDecoder.GetModuleTableSize() > 0

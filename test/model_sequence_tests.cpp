@@ -204,6 +204,14 @@ TEST(CppModelSequenceTable, SegmentBindingSlot) {
     ASSERT_TRUE(seqTableDecoder->getBindingsSize(bindingSlotsHandle) == 1);
     ASSERT_TRUE(seqTableDecoder->getBindingSlotBinding(bindingSlotsHandle, 0) == 1);
     ASSERT_TRUE(seqTableDecoder->getBindingSlotMrtIndex(bindingSlotsHandle, 0) == 5);
+
+    NameArrayHandle inputNames = seqTableDecoder->getModelSequenceInputNamesHandle();
+    ASSERT_TRUE(seqTableDecoder->getNamesSize(inputNames) == 1);
+    ASSERT_TRUE(seqTableDecoder->getName(inputNames, 0) == "input");
+
+    NameArrayHandle outputNames = seqTableDecoder->getModelSequenceOutputNamesHandle();
+    ASSERT_TRUE(seqTableDecoder->getNamesSize(outputNames) == 1);
+    ASSERT_TRUE(seqTableDecoder->getName(outputNames, 0) == "output");
 }
 
 TEST(CppModelSequenceTable, BindingSlot) {
@@ -218,7 +226,7 @@ TEST(CppModelSequenceTable, BindingSlot) {
     BindingSlotRef outputBinding = encoder->AddBindingSlot(4, ResourceRef{5});
     std::vector<BindingSlotRef> outputBindings = {outputBinding};
 
-    encoder->AddModelSequenceInputsOutputs(inputBindings, {"input_0"}, outputBindings, {});
+    encoder->AddModelSequenceInputsOutputs(inputBindings, {"input_0"}, outputBindings, {"output_0"});
 
     encoder->AddSegmentInfo(module, "test_segment", {}, inputBindings, outputBindings);
 
@@ -242,17 +250,18 @@ TEST(CppModelSequenceTable, BindingSlot) {
     ASSERT_TRUE(seqTableDecoder->getBindingSlotBinding(inputsHandle, 0) == 1);
     ASSERT_TRUE(seqTableDecoder->getBindingSlotMrtIndex(inputsHandle, 0) == 2);
 
+    BindingSlotArrayHandle outputsHandle = seqTableDecoder->getModelSequenceOutputBindingSlotsHandle();
+    ASSERT_TRUE(seqTableDecoder->getBindingsSize(outputsHandle) == 1);
+    ASSERT_TRUE(seqTableDecoder->getBindingSlotBinding(outputsHandle, 0) == 4);
+    ASSERT_TRUE(seqTableDecoder->getBindingSlotMrtIndex(outputsHandle, 0) == 5);
+
     NameArrayHandle inputNames = seqTableDecoder->getModelSequenceInputNamesHandle();
     ASSERT_TRUE(seqTableDecoder->getNamesSize(inputNames) == 1);
     ASSERT_TRUE(seqTableDecoder->getName(inputNames, 0) == "input_0");
 
     NameArrayHandle outputNames = seqTableDecoder->getModelSequenceOutputNamesHandle();
-    ASSERT_TRUE(seqTableDecoder->getNamesSize(outputNames) == 0);
-
-    BindingSlotArrayHandle outputsHandle = seqTableDecoder->getModelSequenceOutputBindingSlotsHandle();
-    ASSERT_TRUE(seqTableDecoder->getBindingsSize(outputsHandle) == 1);
-    ASSERT_TRUE(seqTableDecoder->getBindingSlotBinding(outputsHandle, 0) == 4);
-    ASSERT_TRUE(seqTableDecoder->getBindingSlotMrtIndex(outputsHandle, 0) == 5);
+    ASSERT_TRUE(seqTableDecoder->getNamesSize(outputNames) == 1);
+    ASSERT_TRUE(seqTableDecoder->getName(outputNames, 0) == "output_0");
 }
 
 TEST(CppModelSequenceTable, SegmentConstants) {
@@ -585,6 +594,7 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
     std::vector<BindingSlotRef> outputBindings = {outputBinding};
 
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, inputBindings, outputBindings);
+    encoder->AddModelSequenceInputsOutputs(inputBindings, {"input"}, outputBindings, {"output"});
 
     encoder->Finish();
     ASSERT_TRUE(encoder->WriteTo(buffer));
@@ -637,6 +647,14 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
     ASSERT_TRUE(mlsdk_decoder_binding_slot_size(modelSequenceDecoder, handle) == 1);
     ASSERT_TRUE(mlsdk_decoder_binding_slot_binding_id(modelSequenceDecoder, handle, 0) == 4);
     ASSERT_TRUE(mlsdk_decoder_binding_slot_mrt_index(modelSequenceDecoder, handle, 0) == 5);
+
+    mlsdk_decoder_names_handle inputNames = mlsdk_decoder_model_sequence_get_input_names(modelSequenceDecoder);
+    ASSERT_TRUE(mlsdk_decoder_model_sequence_get_names_size(modelSequenceDecoder, inputNames) == 1);
+    ASSERT_TRUE(std::string(mlsdk_decoder_model_sequence_get_name(modelSequenceDecoder, inputNames, 0)) == "input");
+
+    mlsdk_decoder_names_handle outputNames = mlsdk_decoder_model_sequence_get_output_names(modelSequenceDecoder);
+    ASSERT_TRUE(mlsdk_decoder_model_sequence_get_names_size(modelSequenceDecoder, outputNames) == 1);
+    ASSERT_TRUE(std::string(mlsdk_decoder_model_sequence_get_name(modelSequenceDecoder, outputNames, 0)) == "output");
 }
 
 TEST(CModelSequenceTable, BindingSlot) {
@@ -651,7 +669,7 @@ TEST(CModelSequenceTable, BindingSlot) {
     BindingSlotRef outputBinding = encoder->AddBindingSlot(4, ResourceRef{5});
     std::vector<BindingSlotRef> outputBindings = {outputBinding};
 
-    encoder->AddModelSequenceInputsOutputs(inputBindings, {}, outputBindings, {});
+    encoder->AddModelSequenceInputsOutputs(inputBindings, {"input_0"}, outputBindings, {"output_0"});
 
     encoder->AddSegmentInfo(module, "test_segment", {}, inputBindings, outputBindings);
 
@@ -706,6 +724,14 @@ TEST(CModelSequenceTable, BindingSlot) {
     ASSERT_TRUE(mlsdk_decoder_binding_slot_size(modelSequenceDecoder, handle) == 1);
     ASSERT_TRUE(mlsdk_decoder_binding_slot_binding_id(modelSequenceDecoder, handle, 0) == 4);
     ASSERT_TRUE(mlsdk_decoder_binding_slot_mrt_index(modelSequenceDecoder, handle, 0) == 5);
+
+    mlsdk_decoder_names_handle inputNames = mlsdk_decoder_model_sequence_get_input_names(modelSequenceDecoder);
+    ASSERT_TRUE(mlsdk_decoder_model_sequence_get_names_size(modelSequenceDecoder, inputNames) == 1);
+    ASSERT_TRUE(std::string(mlsdk_decoder_model_sequence_get_name(modelSequenceDecoder, inputNames, 0)) == "input_0");
+
+    mlsdk_decoder_names_handle outputNames = mlsdk_decoder_model_sequence_get_output_names(modelSequenceDecoder);
+    ASSERT_TRUE(mlsdk_decoder_model_sequence_get_names_size(modelSequenceDecoder, outputNames) == 1);
+    ASSERT_TRUE(std::string(mlsdk_decoder_model_sequence_get_name(modelSequenceDecoder, outputNames, 0)) == "output_0");
 }
 
 TEST(CModelSequenceTable, SegmentConstants) {

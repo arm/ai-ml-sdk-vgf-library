@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -11,12 +11,6 @@
 #include <cstdint>
 
 namespace mlsdk::vgflib {
-
-struct FormatVersion {
-    uint8_t major;
-    uint8_t minor;
-    uint8_t patch;
-};
 
 struct SectionEntry {
     SectionEntry(uint64_t offset, uint64_t size) : offset(offset), size(size) {}
