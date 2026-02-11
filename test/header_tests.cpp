@@ -42,6 +42,10 @@ TEST(CppEncodeDecode, HeaderTest) {
     ASSERT_TRUE(decoder->GetMajor() == HEADER_MAJOR_VERSION_VALUE);
     ASSERT_TRUE(decoder->GetMinor() == HEADER_MINOR_VERSION_VALUE);
     ASSERT_TRUE(decoder->GetPatch() == HEADER_PATCH_VERSION_VALUE);
+    FormatVersion version = decoder->GetVersion();
+    ASSERT_EQ(HEADER_MAJOR_VERSION_VALUE, version.major);
+    ASSERT_EQ(HEADER_MINOR_VERSION_VALUE, version.minor);
+    ASSERT_EQ(HEADER_PATCH_VERSION_VALUE, version.patch);
     ASSERT_TRUE(decoder->IsLatestVersion());
 
     ASSERT_TRUE(decoder->GetModuleTableSize() > 0);
@@ -109,6 +113,9 @@ TEST(CDecode, HeaderTest) {
     ASSERT_TRUE(version.major == HEADER_MAJOR_VERSION_VALUE);
     ASSERT_TRUE(version.minor == HEADER_MINOR_VERSION_VALUE);
     ASSERT_TRUE(version.patch == HEADER_PATCH_VERSION_VALUE);
+    ASSERT_EQ(HEADER_MAJOR_VERSION_VALUE, mlsdk_decoder_get_header_major(decoder));
+    ASSERT_EQ(HEADER_MINOR_VERSION_VALUE, mlsdk_decoder_get_header_minor(decoder));
+    ASSERT_EQ(HEADER_PATCH_VERSION_VALUE, mlsdk_decoder_get_header_patch(decoder));
 
     ASSERT_TRUE(mlsdk_decoder_is_latest_version(decoder));
 

@@ -227,6 +227,7 @@ TEST(CModuleTable, Single) {
     ASSERT_TRUE(mlsdk_decoder_get_module_type(decoder, module.reference) == mlsdk_decoder_module_type_graph);
     ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_name(decoder, module.reference)) == "test");
     ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_entry_point(decoder, module.reference)) == "main");
+    ASSERT_TRUE(mlsdk_decoder_module_has_spirv(decoder, module.reference));
 
     mlsdk_decoder_spirv_code spirv;
     mlsdk_decoder_get_module_code(decoder, module.reference, &spirv);
@@ -266,6 +267,7 @@ TEST(CModuleTable, Single2) {
     ASSERT_TRUE(mlsdk_decoder_get_module_type(decoder, module.reference) == mlsdk_decoder_module_type_compute);
     ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_name(decoder, module.reference)) == "test");
     ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_entry_point(decoder, module.reference)) == "main");
+    ASSERT_FALSE(mlsdk_decoder_module_has_spirv(decoder, module.reference));
 
     mlsdk_decoder_spirv_code spirv;
     mlsdk_decoder_get_module_code(decoder, module.reference, &spirv);

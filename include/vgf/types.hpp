@@ -22,6 +22,12 @@ constexpr int64_t CONSTANT_NOT_SPARSE_DIMENSION = -1;
 static_assert(CONSTANT_NOT_SPARSE_DIMENSION > CONSTANT_INVALID_SPARSITY_DIMENSION);
 constexpr uint32_t CONSTANT_INVALID_MRT_INDEX = UINT32_MAX_VALUE;
 
+struct FormatVersion {
+    uint8_t major;
+    uint8_t minor;
+    uint8_t patch;
+};
+
 /// \brief FourCC value
 struct FourCCValue {
     constexpr FourCCValue(char a, char b, char c, char d) : a(a), b(b), c(c), d(d) {}

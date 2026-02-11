@@ -194,6 +194,10 @@ class HeaderDecoderImpl : public HeaderDecoder {
                GetPatch() == HEADER_PATCH_VERSION_VALUE;
     }
 
+    [[nodiscard]] FormatVersion GetVersion() const override {
+        return {_header->version.major, _header->version.minor, _header->version.patch};
+    }
+
     [[nodiscard]] bool IsValid() const override {
         return _header->magic == HEADER_MAGIC_VALUE || _header->magic == OldMagicAsFourCC();
     }

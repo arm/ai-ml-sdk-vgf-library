@@ -42,6 +42,7 @@ typedef struct mlsdk_decoder_push_constants_range_decoder_s *mlsdk_decoder_push_
 typedef struct mlsdk_decoder_model_sequence_decoder_s *mlsdk_decoder_model_sequence_decoder;
 typedef struct mlsdk_decoder_model_resource_table_decoder_s *mlsdk_decoder_model_resource_table_decoder;
 typedef struct mlsdk_decoder_constant_table_decoder_s *mlsdk_decoder_constant_table_decoder;
+typedef struct mlsdk_decoder_names_handle_s const *mlsdk_decoder_names_handle;
 
 /**
  * \defgroup VGFCAPI Decoder C API
@@ -226,6 +227,21 @@ MLSDKAPI bool mlsdk_decoder_is_header_valid(const mlsdk_decoder_header_decoder *
 MLSDKAPI bool mlsdk_decoder_is_header_compatible(const mlsdk_decoder_header_decoder *const decoder);
 
 /**
+ * @brief Returns the Major version value from the VGF header
+ */
+MLSDKAPI uint8_t mlsdk_decoder_get_header_major(const mlsdk_decoder_header_decoder *const decoder);
+
+/**
+ * @brief Returns the Minor version value from the VGF header
+ */
+MLSDKAPI uint8_t mlsdk_decoder_get_header_minor(const mlsdk_decoder_header_decoder *const decoder);
+
+/**
+ * @brief Returns the Patch version value from the VGF header
+ */
+MLSDKAPI uint8_t mlsdk_decoder_get_header_patch(const mlsdk_decoder_header_decoder *const decoder);
+
+/**
  * @brief Returns the value of VK_HEADERS_VERSION found in the VGF file
  *
  * @param decoder The header decoder associated to the header data
@@ -323,6 +339,15 @@ MLSDKAPI const char *mlsdk_decoder_get_module_entry_point(const mlsdk_decoder_mo
  */
 MLSDKAPI void mlsdk_decoder_get_module_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx,
                                             mlsdk_decoder_spirv_code *spirvCode);
+
+/**
+ * @brief Returns true if the module table entry has SPIR-V code
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @return True if SPIR-V code is present for the entry
+ */
+MLSDKAPI bool mlsdk_decoder_module_has_spirv(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx);
 
 /**********************************************************************************************************************/
 
@@ -575,6 +600,46 @@ mlsdk_decoder_model_sequence_get_input_binding_slot(mlsdk_decoder_model_sequence
 
 MLSDKAPI mlsdk_decoder_binding_slots_handle
 mlsdk_decoder_model_sequence_get_output_binding_slot(mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder);
+
+/**
+ * @brief Gets the input names handle of model sequence
+ *
+ * @param modelSequenceDecoder The pointer to the model sequence decoder
+ * @return Handle to the names array
+ */
+MLSDKAPI mlsdk_decoder_names_handle
+mlsdk_decoder_model_sequence_get_input_names(mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder);
+
+/**
+ * @brief Gets the output names handle of model sequence
+ *
+ * @param modelSequenceDecoder The pointer to the model sequence decoder
+ * @return Handle to the names array
+ */
+MLSDKAPI mlsdk_decoder_names_handle
+mlsdk_decoder_model_sequence_get_output_names(mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder);
+
+/**
+ * @brief Returns the number of names associated with the given handle
+ *
+ * @param modelSequenceDecoder The pointer to the model sequence decoder
+ * @param handle Handle to the names array
+ * @return Number of names
+ */
+MLSDKAPI size_t mlsdk_decoder_model_sequence_get_names_size(
+    const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder, mlsdk_decoder_names_handle handle);
+
+/**
+ * @brief Returns the name at the given index
+ *
+ * @param modelSequenceDecoder The pointer to the model sequence decoder
+ * @param handle Handle to the names array
+ * @param nameIdx Index of the name in the array
+ * @return Pointer to the null-terminated name string
+ */
+MLSDKAPI const char *
+mlsdk_decoder_model_sequence_get_name(const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder,
+                                      mlsdk_decoder_names_handle handle, uint32_t nameIdx);
 /**
  * @brief Returns the memory requirements in bytes to allocate memory for creating the model resource table decoder
  * @return The size in bytes of the memory needed to create the model resource table decoder

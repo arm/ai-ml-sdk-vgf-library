@@ -37,6 +37,8 @@ class PyHeaderDecoder final : public HeaderDecoder {
         PYBIND11_OVERRIDE_PURE(uint16_t, HeaderDecoder, GetEncoderVulkanHeadersVersion);
     }
 
+    FormatVersion GetVersion() const override { PYBIND11_OVERRIDE_PURE(FormatVersion, HeaderDecoder, GetVersion); }
+
     bool CheckVersion() const override { PYBIND11_OVERRIDE_PURE(bool, HeaderDecoder, CheckVersion); }
 
     uint8_t GetMajor() const override { PYBIND11_OVERRIDE_PURE(uint8_t, HeaderDecoder, GetMajor); }
@@ -78,11 +80,18 @@ class PyHeaderDecoder final : public HeaderDecoder {
 
 void pyInitHeaderDecoder(py::module m) {
 
+    py::class_<FormatVersion>(m, "FormatVersion")
+        .def(py::init<>())
+        .def_readwrite("major", &FormatVersion::major)
+        .def_readwrite("minor", &FormatVersion::minor)
+        .def_readwrite("patch", &FormatVersion::patch);
+
     py::class_<HeaderDecoder, PyHeaderDecoder>(m, "HeaderDecoder")
         .def(py::init<>())
         .def("IsLatestVersion", &HeaderDecoder::IsLatestVersion)
         .def("IsValid", &HeaderDecoder::IsValid)
         .def("GetEncoderVulkanHeadersVersion", &HeaderDecoder::GetEncoderVulkanHeadersVersion)
+        .def("GetVersion", &HeaderDecoder::GetVersion)
         .def("CheckVersion", &HeaderDecoder::CheckVersion)
         .def("GetMajor", &HeaderDecoder::GetMajor)
         .def("GetMinor", &HeaderDecoder::GetMinor)
