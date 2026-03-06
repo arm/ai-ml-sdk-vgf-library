@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    message(STATUS "Skipping vgf_fuzzer: requires clang/LLVM libFuzzer.")
+if(NOT ML_SDK_VGF_LIB_ENABLE_FUZZER)
     return()
+endif()
+
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "vgf_fuzzer requires clang/LLVM libFuzzer.")
 endif()
 
 message(STATUS "Building vgf_fuzzer (clang/libFuzzer + ASan + UBSan)")
