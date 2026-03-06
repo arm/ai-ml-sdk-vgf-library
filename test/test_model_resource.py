@@ -3,12 +3,13 @@
 # SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
-""" Tests for VGF Model Resource. """
 import io
 
 import numpy as np
 import pytest
 import vgfpy as vgf
+
+"""Tests for VGF Model Resource."""
 
 pretendVulkanHeaderVersion = 123
 
