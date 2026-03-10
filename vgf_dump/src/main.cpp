@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -23,6 +23,8 @@ int main(int argc, char *argv[]) {
         outputGroup.add_argument("--dump-spirv")
             .help("Dump the SPIR-V™ module code at the given index")
             .scan<'i', int>();
+        outputGroup.add_argument("--dump-glsl").help("Dump the GLSL module code at the given index").scan<'i', int>();
+        outputGroup.add_argument("--dump-hlsl").help("Dump the HLSL module code at the given index").scan<'i', int>();
         outputGroup.add_argument("--dump-constant")
             .help("Dump the constant at the given index. Outputs NumPy file if output file is .npy, "
                   "otherwise dumps as raw binary.")
@@ -43,6 +45,10 @@ int main(int argc, char *argv[]) {
 
         if (parser.present<int>("--dump-spirv")) {
             dumpSpirv(input, output, uint32_t(parser.get<int>("--dump-spirv")));
+        } else if (parser.present<int>("--dump-glsl")) {
+            dumpGlsl(input, output, uint32_t(parser.get<int>("--dump-glsl")));
+        } else if (parser.present<int>("--dump-hlsl")) {
+            dumpHlsl(input, output, uint32_t(parser.get<int>("--dump-hlsl")));
         } else if (parser.present<int>("--dump-constant")) {
             if (std::filesystem::path(output).extension() == ".npy") {
                 dumpNumpy(input, output, uint32_t(parser.get<int>("--dump-constant")));

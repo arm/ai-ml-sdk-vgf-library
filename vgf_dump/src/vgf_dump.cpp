@@ -20,6 +20,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <utility>
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -97,23 +98,27 @@ void to_json(json &j, const Header &header) {
 
 struct Module {
     Module() = default;
-    Module(uint32_t index, ModuleType type, std::string_view &&name, std::string_view &&entryPoint, bool hasSPIRV,
-           size_t codeSize)
-        : mIndex(index), mType(type), mName(name), mEntryPoint(entryPoint), mHasSPIRV(hasSPIRV), mCodeSize(codeSize) {}
+    Module(uint32_t index, ModuleType type, const std::string_view &name, const std::string_view &entryPoint,
+           const std::string_view &shaderType, bool codeAvailable)
+        : mIndex(index), mType(type), mName(name), mEntryPoint(entryPoint), mShaderType(shaderType),
+          mCodeAvailable(codeAvailable) {}
 
     uint32_t mIndex{0};
     ModuleType mType{ModuleType::COMPUTE};
     std::string mName;
     std::string mEntryPoint;
-    bool mHasSPIRV{false};
-    size_t mCodeSize{0};
+    std::string mShaderType;
+    bool mCodeAvailable{false};
 };
 
 void to_json(json &j, const Module &m) {
     j = json{
-        {"index", m.mIndex},        {"type", moduleTypeToString(m.mType)},
-        {"name", m.mName},          {"entry_point", m.mEntryPoint},
-        {"has_spirv", m.mHasSPIRV}, {"code_size", m.mCodeSize},
+        {"index", m.mIndex},
+        {"type", moduleTypeToString(m.mType)},
+        {"name", m.mName},
+        {"entry_point", m.mEntryPoint},
+        {"shader_type", m.mShaderType},
+        {"shader_code_available", m.mCodeAvailable},
     };
 }
 
@@ -138,8 +143,22 @@ std::vector<Module> parseModuleTable(const void *const data, uint64_t size) {
     std::vector<Module> modules;
     modules.reserve(decoder->size());
     for (uint32_t i = 0; i < decoder->size(); i++) {
+        std::string_view shaderType = "None";
+        bool codeAvailable = false;
+
+        if (decoder->isHLSL(i)) {
+            shaderType = "HLSL";
+            codeAvailable = decoder->hasHLSLCode(i);
+        } else if (decoder->isGLSL(i)) {
+            shaderType = "GLSL";
+            codeAvailable = decoder->hasGLSLCode(i);
+        } else if (decoder->isSPIRV(i)) {
+            shaderType = "SPIR-V";
+            codeAvailable = decoder->hasSPIRVCode(i);
+        }
+
         modules.emplace_back(i, decoder->getModuleType(i), decoder->getModuleName(i), decoder->getModuleEntryPoint(i),
-                             decoder->hasSPIRV(i), decoder->getModuleCode(i).size());
+                             shaderType, codeAvailable);
     }
     return modules;
 }
@@ -379,12 +398,71 @@ void to_json(nlohmann::json &j, const Resource &resource) {
 
 } // namespace vgfutils
 
+namespace {
+
+std::unique_ptr<ModuleTableDecoder> getModuleTableDecoder(MemoryMap &mapped, uint32_t index) {
+    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
+
+    const auto moduleOffset = headerDecoder->GetModuleTableOffset();
+    const auto moduleSize = headerDecoder->GetModuleTableSize();
+    std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(mapped.ptr(moduleOffset), moduleSize);
+    if (decoder == nullptr) {
+        throw std::runtime_error("Invalid module table section");
+    }
+
+    if (index >= decoder->size()) {
+        throw std::runtime_error("Module index " + std::to_string(index) +
+                                 " out of bounds. Number of modules: " + std::to_string(decoder->size()));
+    }
+    return decoder;
+}
+} // namespace
+
 namespace vgf_dump {
+
+void getSpirv(const std::string &inputFile, uint32_t index,
+              const std::function<void(const uint32_t *, size_t)> &callback) {
+    MemoryMap mapped(inputFile);
+    std::unique_ptr<ModuleTableDecoder> decoder = getModuleTableDecoder(mapped, index);
+    if (!decoder->hasSPIRVCode(index)) {
+        throw std::runtime_error("Module index " + std::to_string(index) + " has no stored SPIRV code");
+    }
+    DataView<uint32_t> data = decoder->getSPIRVModuleCode(index);
+    callback(&data[0], data.size());
+}
+
+void getGlsl(const std::string &inputFile, uint32_t index, const std::function<void(const char *, size_t)> &callback) {
+    MemoryMap mapped(inputFile);
+    std::unique_ptr<ModuleTableDecoder> decoder = getModuleTableDecoder(mapped, index);
+    if (!decoder->hasGLSLCode(index)) {
+        throw std::runtime_error("Module index " + std::to_string(index) + " has no stored GLSL code");
+    }
+    std::string_view data = decoder->getGLSLModuleCode(index);
+    callback(data.data(), data.size());
+}
+
+void getHlsl(const std::string &inputFile, uint32_t index, const std::function<void(const char *, size_t)> &callback) {
+    MemoryMap mapped(inputFile);
+    std::unique_ptr<ModuleTableDecoder> decoder = getModuleTableDecoder(mapped, index);
+    if (!decoder->hasHLSLCode(index)) {
+        throw std::runtime_error("Module index " + std::to_string(index) + " has no stored HLSL code");
+    }
+    std::string_view data = decoder->getHLSLModuleCode(index);
+    callback(data.data(), data.size());
+}
 
 void dumpSpirv(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
     getSpirv(inputFile, index, [&](const uint32_t *data, size_t size) {
         writeOutputBinary(outputFile, reinterpret_cast<const char *>(data), size * sizeof(uint32_t));
     });
+}
+
+void dumpGlsl(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
+    getGlsl(inputFile, index, [&](const char *data, size_t size) { writeOutputText(outputFile, data, size); });
+}
+
+void dumpHlsl(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
+    getHlsl(inputFile, index, [&](const char *data, size_t size) { writeOutputText(outputFile, data, size); });
 }
 
 void dumpConstant(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
@@ -439,29 +517,6 @@ void dumpScenario(const std::string &inputFile, const std::string &outputFile, b
 void dumpFile(const std ::string &inputFile, const std::string &outputFile) {
     json json = getFile(inputFile);
     writeOutputJSON(outputFile, json);
-}
-
-void getSpirv(const std::string &inputFile, uint32_t index,
-              const std::function<void(const uint32_t *, size_t)> &callback) {
-    MemoryMap mapped(inputFile);
-    std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
-
-    const auto moduleOffset = headerDecoder->GetModuleTableOffset();
-    const auto moduleSize = headerDecoder->GetModuleTableSize();
-    std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(mapped.ptr(moduleOffset), moduleSize);
-    if (decoder == nullptr) {
-        throw std::runtime_error("Invalid module table section");
-    }
-
-    if (index >= decoder->size()) {
-        throw std::runtime_error("Module index " + std::to_string(index) +
-                                 " out of bounds. Number of modules: " + std::to_string(decoder->size()));
-    }
-    if (!decoder->hasSPIRV(index)) {
-        throw std::runtime_error("Module index " + std::to_string(index) + " has no stored code");
-    }
-    DataView<uint32_t> data = decoder->getModuleCode(index);
-    callback(&data[0], data.size());
 }
 
 void getConstant(const std::string &inputFile, uint32_t index,
@@ -562,15 +617,16 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     uint32_t shaderIdx = 0;
     std::vector<ScenarioShaderSubstitutions> shaderSubstitutions;
     std::vector<ScenarioShaderResource> shaderResources;
-    for (auto &module :
+    for (auto &m :
          parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
 
-        if (module.mType == ModuleType::COMPUTE) {
+        if (m.mType == ModuleType::COMPUTE) {
             std::string shaderRef = "shader_" + std::to_string(shaderIdx) + "_ref";
-            shaderSubstitutions.emplace_back(shaderRef, std::string(module.mName));
-
-            shaderResources.push_back(ScenarioShaderResource(
-                shaderRef, "TEMPLATE_PATH_SHADER_GLSL_" + std::to_string(shaderIdx), "GLSL", module.mEntryPoint));
+            shaderSubstitutions.emplace_back(shaderRef, std::string(m.mName));
+            const std::string shaderType = m.mShaderType;
+            const std::string shaderPathType = shaderType == "SPIR-V" ? "SPIRV" : shaderType;
+            const std::string shaderPath = "TEMPLATE_PATH_SHADER_" + shaderPathType + "_" + std::to_string(shaderIdx);
+            shaderResources.push_back(ScenarioShaderResource(shaderRef, shaderPath, shaderType, m.mEntryPoint));
             shaderIdx++;
         }
     }

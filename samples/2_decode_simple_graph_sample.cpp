@@ -168,11 +168,12 @@ void T2_decode_simple_graph_sample(const std::string &vgfFilename) {
 
         // The following fields will be required in order to create the Vulkan compute or graph pipelines
         assert(modulesDecoder->getModuleType(0) == vgflib::ModuleType::GRAPH); // is a graph module
-        assert(modulesDecoder->hasSPIRV(0) == true); // source is included and it's not a placeholder module.
-                                                     // a placeholder module would require the user to provision the
-                                                     // source code via some other/bespoke route.
+        assert(modulesDecoder->isSPIRV(0) == true);                            // the stored module format is SPIR-V.
+        assert(modulesDecoder->hasSPIRVCode(0) == true); // source is included and it's not a placeholder module.
+                                                         // a placeholder module would require the user to provision
+                                                         // the source code via some other/bespoke route.
         assert(modulesDecoder->getModuleEntryPoint(0) == "main"); // the entry function name
-        assert(!modulesDecoder->getModuleCode(0).empty());        // the source code, if embedded
+        assert(!modulesDecoder->getSPIRVModuleCode(0).empty());   // the source code, if embedded
 
         // Once the pipelines have been compiled, we don't need the modules to be loaded.
         // explicitly destruct the decoder now that we're done with it

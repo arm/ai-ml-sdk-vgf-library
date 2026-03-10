@@ -170,18 +170,64 @@ const char *mlsdk_decoder_get_module_entry_point(const mlsdk_decoder_module_tabl
     return reinterpret_cast<const ModuleTableDecoder *>(decoder)->getModuleEntryPoint(idx).data();
 }
 
-void mlsdk_decoder_get_module_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx,
-                                   mlsdk_decoder_spirv_code *spirvCode) {
+void mlsdk_decoder_get_spirv_module_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx,
+                                         mlsdk_decoder_spirv_code *spirvCode) {
     assert(decoder != nullptr && "decoder is null");
     assert(spirvCode != nullptr && "spirvCode is null");
-    DataView<uint32_t> view = reinterpret_cast<const ModuleTableDecoder *>(decoder)->getModuleCode(idx);
+    DataView<uint32_t> view = reinterpret_cast<const ModuleTableDecoder *>(decoder)->getSPIRVModuleCode(idx);
     spirvCode->code = view.begin();
     spirvCode->words = view.size();
 }
 
+void mlsdk_decoder_get_module_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx,
+                                   mlsdk_decoder_spirv_code *spirvCode) {
+    mlsdk_decoder_get_spirv_module_code(decoder, idx, spirvCode);
+}
+
 bool mlsdk_decoder_module_has_spirv(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx) {
+    return mlsdk_decoder_module_is_spirv(decoder, idx);
+}
+
+bool mlsdk_decoder_module_is_spirv(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx) {
     assert(decoder != nullptr && "decoder is null");
-    return reinterpret_cast<const ModuleTableDecoder *>(decoder)->hasSPIRV(idx);
+    return reinterpret_cast<const ModuleTableDecoder *>(decoder)->isSPIRV(idx);
+}
+
+bool mlsdk_decoder_module_has_spirv_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx) {
+    assert(decoder != nullptr && "decoder is null");
+    return reinterpret_cast<const ModuleTableDecoder *>(decoder)->hasSPIRVCode(idx);
+}
+
+bool mlsdk_decoder_module_is_glsl(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx) {
+    assert(decoder != nullptr && "decoder is null");
+    return reinterpret_cast<const ModuleTableDecoder *>(decoder)->isGLSL(idx);
+}
+
+bool mlsdk_decoder_module_has_glsl_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx) {
+    assert(decoder != nullptr && "decoder is null");
+    return reinterpret_cast<const ModuleTableDecoder *>(decoder)->hasGLSLCode(idx);
+}
+
+bool mlsdk_decoder_module_is_hlsl(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx) {
+    assert(decoder != nullptr && "decoder is null");
+    return reinterpret_cast<const ModuleTableDecoder *>(decoder)->isHLSL(idx);
+}
+
+bool mlsdk_decoder_module_has_hlsl_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx) {
+    assert(decoder != nullptr && "decoder is null");
+    return reinterpret_cast<const ModuleTableDecoder *>(decoder)->hasHLSLCode(idx);
+}
+
+const char *mlsdk_decoder_get_module_glsl_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx) {
+    assert(decoder != nullptr && "decoder is null");
+    const std::string_view code = reinterpret_cast<const ModuleTableDecoder *>(decoder)->getGLSLModuleCode(idx);
+    return code.empty() ? nullptr : code.data();
+}
+
+const char *mlsdk_decoder_get_module_hlsl_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx) {
+    assert(decoder != nullptr && "decoder is null");
+    const std::string_view code = reinterpret_cast<const ModuleTableDecoder *>(decoder)->getHLSLModuleCode(idx);
+    return code.empty() ? nullptr : code.data();
 }
 
 /**********************************************************************************************************************/

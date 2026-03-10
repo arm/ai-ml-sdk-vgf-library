@@ -287,7 +287,35 @@ class ModuleTableDecoderImpl : public ModuleTableDecoder {
     }
 
     [[nodiscard]] bool hasSPIRV(uint32_t idx) const override {
+        logging::warning("hasSPIRV is deprecated use isSPIRV instead");
+        return isSPIRV(idx);
+    }
+
+    [[nodiscard]] bool isSPIRV(uint32_t idx) const override {
         return VGF::ModuleCode_SPIRV == getModuleAt(idx)->code_type();
+    }
+
+    [[nodiscard]] bool hasSPIRVCode(uint32_t idx) const override {
+        const VGF::SPIRV *spirv = getModuleAt(idx)->code_as_SPIRV();
+        return spirv != nullptr && spirv->words() != nullptr && !spirv->words()->empty();
+    }
+
+    [[nodiscard]] bool isGLSL(uint32_t idx) const override {
+        return VGF::ModuleCode_GLSL == getModuleAt(idx)->code_type();
+    }
+
+    [[nodiscard]] bool hasGLSLCode(uint32_t idx) const override {
+        const VGF::GLSL *glsl = getModuleAt(idx)->code_as_GLSL();
+        return glsl != nullptr && glsl->code() != nullptr && !glsl->code()->empty();
+    }
+
+    [[nodiscard]] bool isHLSL(uint32_t idx) const override {
+        return VGF::ModuleCode_HLSL == getModuleAt(idx)->code_type();
+    }
+
+    [[nodiscard]] bool hasHLSLCode(uint32_t idx) const override {
+        const VGF::HLSL *hlsl = getModuleAt(idx)->code_as_HLSL();
+        return hlsl != nullptr && hlsl->code() != nullptr && !hlsl->code()->empty();
     }
 
     [[nodiscard]] std::string_view getModuleEntryPoint(uint32_t idx) const override {
@@ -295,10 +323,34 @@ class ModuleTableDecoderImpl : public ModuleTableDecoder {
     }
 
     [[nodiscard]] DataView<uint32_t> getModuleCode(uint32_t idx) const override {
+        logging::warning("getModuleCode is deprecated use getSPIRVModuleCode instead");
+        return getSPIRVModuleCode(idx);
+    }
+
+    [[nodiscard]] DataView<uint32_t> getSPIRVModuleCode(uint32_t idx) const override {
         const VGF::SPIRV *spirv = getModuleAt(idx)->code_as_SPIRV();
         if ((spirv != nullptr) && (spirv->words() != nullptr)) {
             return {spirv->words()->data(), spirv->words()->size()};
         }
+        logging::warning("Trying to fetch non-existing SPIR-V code");
+        return {};
+    }
+
+    [[nodiscard]] std::string_view getGLSLModuleCode(uint32_t idx) const override {
+        const VGF::GLSL *glsl = getModuleAt(idx)->code_as_GLSL();
+        if (glsl != nullptr && glsl->code() != nullptr) {
+            return std::string_view{glsl->code()->data(), glsl->code()->size()};
+        }
+        logging::warning("Trying to fetch non-existing GLSL code");
+        return {};
+    }
+
+    [[nodiscard]] std::string_view getHLSLModuleCode(uint32_t idx) const override {
+        const VGF::HLSL *hlsl = getModuleAt(idx)->code_as_HLSL();
+        if (hlsl != nullptr && hlsl->code() != nullptr) {
+            return std::string_view{hlsl->code()->data(), hlsl->code()->size()};
+        }
+        logging::warning("Trying to fetch non-existing HLSL code");
         return {};
     }
 

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -15,6 +15,8 @@ using namespace mlsdk::vgflib;
 void pyInitTypes(py::module m) {
 
     py::enum_<ModuleType>(m, "ModuleType").value("Compute", ModuleType::COMPUTE).value("Graph", ModuleType::GRAPH);
+
+    py::enum_<ShaderType>(m, "ShaderType").value("Glsl", ShaderType::GLSL).value("Hlsl", ShaderType::HLSL);
 
     py::enum_<ResourceCategory>(m, "ResourceCategory")
         .value("Input", ResourceCategory::INPUT)

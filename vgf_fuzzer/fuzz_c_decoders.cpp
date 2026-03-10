@@ -67,10 +67,16 @@ void FuzzCDecoderAccessors(const uint8_t *data, size_t size) {
             mlsdk_decoder_get_module_type(modDec, idx);
             mlsdk_decoder_get_module_name(modDec, idx);
             mlsdk_decoder_get_module_entry_point(modDec, idx);
-            if (mlsdk_decoder_module_has_spirv(modDec, idx)) {
-                mlsdk_decoder_spirv_code code{};
-                mlsdk_decoder_get_module_code(modDec, idx, &code);
-            }
+            mlsdk_decoder_module_is_spirv(modDec, idx);
+            mlsdk_decoder_module_has_spirv_code(modDec, idx);
+            mlsdk_decoder_module_is_glsl(modDec, idx);
+            mlsdk_decoder_module_has_glsl_code(modDec, idx);
+            mlsdk_decoder_module_is_hlsl(modDec, idx);
+            mlsdk_decoder_module_has_hlsl_code(modDec, idx);
+            mlsdk_decoder_get_module_glsl_code(modDec, idx);
+            mlsdk_decoder_get_module_hlsl_code(modDec, idx);
+            mlsdk_decoder_spirv_code code{};
+            mlsdk_decoder_get_spirv_module_code(modDec, idx, &code);
         }
     }
 

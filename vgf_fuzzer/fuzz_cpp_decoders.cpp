@@ -51,9 +51,15 @@ void FuzzCppDecoderAccessors(const uint8_t *data, size_t size) {
             modDec->getModuleType(idx);
             modDec->getModuleName(idx);
             modDec->getModuleEntryPoint(idx);
-            if (modDec->hasSPIRV(idx)) {
-                modDec->getModuleCode(idx);
-            }
+            modDec->isSPIRV(idx);
+            modDec->hasSPIRVCode(idx);
+            modDec->isGLSL(idx);
+            modDec->hasGLSLCode(idx);
+            modDec->isHLSL(idx);
+            modDec->hasHLSLCode(idx);
+            modDec->getSPIRVModuleCode(idx);
+            modDec->getGLSLModuleCode(idx);
+            modDec->getHLSLModuleCode(idx);
         }
     }
 

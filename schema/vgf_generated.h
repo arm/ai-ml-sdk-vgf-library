@@ -18,6 +18,12 @@ namespace VGF {
 struct SPIRV;
 struct SPIRVBuilder;
 
+struct GLSL;
+struct GLSLBuilder;
+
+struct HLSL;
+struct HLSLBuilder;
+
 struct Module;
 struct ModuleBuilder;
 
@@ -57,29 +63,35 @@ struct ConstantSectionBuilder;
 enum ModuleCode : uint8_t {
   ModuleCode_NONE = 0,
   ModuleCode_SPIRV = 1,
+  ModuleCode_GLSL = 2,
+  ModuleCode_HLSL = 3,
   ModuleCode_MIN = ModuleCode_NONE,
-  ModuleCode_MAX = ModuleCode_SPIRV
+  ModuleCode_MAX = ModuleCode_HLSL
 };
 
-inline const ModuleCode (&EnumValuesModuleCode())[2] {
+inline const ModuleCode (&EnumValuesModuleCode())[4] {
   static const ModuleCode values[] = {
     ModuleCode_NONE,
-    ModuleCode_SPIRV
+    ModuleCode_SPIRV,
+    ModuleCode_GLSL,
+    ModuleCode_HLSL
   };
   return values;
 }
 
 inline const char * const *EnumNamesModuleCode() {
-  static const char * const names[3] = {
+  static const char * const names[5] = {
     "NONE",
     "SPIRV",
+    "GLSL",
+    "HLSL",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameModuleCode(ModuleCode e) {
-  if (::flatbuffers::IsOutRange(e, ModuleCode_NONE, ModuleCode_SPIRV)) return "";
+  if (::flatbuffers::IsOutRange(e, ModuleCode_NONE, ModuleCode_HLSL)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesModuleCode()[index];
 }
@@ -90,6 +102,14 @@ template<typename T> struct ModuleCodeTraits {
 
 template<> struct ModuleCodeTraits<VGF::SPIRV> {
   static const ModuleCode enum_value = ModuleCode_SPIRV;
+};
+
+template<> struct ModuleCodeTraits<VGF::GLSL> {
+  static const ModuleCode enum_value = ModuleCode_GLSL;
+};
+
+template<> struct ModuleCodeTraits<VGF::HLSL> {
+  static const ModuleCode enum_value = ModuleCode_HLSL;
 };
 
 bool VerifyModuleCode(::flatbuffers::Verifier &verifier, const void *obj, ModuleCode type);
@@ -212,6 +232,108 @@ inline ::flatbuffers::Offset<SPIRV> CreateSPIRVDirect(
       words__);
 }
 
+struct GLSL FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef GLSLBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CODE = 4
+  };
+  const ::flatbuffers::String *code() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_CODE);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_CODE) &&
+           verifier.VerifyString(code()) &&
+           verifier.EndTable();
+  }
+};
+
+struct GLSLBuilder {
+  typedef GLSL Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_code(::flatbuffers::Offset<::flatbuffers::String> code) {
+    fbb_.AddOffset(GLSL::VT_CODE, code);
+  }
+  explicit GLSLBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<GLSL> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<GLSL>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<GLSL> CreateGLSL(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> code = 0) {
+  GLSLBuilder builder_(_fbb);
+  builder_.add_code(code);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<GLSL> CreateGLSLDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *code = nullptr) {
+  auto code__ = code ? _fbb.CreateString(code) : 0;
+  return VGF::CreateGLSL(
+      _fbb,
+      code__);
+}
+
+struct HLSL FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef HLSLBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CODE = 4
+  };
+  const ::flatbuffers::String *code() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_CODE);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_CODE) &&
+           verifier.VerifyString(code()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HLSLBuilder {
+  typedef HLSL Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_code(::flatbuffers::Offset<::flatbuffers::String> code) {
+    fbb_.AddOffset(HLSL::VT_CODE, code);
+  }
+  explicit HLSLBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<HLSL> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<HLSL>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<HLSL> CreateHLSL(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> code = 0) {
+  HLSLBuilder builder_(_fbb);
+  builder_.add_code(code);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<HLSL> CreateHLSLDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *code = nullptr) {
+  auto code__ = code ? _fbb.CreateString(code) : 0;
+  return VGF::CreateHLSL(
+      _fbb,
+      code__);
+}
+
 struct Module FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ModuleBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -240,6 +362,12 @@ struct Module FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const VGF::SPIRV *code_as_SPIRV() const {
     return code_type() == VGF::ModuleCode_SPIRV ? static_cast<const VGF::SPIRV *>(code()) : nullptr;
   }
+  const VGF::GLSL *code_as_GLSL() const {
+    return code_type() == VGF::ModuleCode_GLSL ? static_cast<const VGF::GLSL *>(code()) : nullptr;
+  }
+  const VGF::HLSL *code_as_HLSL() const {
+    return code_type() == VGF::ModuleCode_HLSL ? static_cast<const VGF::HLSL *>(code()) : nullptr;
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_TYPE, 1) &&
@@ -256,6 +384,14 @@ struct Module FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
 
 template<> inline const VGF::SPIRV *Module::code_as<VGF::SPIRV>() const {
   return code_as_SPIRV();
+}
+
+template<> inline const VGF::GLSL *Module::code_as<VGF::GLSL>() const {
+  return code_as_GLSL();
+}
+
+template<> inline const VGF::HLSL *Module::code_as<VGF::HLSL>() const {
+  return code_as_HLSL();
 }
 
 struct ModuleBuilder {
@@ -1137,6 +1273,14 @@ inline bool VerifyModuleCode(::flatbuffers::Verifier &verifier, const void *obj,
     }
     case ModuleCode_SPIRV: {
       auto ptr = reinterpret_cast<const VGF::SPIRV *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ModuleCode_GLSL: {
+      auto ptr = reinterpret_cast<const VGF::GLSL *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ModuleCode_HLSL: {
+      auto ptr = reinterpret_cast<const VGF::HLSL *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

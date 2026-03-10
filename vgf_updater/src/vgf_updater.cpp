@@ -64,16 +64,24 @@ std::vector<ModuleRef> extractModules(const HeaderDecoder &headerDecoder, const 
     std::vector<ModuleRef> moduleRefs;
     moduleRefs.reserve(numModules);
     for (uint32_t i = 0; i < numModules; i++) {
-        const auto moduleCode = moduleDecoder->getModuleCode(i);
-        if (moduleCode.begin() == moduleCode.end()) {
-            moduleRefs.push_back(encoder.AddPlaceholderModule(moduleDecoder->getModuleType(i),
-                                                              std::string(moduleDecoder->getModuleName(i)),
-                                                              std::string(moduleDecoder->getModuleEntryPoint(i))));
-        } else {
+        const auto moduleType = moduleDecoder->getModuleType(i);
+        const std::string moduleName = std::string(moduleDecoder->getModuleName(i));
+        const std::string entryPoint = std::string(moduleDecoder->getModuleEntryPoint(i));
+
+        if (moduleDecoder->hasHLSLCode(i)) {
+            const std::string_view moduleCode = moduleDecoder->getHLSLModuleCode(i);
+            moduleRefs.push_back(
+                encoder.AddModule(moduleType, moduleName, entryPoint, ShaderType::HLSL, std::string(moduleCode)));
+        } else if (moduleDecoder->hasGLSLCode(i)) {
+            const std::string_view moduleCode = moduleDecoder->getGLSLModuleCode(i);
+            moduleRefs.push_back(
+                encoder.AddModule(moduleType, moduleName, entryPoint, ShaderType::GLSL, std::string(moduleCode)));
+        } else if (moduleDecoder->hasSPIRVCode(i)) {
+            const auto moduleCode = moduleDecoder->getSPIRVModuleCode(i);
             const std::vector<uint32_t> moduleCodeData(moduleCode.begin(), moduleCode.end());
-            moduleRefs.push_back(encoder.AddModule(moduleDecoder->getModuleType(i),
-                                                   std::string(moduleDecoder->getModuleName(i)),
-                                                   std::string(moduleDecoder->getModuleEntryPoint(i)), moduleCodeData));
+            moduleRefs.push_back(encoder.AddModule(moduleType, moduleName, entryPoint, moduleCodeData));
+        } else if (moduleDecoder->isSPIRV(i)) {
+            moduleRefs.push_back(encoder.AddModule(moduleType, moduleName, entryPoint));
         }
     }
     return moduleRefs;

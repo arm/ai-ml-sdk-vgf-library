@@ -51,6 +51,11 @@ enum class ModuleType {
     GRAPH,
 };
 
+enum class ShaderType {
+    GLSL,
+    HLSL,
+};
+
 /// \brief Category of resource as it relates to usage in the graph.
 enum class ResourceCategory {
     INPUT,
