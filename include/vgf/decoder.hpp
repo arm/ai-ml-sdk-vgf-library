@@ -156,18 +156,20 @@ size_t HeaderDecoderSize();
  * @brief Constructs a Header decoder
  *
  * @param data Pointer to the start of the VGF buffer (file contents)
- * @param size Total size in bytes of the VGF buffer starting at `data`
+ * @param headerSize Total size in bytes of the VGF buffer starting at `data`
+ * @param fileSize Total size of the vgf file in bytes, used only for validation purposes
  */
-std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *data, uint64_t size);
+std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *data, uint64_t headerSize, uint64_t fileSize);
 
 /**
  * @brief Constructs a Header decoder in-place using pre-allocated memory
  *
- * @param data Pointer to the Header section data
- * @param size Size in bytes of the header buffer
- * @param decoderMem Memory to place the decoder into
+ * @param data Pointer to the start of the VGF buffer (file contents)
+ * @param headerSize Total size in bytes of the VGF buffer starting at `data`
+ * @param fileSize Total size of the vgf file in bytes, used only for validation purposes
+ * @param decoderMem Pre-allocated memory to place the decoder into
  */
-HeaderDecoder *CreateHeaderDecoderInPlace(const void *data, uint64_t size, void *decoderMem);
+HeaderDecoder *CreateHeaderDecoderInPlace(const void *data, uint64_t headerSize, uint64_t fileSize, void *decoderMem);
 
 // ModuleTableDecoder
 class ModuleTableDecoder {

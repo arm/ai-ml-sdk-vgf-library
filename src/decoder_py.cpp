@@ -109,8 +109,10 @@ void pyInitHeaderDecoder(py::module m) {
     m.def("HeaderDecoderSize", &HeaderDecoderSize);
     m.def(
         "CreateHeaderDecoder",
-        [](const py::buffer &buffer, uint64_t size) { return CreateHeaderDecoder(buffer.request().ptr, size); },
-        py::arg("data"), py::arg("size"));
+        [](const py::buffer &buffer, uint64_t headerSize, uint64_t fileSize) {
+            return CreateHeaderDecoder(buffer.request().ptr, headerSize, fileSize);
+        },
+        py::arg("data"), py::arg("headerSize"), py::arg("fileSize"));
 
     m.attr("HEADER_MAGIC_VALUE_OLD") = HEADER_MAGIC_VALUE_OLD;
     m.attr("HEADER_MAGIC_VALUE") = HEADER_MAGIC_VALUE;

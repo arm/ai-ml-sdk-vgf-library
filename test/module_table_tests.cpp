@@ -34,7 +34,7 @@ TEST(CppModuleTable, Empty) {
     ASSERT_TRUE(data.size() >= HeaderSize());
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(
@@ -56,8 +56,8 @@ TEST(CppModuleTable, Single) {
     std::string vgf_data = buffer.str();
     ASSERT_TRUE(vgf_data.size() >= HeaderSize());
 
-    std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
+    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
+        vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgf_data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     uint32_t moduleIndex = module.reference;
@@ -98,7 +98,7 @@ TEST(CppModuleTable, Single2) {
     ASSERT_TRUE(data.size() >= HeaderSize());
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(
@@ -123,7 +123,8 @@ TEST(CppVerify, ModuleSizeWrapRejected) {
     Header header({moduleOffset, moduleSize}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
-    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(HeaderSize()),
+                                           static_cast<uint64_t>(buffer.size())));
     EXPECT_TRUE(logger.contains({"section bounds invalid"}));
     EXPECT_EQ(nullptr, CreateModuleTableDecoder(buffer.data() + moduleOffset, moduleSize));
     EXPECT_TRUE(logger.contains({"VerifyModuleTable", "size out of bounds"}));
@@ -147,7 +148,8 @@ TEST(CppVerify, ModuleMisalignedRejected) {
     Header header({moduleOffset, moduleSize}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
-    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(HeaderSize()),
+                                           static_cast<uint64_t>(buffer.size())));
     EXPECT_EQ(nullptr, CreateModuleTableDecoder(buffer.data() + moduleOffset, moduleSize));
     EXPECT_TRUE(logger.contains({"VerifyModuleTable", "data alignment invalid"}));
 }
@@ -174,8 +176,9 @@ TEST(CModuleTable, Empty) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -207,8 +210,9 @@ TEST(CModuleTable, Single) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -247,8 +251,9 @@ TEST(CModuleTable, Single2) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -286,8 +291,9 @@ TEST(CVerify, ModuleSizeWrapRejected) {
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
     std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
-    EXPECT_EQ(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
-                                                           headerDecoderMemory.data()));
+    EXPECT_EQ(nullptr,
+              mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                                  static_cast<uint64_t>(buffer.size()), headerDecoderMemory.data()));
     EXPECT_TRUE(logger.contains({"section bounds invalid"}));
     std::vector<uint8_t> decoderMemory(mlsdk_decoder_module_table_decoder_mem_reqs());
     EXPECT_EQ(nullptr, mlsdk_decoder_create_module_table_decoder(buffer.data() + moduleOffset, moduleSize,
@@ -315,8 +321,9 @@ TEST(CVerify, ModuleMisalignedRejected) {
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
     std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
-    EXPECT_NE(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
-                                                           headerDecoderMemory.data()));
+    EXPECT_NE(nullptr,
+              mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                                  static_cast<uint64_t>(buffer.size()), headerDecoderMemory.data()));
     std::vector<uint8_t> decoderMem(mlsdk_decoder_module_table_decoder_mem_reqs());
     EXPECT_EQ(nullptr,
               mlsdk_decoder_create_module_table_decoder(buffer.data() + moduleOffset, moduleSize, decoderMem.data()));

@@ -23,12 +23,13 @@ size_t mlsdk_decoder_header_size() { return HeaderSize(); }
 
 size_t mlsdk_decoder_header_decoder_mem_reqs() { return HeaderDecoderSize(); }
 
-mlsdk_decoder_header_decoder *mlsdk_decoder_create_header_decoder(const void *const headerData, const uint64_t size,
+mlsdk_decoder_header_decoder *mlsdk_decoder_create_header_decoder(const void *const headerData,
+                                                                  const uint64_t headerSize, const uint64_t fileSize,
                                                                   void *decoderMemory) {
     assert(headerData != nullptr && "headerData is null");
     assert(decoderMemory != nullptr && "decoderMemory is null");
     return reinterpret_cast<mlsdk_decoder_header_decoder *>(
-        CreateHeaderDecoderInPlace(headerData, size, decoderMemory));
+        CreateHeaderDecoderInPlace(headerData, headerSize, fileSize, decoderMemory));
 }
 
 bool mlsdk_decoder_is_latest_version(const mlsdk_decoder_header_decoder *const decoder) {

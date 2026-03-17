@@ -15,7 +15,8 @@
 
 void FuzzCDecoders(const uint8_t *data, size_t size) {
     std::vector<uint8_t> hdrMem(mlsdk_decoder_header_decoder_mem_reqs());
-    (void)mlsdk_decoder_create_header_decoder(data, size, hdrMem.data());
+    (void)mlsdk_decoder_create_header_decoder(data, static_cast<uint64_t>(mlsdk_decoder_header_size()), size,
+                                              hdrMem.data());
 
     std::vector<uint8_t> modMem(mlsdk_decoder_module_table_decoder_mem_reqs());
     (void)mlsdk_decoder_create_module_table_decoder(data, size, modMem.data());
@@ -32,7 +33,8 @@ void FuzzCDecoders(const uint8_t *data, size_t size) {
 
 void FuzzCDecoderAccessors(const uint8_t *data, size_t size) {
     std::vector<uint8_t> hdrMem(mlsdk_decoder_header_decoder_mem_reqs());
-    auto *header = mlsdk_decoder_create_header_decoder(data, size, hdrMem.data());
+    auto *header = mlsdk_decoder_create_header_decoder(data, static_cast<uint64_t>(mlsdk_decoder_header_size()), size,
+                                                       hdrMem.data());
     if (!header) {
         return;
     }

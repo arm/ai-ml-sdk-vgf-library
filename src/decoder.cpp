@@ -157,32 +157,33 @@ const char *getConstantSectionVersion(const void *data) {
 // Header Decoder
 class HeaderDecoderImpl : public HeaderDecoder {
   public:
-    static std::unique_ptr<HeaderDecoderImpl> Create(const void *const data, uint64_t size) {
+    static std::unique_ptr<HeaderDecoderImpl> Create(const void *const data, uint64_t headerSize, uint64_t fileSize) {
         if (data == nullptr) {
             return nullptr;
         }
-        if (size < HeaderSize()) {
-            logging::error("Header size is smaller than expected");
+        if (headerSize != HeaderSize()) {
+            logging::error("Header size is not the expected size");
             return nullptr;
         }
         auto decoder = std::unique_ptr<HeaderDecoderImpl>(new HeaderDecoderImpl(data));
-        if (!_verify(decoder.get(), size)) {
+        if (!_verify(decoder.get(), fileSize)) {
             return nullptr;
         }
         return decoder;
     }
 
-    static HeaderDecoderImpl *CreateInPlace(const void *const data, uint64_t size, void *decoderMem) {
+    static HeaderDecoderImpl *CreateInPlace(const void *const data, uint64_t headerSize, uint64_t fileSize,
+                                            void *decoderMem) {
         assert(decoderMem != nullptr && "decoderMem is null");
         if (data == nullptr) {
             return nullptr;
         }
-        if (size < HeaderSize()) {
-            logging::error("Header size is smaller than expected");
+        if (headerSize != HeaderSize()) {
+            logging::error("Header size is not the expected size");
             return nullptr;
         }
         auto *decoder = new (decoderMem) HeaderDecoderImpl(data);
-        if (!_verify(decoder, size)) {
+        if (!_verify(decoder, fileSize)) {
             decoder->~HeaderDecoderImpl();
             return nullptr;
         }
@@ -238,12 +239,12 @@ class HeaderDecoderImpl : public HeaderDecoder {
     }
 
   private:
-    [[nodiscard]] static bool _verify(HeaderDecoderImpl *decoder, uint64_t size) {
+    [[nodiscard]] static bool _verify(HeaderDecoderImpl *decoder, uint64_t fileSize) {
         if (!decoder->IsValid() || !decoder->CheckVersion()) {
             logging::error("Header failed validation");
             return false;
         }
-        if (!validateSectionsSizesInHeader(*decoder, size)) {
+        if (!validateSectionsSizesInHeader(*decoder, fileSize)) {
             return false;
         }
         return true;
@@ -257,12 +258,13 @@ class HeaderDecoderImpl : public HeaderDecoder {
 size_t HeaderSize() { return HEADER_HEADER_SIZE_VALUE; }
 size_t HeaderDecoderSize() { return sizeof(HeaderDecoderImpl); }
 
-std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *const data, const uint64_t size) {
-    return HeaderDecoderImpl::Create(data, size);
+std::unique_ptr<HeaderDecoder> CreateHeaderDecoder(const void *const data, uint64_t headerSize, uint64_t fileSize) {
+    return HeaderDecoderImpl::Create(data, headerSize, fileSize);
 }
 
-HeaderDecoder *CreateHeaderDecoderInPlace(const void *const data, const uint64_t size, void *decoderMem) {
-    return HeaderDecoderImpl::CreateInPlace(data, size, decoderMem);
+HeaderDecoder *CreateHeaderDecoderInPlace(const void *const data, uint64_t headerSize, uint64_t fileSize,
+                                          void *decoderMem) {
+    return HeaderDecoderImpl::CreateInPlace(data, headerSize, fileSize, decoderMem);
 }
 
 // Module Table decoder
