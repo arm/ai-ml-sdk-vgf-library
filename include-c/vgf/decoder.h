@@ -202,12 +202,14 @@ MLSDKAPI size_t mlsdk_decoder_header_decoder_mem_reqs();
 /**
  * @brief Creates the header decoder
  *
- * @param headerData The pointer to the header data
- * @param size The size in bytes of the header data
+ * @param headerData The pointer to the start of the VGF data
+ * @param headerSize The size in bytes of the header data
+ * @param fileSize The total size in bytes of the full VGF file
  * @param decoderMemory Memory allocated to be used to create the decoder
  * @return The pointer to the newly created decoder
  */
-MLSDKAPI mlsdk_decoder_header_decoder *mlsdk_decoder_create_header_decoder(const void *const headerData, uint64_t size,
+MLSDKAPI mlsdk_decoder_header_decoder *mlsdk_decoder_create_header_decoder(const void *const headerData,
+                                                                           uint64_t headerSize, uint64_t fileSize,
                                                                            void *decoderMemory);
 
 /**

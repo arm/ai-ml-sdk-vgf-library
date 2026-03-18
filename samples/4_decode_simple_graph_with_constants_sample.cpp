@@ -17,7 +17,8 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
 
     // get length of file so we can do some error checking
     vgf_file.seekg(0, std::ios_base::end);
-    assert(header_size <= static_cast<size_t>(vgf_file.tellg()));
+    const uint64_t file_size = static_cast<uint64_t>(vgf_file.tellg());
+    assert(header_size <= static_cast<size_t>(file_size));
     vgf_file.seekg(0, std::ios_base::beg);
 
     // Read exactly 'headerSize' num bytes of data
@@ -27,7 +28,7 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
 
     // Lets create an object to decode the bytes we have just read from file.
     std::unique_ptr<vgflib::HeaderDecoder> header_decoder =
-        vgflib::CreateHeaderDecoder(header.data(), static_cast<uint64_t>(header.size()));
+        vgflib::CreateHeaderDecoder(header.data(), static_cast<uint64_t>(header.size()), file_size);
 
     // Validate that decoding succeeded
     assert(header_decoder);

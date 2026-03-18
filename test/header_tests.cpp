@@ -29,8 +29,8 @@ TEST(CppEncodeDecode, HeaderTest) {
     ASSERT_TRUE(vgf_data.size() >= HeaderSize());
 
     //! [HeaderDecodingSample0 begin]
-    std::unique_ptr<HeaderDecoder> decoder =
-        CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
+    std::unique_ptr<HeaderDecoder> decoder = CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()),
+                                                                 static_cast<uint64_t>(vgf_data.size()));
     //! [HeaderDecodingSample0 end]
 
     //! [HeaderDecodingSample1 begin]
@@ -65,7 +65,8 @@ TEST(CppEncodeDecode, HeaderTest) {
 
 TEST(CppDecode, WrongMagic) {
     std::array<char, HEADER_HEADER_SIZE_VALUE> data = {0};
-    std::unique_ptr<HeaderDecoder> decoder = CreateHeaderDecoder(data.data(), static_cast<uint64_t>(data.size()));
+    std::unique_ptr<HeaderDecoder> decoder =
+        CreateHeaderDecoder(data.data(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_TRUE(nullptr == decoder);
 
     // Test the FourCC generator used for the magic value
@@ -101,7 +102,8 @@ TEST(CDecode, HeaderTest) {
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *decoder =
-        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(data.size()), decoderMemory.data());
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), decoderMemory.data());
     ASSERT_NE(decoder, nullptr);
 
     mlsdk_vk_header_version vkHeaderVersion;
@@ -146,6 +148,7 @@ TEST(CDecode, WrongMagic) {
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
     mlsdk_decoder_header_decoder *decoder =
-        mlsdk_decoder_create_header_decoder(data.data(), static_cast<uint64_t>(data.size()), decoderMemory.data());
+        mlsdk_decoder_create_header_decoder(data.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), decoderMemory.data());
     ASSERT_TRUE(nullptr == decoder);
 }

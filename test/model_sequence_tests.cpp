@@ -39,7 +39,7 @@ TEST(CppModelSequenceTable, SegmentInfo) {
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
@@ -69,7 +69,7 @@ TEST(CppModelSequenceTable, DescripterSetInfo) {
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
@@ -102,8 +102,8 @@ TEST(CppModelSequenceTable, DescriptorBindingSlot) {
 
     std::string vgf_data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
+    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
+        vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgf_data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     //! [ModelSequenceTableDecodingSample0 begin]
@@ -183,7 +183,7 @@ TEST(CppModelSequenceTable, SegmentBindingSlot) {
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
@@ -236,7 +236,7 @@ TEST(CppModelSequenceTable, BindingSlot) {
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
@@ -280,7 +280,7 @@ TEST(CppModelSequenceTable, SegmentConstants) {
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
@@ -313,7 +313,7 @@ TEST(CppModelSequenceTable, SegmentDispatchShape) {
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
@@ -347,7 +347,7 @@ TEST(CppModelSequenceTable, PushConstantRange) {
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
@@ -374,7 +374,8 @@ TEST(CppVerify, ModelSequenceSizeWrapRejected) {
     Header header({0, 0}, {sequenceOffset, sequenceSize}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
-    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(HeaderSize()),
+                                           static_cast<uint64_t>(buffer.size())));
     EXPECT_TRUE(logger.contains({"section bounds invalid"}));
     EXPECT_EQ(nullptr, CreateModelSequenceTableDecoder(buffer.data() + sequenceOffset, sequenceSize));
     EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "size out of bounds"}));
@@ -398,7 +399,8 @@ TEST(CppVerify, ModelSequenceMisalignedRejected) {
     Header header({0, 0}, {sequenceOffset, sequenceSize}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
-    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(HeaderSize()),
+                                           static_cast<uint64_t>(buffer.size())));
     EXPECT_EQ(nullptr, CreateModelSequenceTableDecoder(buffer.data() + sequenceOffset, sequenceSize));
     EXPECT_TRUE(logger.contains({"VerifyModelSequenceTable", "data alignment invalid"}));
 }
@@ -429,8 +431,9 @@ TEST(CModelSequenceTable, SegmentInfo) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -485,8 +488,9 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -540,8 +544,9 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -604,8 +609,9 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -681,8 +687,9 @@ TEST(CModelSequenceTable, BindingSlot) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -752,8 +759,9 @@ TEST(CModelSequenceTable, SegmentConstants) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -810,8 +818,9 @@ TEST(CModelSequenceTable, SegmentDispatchShape) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -869,8 +878,9 @@ TEST(CModelSequenceTable, PushConstantRange) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -935,8 +945,9 @@ TEST(CVerify, ModelSequenceSizeWrapRejected) {
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
     std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
-    EXPECT_EQ(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
-                                                           headerDecoderMemory.data()));
+    EXPECT_EQ(nullptr,
+              mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                                  static_cast<uint64_t>(buffer.size()), headerDecoderMemory.data()));
     EXPECT_TRUE(logger.contains({"section bounds invalid"}));
     std::vector<uint8_t> decoderMemory(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     EXPECT_EQ(nullptr, mlsdk_decoder_create_model_sequence_decoder(buffer.data() + sequenceOffset, sequenceSize,
@@ -964,8 +975,9 @@ TEST(CVerify, ModelSequenceMisalignedRejected) {
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
     std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
-    EXPECT_NE(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
-                                                           headerDecoderMemory.data()));
+    EXPECT_NE(nullptr,
+              mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                                  static_cast<uint64_t>(buffer.size()), headerDecoderMemory.data()));
     std::vector<uint8_t> decoderMem(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     EXPECT_EQ(nullptr, mlsdk_decoder_create_model_sequence_decoder(buffer.data() + sequenceOffset, sequenceSize,
                                                                    decoderMem.data()));

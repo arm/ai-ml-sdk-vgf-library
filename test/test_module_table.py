@@ -29,7 +29,7 @@ def test_encode_decode_module_table_empty():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
     assert headerDecoder is not None
 
     moduleDecoder = vgf.CreateModuleTableDecoder(
@@ -58,7 +58,7 @@ def test_encode_decode_module_table_single():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
     assert headerDecoder is not None
 
     moduleIndex = module.reference
@@ -96,7 +96,7 @@ def test_encode_decode_module_table_single_placeholder():
 
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
     assert headerDecoder is not None
 
     moduleIndex = module.reference

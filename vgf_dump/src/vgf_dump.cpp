@@ -120,7 +120,8 @@ std::unique_ptr<HeaderDecoder> parseHeader(const void *const headerData, uint64_
     if (size < HeaderSize()) {
         throw std::runtime_error("File too small to contain VGF header");
     }
-    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(headerData, size);
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(headerData, static_cast<uint64_t>(HeaderSize()), size);
     if (headerDecoder == nullptr) {
         throw std::runtime_error("Invalid VGF file: header or section verification failed");
     }

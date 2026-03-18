@@ -203,7 +203,8 @@ void writeOutput(const std::string &outputPath, Encoder &encoder) {
 
 void update(const std::string &inputPath, const std::string &outputPath) {
     MemoryMap mapped(inputPath);
-    const auto headerDecoder = CreateHeaderDecoder(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
+    const auto headerDecoder =
+        CreateHeaderDecoder(mapped.ptr(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(mapped.size()));
     if (!headerDecoder) {
         throw std::runtime_error("Invalid VGF file: header or section verification failed");
     }

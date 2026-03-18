@@ -55,7 +55,7 @@ TEST(CppModelResourceTable, EmptyTable) {
     std::string data = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(data.size()));
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     std::unique_ptr<ModelResourceTableDecoder> decoder = CreateModelResourceTableDecoder(
@@ -94,8 +94,8 @@ TEST(CppModelResourceTable, EncodeDecode) {
 
     std::string vgf_data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
+    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
+        vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgf_data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     uint32_t mrtIndex = resource0.reference;
@@ -153,8 +153,8 @@ TEST(CppModelResourceTable, UnknownDimensions) {
 
     std::string vgf_data = buffer.str();
 
-    std::unique_ptr<HeaderDecoder> headerDecoder =
-        CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(vgf_data.size()));
+    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
+        vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgf_data.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     uint32_t mrtIndex = resource0.reference;
@@ -195,7 +195,8 @@ TEST(CppVerify, ModelResourceSizeWrapRejected) {
     Header header({0, 0}, {0, 0}, {resourceOffset, resourceSize}, {0, 0}, pretendVulkanHeaderVersion);
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
-    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(HeaderSize()),
+                                           static_cast<uint64_t>(buffer.size())));
     EXPECT_TRUE(logger.contains({"section bounds invalid"}));
     EXPECT_EQ(nullptr, CreateModelResourceTableDecoder(buffer.data() + resourceOffset, resourceSize));
     EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "size out of bounds"}));
@@ -219,7 +220,8 @@ TEST(CppVerify, ModelResourceMisalignedRejected) {
     Header header({0, 0}, {0, 0}, {resourceOffset, resourceSize}, {0, 0}, pretendVulkanHeaderVersion);
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
-    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(buffer.size())));
+    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(HeaderSize()),
+                                           static_cast<uint64_t>(buffer.size())));
     EXPECT_EQ(nullptr, CreateModelResourceTableDecoder(buffer.data() + resourceOffset, resourceSize));
     EXPECT_TRUE(logger.contains({"VerifyModelResourceTable", "data alignment invalid"}));
 }
@@ -246,8 +248,9 @@ TEST(CModelResourceTable, EmptyTable) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -290,8 +293,9 @@ TEST(CModelResourceTable, EncodeDecode) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -367,8 +371,9 @@ TEST(CModelResourceTable, UnknownDimensions) {
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *headerDecoder = mlsdk_decoder_create_header_decoder(
-        data.c_str(), static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
     ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
     ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
 
@@ -420,8 +425,9 @@ TEST(CVerify, ModelResourceSizeWrapRejected) {
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
     std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
-    EXPECT_EQ(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
-                                                           headerDecoderMemory.data()));
+    EXPECT_EQ(nullptr,
+              mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                                  static_cast<uint64_t>(buffer.size()), headerDecoderMemory.data()));
     EXPECT_TRUE(logger.contains({"section bounds invalid"}));
     std::vector<uint8_t> decoderMemory(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
     EXPECT_EQ(nullptr, mlsdk_decoder_create_model_resource_table_decoder(buffer.data() + resourceOffset, resourceSize,
@@ -450,8 +456,9 @@ TEST(CVerify, ModelResourceMisalignedRejected) {
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
     std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
-    EXPECT_NE(nullptr, mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(buffer.size()),
-                                                           headerDecoderMemory.data()));
+    EXPECT_NE(nullptr,
+              mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                                  static_cast<uint64_t>(buffer.size()), headerDecoderMemory.data()));
     std::vector<uint8_t> decoderMem(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
     EXPECT_EQ(nullptr, mlsdk_decoder_create_model_resource_table_decoder(buffer.data() + resourceOffset, resourceSize,
                                                                          decoderMem.data()));

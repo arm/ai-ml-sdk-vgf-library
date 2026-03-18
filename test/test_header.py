@@ -29,7 +29,7 @@ def test_encode_decode_header():
     buffer = stream.getbuffer()
     assert buffer.nbytes >= vgf.HeaderSize()
 
-    headerDecoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
     assert headerDecoder is not None
 
     assert headerDecoder.GetEncoderVulkanHeadersVersion() == pretendVulkanHeaderVersion
@@ -75,7 +75,7 @@ def test_decode_wrong_magic():
 
     buffer = stream.getbuffer()
 
-    decoder = vgf.CreateHeaderDecoder(buffer, buffer.nbytes)
+    decoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
     assert decoder is None
 
     vgf1 = vgf.FourCC("V", "G", "F", "1")
