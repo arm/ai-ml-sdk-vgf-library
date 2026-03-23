@@ -2,6 +2,21 @@
 
 ---
 
+## Version 0.9.0 – *Decoder Hardening & Build Updates*
+
+### Highlights
+
+- Added BF16 and FP8 (`fp8e4m3`, `fp8e5m2`) datatype support
+- Expanded decoder validation paths for constant and header parsing.
+- Added a decoder API fuzzer and aligned C/C++ decoder call semantics.
+- Updated VGF header/constant decoder paths, including `parseConstantSection`
+  and decoder-size handling.
+
+### Build, Packaging & Developer Experience
+
+- Added a CMake option to build the VGF shared library.
+- Updated fuzzer build integration and disabled `vgf_fuzzer` by default.
+
 ## Version 0.8.0 – *Updater & Tooling Update*
 
 ### Highlights
