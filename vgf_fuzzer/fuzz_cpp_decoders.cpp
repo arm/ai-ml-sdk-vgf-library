@@ -16,7 +16,7 @@
 using namespace mlsdk::vgflib;
 
 void FuzzCppDecoders(const uint8_t *data, size_t size) {
-    (void)CreateHeaderDecoder(data, size);
+    (void)CreateHeaderDecoder(data, static_cast<uint64_t>(HeaderSize()), size);
     (void)CreateModuleTableDecoder(data, size);
     (void)CreateModelResourceTableDecoder(data, size);
     (void)CreateModelSequenceTableDecoder(data, size);
@@ -24,7 +24,7 @@ void FuzzCppDecoders(const uint8_t *data, size_t size) {
 }
 
 void FuzzCppDecoderAccessors(const uint8_t *data, size_t size) {
-    auto header = CreateHeaderDecoder(data, size);
+    auto header = CreateHeaderDecoder(data, static_cast<uint64_t>(HeaderSize()), size);
     if (!header) {
         return;
     }
