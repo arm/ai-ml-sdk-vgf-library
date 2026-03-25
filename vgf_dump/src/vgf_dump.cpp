@@ -15,6 +15,7 @@
 #define VGFLIB_VK_HELPERS // Avoid need to include Vulkan headers
 #include <vgf/vulkan_helpers.generated.hpp>
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -181,7 +182,12 @@ void writeOutputJSON(const std::string &path, json &json) {
 struct ScenarioTensorResource {
     ScenarioTensorResource(const std::string &name, const std::string &uid, const std::string &path, bool isSrc,
                            VkFormat format, const DataView<int64_t> &dims)
-        : mName(name), mUid(uid), mPath(path), mIsSrc(isSrc), mFormat(format), mDims(dims.begin(), dims.end()) {}
+        : mName(name), mUid(uid), mPath(path), mIsSrc(isSrc), mFormat(format) {
+        // dynamic dimensions are represented as the lowest int64_t value in LLVM
+        mDims.reserve(dims.size());
+        std::transform(dims.begin(), dims.end(), std::back_inserter(mDims),
+                       [](int64_t v) { return v == std::numeric_limits<int64_t>::lowest() ? int64_t{-1} : v; });
+    }
 
     ScenarioTensorResource(const std::string &uid, const std::string &path, bool isInput, VkFormat format,
                            const DataView<int64_t> &dims)
@@ -192,7 +198,7 @@ struct ScenarioTensorResource {
     std::string mPath;
     bool mIsSrc;
     VkFormat mFormat;
-    std::vector<uint64_t> mDims;
+    std::vector<int64_t> mDims;
 };
 
 void to_json(json &j, const ScenarioTensorResource &tensor) {
