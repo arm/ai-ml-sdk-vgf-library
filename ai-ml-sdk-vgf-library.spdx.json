@@ -39,7 +39,7 @@
             "externalRefs": [
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
-                    "referenceLocator": "pkg:pypi/exceptiongroup@1.3.0",
+                    "referenceLocator": "pkg:pypi/exceptiongroup@1.3.1",
                     "referenceType": "purl"
                 },
                 {
@@ -70,7 +70,7 @@
             "externalRefs": [
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
-                    "referenceLocator": "pkg:pypi/execnet@2.1.1",
+                    "referenceLocator": "pkg:pypi/execnet@2.1.2",
                     "referenceType": "purl"
                 },
                 {
