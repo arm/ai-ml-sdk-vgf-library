@@ -110,13 +110,13 @@ TEST(CppModuleTable, Single2) {
     ASSERT_TRUE(decoder->getModuleName(module.reference) == "test");
     ASSERT_TRUE(decoder->hasSPIRV(module.reference) == false);
     ASSERT_TRUE(decoder->getModuleEntryPoint(module.reference) == "main");
-    ASSERT_TRUE(decoder->getModuleCode(module.reference) == DataView<uint32_t>());
+    ASSERT_TRUE(decoder->getModuleCode(module.reference).empty());
 }
 
 TEST(CppVerify, ModuleSizeWrapRejected) {
     Logger logger;
     const uint64_t moduleOffset = 157;
-    const uint64_t moduleSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const auto moduleSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
     const size_t fileSize = 168;
 
     std::vector<uint8_t> buffer(fileSize, 0);
@@ -283,7 +283,7 @@ TEST(CModuleTable, Single2) {
 TEST(CVerify, ModuleSizeWrapRejected) {
     Logger logger;
     const uint64_t moduleOffset = 157;
-    const uint64_t moduleSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
+    const auto moduleSize = static_cast<uint64_t>(SIZE_MAX_VALUE);
     const size_t fileSize = 168;
 
     std::vector<uint8_t> buffer(fileSize, 0);

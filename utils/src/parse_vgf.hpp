@@ -6,8 +6,7 @@
 #pragma once
 
 #include "vgf/decoder.hpp"
-#include <cstdint>
-#include <vgf/types.hpp>
+#include "vgf/types.hpp"
 
 #include <cstdint>
 #include <string>

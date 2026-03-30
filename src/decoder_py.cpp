@@ -15,7 +15,7 @@ using namespace mlsdk::vgflib;
 namespace {
 
 template <typename T> py::object pyDataView(DataView<T> data) {
-    if (data.begin() && data.size()) {
+    if (data.begin() && !data.empty()) {
         return py::memoryview::from_buffer(data.begin(), {data.size()}, {sizeof(T)});
     }
     return py::none();

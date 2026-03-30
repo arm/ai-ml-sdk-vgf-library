@@ -441,7 +441,8 @@ void dumpFile(const std ::string &inputFile, const std::string &outputFile) {
     writeOutputJSON(outputFile, json);
 }
 
-void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(const uint32_t *, size_t)> callback) {
+void getSpirv(const std::string &inputFile, uint32_t index,
+              const std::function<void(const uint32_t *, size_t)> &callback) {
     MemoryMap mapped(inputFile);
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
 
@@ -463,7 +464,8 @@ void getSpirv(const std::string &inputFile, uint32_t index, std::function<void(c
     callback(&data[0], data.size());
 }
 
-void getConstant(const std::string &inputFile, uint32_t index, std::function<void(const uint8_t *, size_t)> callback) {
+void getConstant(const std::string &inputFile, uint32_t index,
+                 const std::function<void(const uint8_t *, size_t)> &callback) {
     MemoryMap mapped(inputFile);
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
 
@@ -589,13 +591,15 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
     json json;
 
-    for (auto &graphResource : graphResources)
+    for (auto &graphResource : graphResources) {
         json["resources"].push_back(graphResource);
-    for (auto &tensorResource : tensorResources)
+    }
+    for (auto &tensorResource : tensorResources) {
         json["resources"].push_back(tensorResource);
-    for (auto &shaderResource : shaderResources)
+    }
+    for (auto &shaderResource : shaderResources) {
         json["resources"].push_back(shaderResource);
-
+    }
     json["commands"] = commands;
 
     return json;

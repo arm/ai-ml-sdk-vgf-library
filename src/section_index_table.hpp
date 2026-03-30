@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -17,13 +17,13 @@
 namespace mlsdk::vgflib {
 
 constexpr std::string_view rdStateToStr(std::ios::iostate state) {
-    if (state & std::ios::eofbit) {
+    if ((state & std::ios::eofbit) != 0) {
         return "eof";
     }
-    if (state & std::ios::failbit) {
+    if ((state & std::ios::failbit) != 0) {
         return "fail";
     }
-    if (state & std::ios::badbit) {
+    if ((state & std::ios::badbit) != 0) {
         return "bad";
     }
     return "good";
@@ -60,7 +60,7 @@ struct SectionIndexTable {
                 logging::error("Failed to write section index, rdstate: " + std::string(rdStateToStr(file.rdstate())));
                 return false;
             }
-            if (_padding) {
+            if (_padding != 0) {
                 std::vector<char> padArray(_padding, 0);
                 file.write(padArray.data(), static_cast<std::streamsize>(padArray.size()));
                 if (file.fail()) {
