@@ -26,37 +26,37 @@ MemoryMap::MemoryMap(const std::string &filename) {
     if (hFile == INVALID_HANDLE_VALUE) {
         throw std::runtime_error("Could not open file " + filename);
     }
-    _hFile = reinterpret_cast<void *>(hFile);
+    hFile_ = reinterpret_cast<void *>(hFile);
 
     LARGE_INTEGER fileSize;
-    if (!GetFileSizeEx(_hFile, &fileSize)) {
+    if (!GetFileSizeEx(hFile_, &fileSize)) {
         throw std::runtime_error("Failed to get file size for " + filename);
     }
-    _size = static_cast<size_t>(fileSize.QuadPart);
+    size_ = static_cast<size_t>(fileSize.QuadPart);
 
     HANDLE hMap = CreateFileMapping(hFile, nullptr, PAGE_READONLY, 0, 0, nullptr);
     if (hMap == INVALID_HANDLE_VALUE) {
         throw std::runtime_error("Failed to create file mapping for file " + filename);
     }
-    _hMap = reinterpret_cast<void *>(hMap);
+    hMap_ = reinterpret_cast<void *>(hMap);
 
-    _addr = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
-    if (_addr == nullptr) {
+    addr_ = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
+    if (addr_ == nullptr) {
         throw std::runtime_error("MapViewOfFile failed for file " + filename);
     }
 #else
-    _fd = open(filename.c_str(), O_RDONLY);
-    if (_fd < 0) {
+    fd_ = open(filename.c_str(), O_RDONLY);
+    if (fd_ < 0) {
         throw std::runtime_error("Could not open file " + filename);
     }
     struct stat st = {};
-    if (fstat(_fd, &st) == -1) {
+    if (fstat(fd_, &st) == -1) {
         throw std::runtime_error("Could not read attributes of file " + filename);
     }
-    _size = size_t(st.st_size);
+    size_ = size_t(st.st_size);
 
-    _addr = mmap(nullptr, _size, PROT_READ, MAP_PRIVATE, _fd, 0);
-    if (_addr == MAP_FAILED) {
+    addr_ = mmap(nullptr, size_, PROT_READ, MAP_PRIVATE, fd_, 0);
+    if (addr_ == MAP_FAILED) {
         throw std::runtime_error("Failed to memory map the file " + filename);
     }
 #endif
@@ -64,21 +64,21 @@ MemoryMap::MemoryMap(const std::string &filename) {
 
 MemoryMap::~MemoryMap() {
 #ifdef _WIN32
-    UnmapViewOfFile(_addr);
-    CloseHandle(reinterpret_cast<HANDLE>(_hMap));
-    CloseHandle(reinterpret_cast<HANDLE>(_hFile));
+    UnmapViewOfFile(addr_);
+    CloseHandle(reinterpret_cast<HANDLE>(hMap_));
+    CloseHandle(reinterpret_cast<HANDLE>(hFile_));
 #else
-    if (_fd > 0) {
-        munmap(_addr, _size);
-        close(_fd);
+    if (fd_ > 0) {
+        munmap(addr_, size_);
+        close(fd_);
     }
 #endif
 }
 
 const void *MemoryMap::ptr(const size_t offset) const {
-    if (offset >= _size) {
+    if (offset >= size_) {
         throw std::runtime_error("offset " + std::to_string(offset) + " exceeds the mapped size " +
-                                 std::to_string(_size));
+                                 std::to_string(size_));
     }
-    return reinterpret_cast<const void *>(static_cast<char *>(_addr) + offset);
+    return reinterpret_cast<const void *>(static_cast<char *>(addr_) + offset);
 }

@@ -17,15 +17,15 @@ class MemoryMap {
     ~MemoryMap();
 
     const void *ptr(size_t offset = 0) const;
-    size_t size() const { return _size; }
+    size_t size() const { return size_; }
 
   private:
 #ifdef _WIN32
-    void *_hFile;
-    void *_hMap;
+    void *hFile_;
+    void *hMap_;
 #else
-    int _fd;
+    int fd_;
 #endif
-    void *_addr;
-    size_t _size;
+    void *addr_;
+    size_t size_;
 };

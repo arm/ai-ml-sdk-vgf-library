@@ -196,46 +196,46 @@ class HeaderDecoderImpl : public HeaderDecoder {
     }
 
     [[nodiscard]] FormatVersion GetVersion() const override {
-        return {_header->version.major, _header->version.minor, _header->version.patch};
+        return {header_->version.major, header_->version.minor, header_->version.patch};
     }
 
     [[nodiscard]] bool IsValid() const override {
-        return _header->magic == HEADER_MAGIC_VALUE || _header->magic == OldMagicAsFourCC();
+        return header_->magic == HEADER_MAGIC_VALUE || header_->magic == OldMagicAsFourCC();
     }
 
-    [[nodiscard]] uint16_t GetEncoderVulkanHeadersVersion() const override { return _header->vkHeaderVersion; }
+    [[nodiscard]] uint16_t GetEncoderVulkanHeadersVersion() const override { return header_->vkHeaderVersion; }
 
     [[nodiscard]] bool CheckVersion() const override {
         return IsValid() && GetMajor() == HEADER_MAJOR_VERSION_VALUE && GetMinor() <= HEADER_MINOR_VERSION_VALUE;
     }
 
-    [[nodiscard]] uint8_t GetMajor() const override { return _header->version.major; }
-    [[nodiscard]] uint8_t GetMinor() const override { return _header->version.minor; }
-    [[nodiscard]] uint8_t GetPatch() const override { return _header->version.patch; }
+    [[nodiscard]] uint8_t GetMajor() const override { return header_->version.major; }
+    [[nodiscard]] uint8_t GetMinor() const override { return header_->version.minor; }
+    [[nodiscard]] uint8_t GetPatch() const override { return header_->version.patch; }
 
     [[nodiscard]] uint64_t GetModuleTableSize() const override {
-        return ReadBytesAs<uint64_t>(_header, HEADER_MODULE_SECTION_SIZE_OFFSET);
+        return ReadBytesAs<uint64_t>(header_, HEADER_MODULE_SECTION_SIZE_OFFSET);
     }
     [[nodiscard]] uint64_t GetModuleTableOffset() const override {
-        return ReadBytesAs<uint64_t>(_header, HEADER_MODULE_SECTION_OFFSET_OFFSET);
+        return ReadBytesAs<uint64_t>(header_, HEADER_MODULE_SECTION_OFFSET_OFFSET);
     }
     [[nodiscard]] uint64_t GetModelSequenceTableSize() const override {
-        return ReadBytesAs<uint64_t>(_header, HEADER_MODEL_SEQUENCE_SECTION_SIZE_OFFSET);
+        return ReadBytesAs<uint64_t>(header_, HEADER_MODEL_SEQUENCE_SECTION_SIZE_OFFSET);
     }
     [[nodiscard]] uint64_t GetModelSequenceTableOffset() const override {
-        return ReadBytesAs<uint64_t>(_header, HEADER_MODEL_SEQUENCE_SECTION_OFFSET_OFFSET);
+        return ReadBytesAs<uint64_t>(header_, HEADER_MODEL_SEQUENCE_SECTION_OFFSET_OFFSET);
     }
     [[nodiscard]] uint64_t GetModelResourceTableSize() const override {
-        return ReadBytesAs<uint64_t>(_header, HEADER_MODEL_RESOURCE_SECTION_SIZE_OFFSET);
+        return ReadBytesAs<uint64_t>(header_, HEADER_MODEL_RESOURCE_SECTION_SIZE_OFFSET);
     }
     [[nodiscard]] uint64_t GetModelResourceTableOffset() const override {
-        return ReadBytesAs<uint64_t>(_header, HEADER_MODEL_RESOURCE_SECTION_OFFSET_OFFSET);
+        return ReadBytesAs<uint64_t>(header_, HEADER_MODEL_RESOURCE_SECTION_OFFSET_OFFSET);
     }
     [[nodiscard]] uint64_t GetConstantsSize() const override {
-        return ReadBytesAs<uint64_t>(_header, HEADER_CONSTANT_SECTION_SIZE_OFFSET);
+        return ReadBytesAs<uint64_t>(header_, HEADER_CONSTANT_SECTION_SIZE_OFFSET);
     }
     [[nodiscard]] uint64_t GetConstantsOffset() const override {
-        return ReadBytesAs<uint64_t>(_header, HEADER_CONSTANT_SECTION_OFFSET_OFFSET);
+        return ReadBytesAs<uint64_t>(header_, HEADER_CONSTANT_SECTION_OFFSET_OFFSET);
     }
 
   private:
@@ -250,9 +250,9 @@ class HeaderDecoderImpl : public HeaderDecoder {
         return true;
     }
 
-    explicit HeaderDecoderImpl(const void *const data) : _header(static_cast<const Header *>(data)) {}
+    explicit HeaderDecoderImpl(const void *const data) : header_(static_cast<const Header *>(data)) {}
 
-    const Header *const _header;
+    const Header *const header_;
 };
 
 size_t HeaderSize() { return HEADER_HEADER_SIZE_VALUE; }
@@ -271,12 +271,12 @@ HeaderDecoder *CreateHeaderDecoderInPlace(const void *const data, uint64_t heade
 class ModuleTableDecoderImpl : public ModuleTableDecoder {
   public:
     explicit ModuleTableDecoderImpl(const void *const data, uint64_t size)
-        : _moduleTable(flatbuffers::GetRoot<const VGF::ModuleTable>(data)) {
+        : moduleTable_(flatbuffers::GetRoot<const VGF::ModuleTable>(data)) {
         (void)size;
     }
 
     [[nodiscard]] size_t size() const override {
-        const auto *modules = _moduleTable->modules();
+        const auto *modules = moduleTable_->modules();
         return modules == nullptr ? 0 : modules->size();
     }
 
@@ -304,12 +304,12 @@ class ModuleTableDecoderImpl : public ModuleTableDecoder {
 
   private:
     [[nodiscard]] const VGF::Module *getModuleAt(uint32_t idx) const {
-        const auto *modules = _moduleTable->modules();
+        const auto *modules = moduleTable_->modules();
         assert(modules && "no modules found");
         return modules->Get(idx);
     }
 
-    const VGF::ModuleTable *_moduleTable;
+    const VGF::ModuleTable *moduleTable_;
 };
 
 size_t ModuleTableDecoderSize() { return sizeof(ModuleTableDecoderImpl); }
@@ -364,12 +364,12 @@ PushConstantRangeHandle ToHandle(const flatbuffers::Vector<flatbuffers::Offset<V
 class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
   public:
     explicit ModelSequenceTableDecoderImpl(const void *const data, uint64_t size)
-        : _modelSequenceTable(flatbuffers::GetRoot<const VGF::ModelSequenceTable>(data)) {
+        : modelSequenceTable_(flatbuffers::GetRoot<const VGF::ModelSequenceTable>(data)) {
         (void)size;
     }
 
     [[nodiscard]] size_t modelSequenceTableSize() const override {
-        const auto *segments = _modelSequenceTable->segments();
+        const auto *segments = modelSequenceTable_->segments();
         return segments == nullptr ? 0 : segments->size();
     }
 
@@ -408,11 +408,11 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
     }
 
     [[nodiscard]] BindingSlotArrayHandle getModelSequenceInputBindingSlotsHandle() const override {
-        return ToHandle(_modelSequenceTable->inputs());
+        return ToHandle(modelSequenceTable_->inputs());
     }
 
     [[nodiscard]] BindingSlotArrayHandle getModelSequenceOutputBindingSlotsHandle() const override {
-        return ToHandle(_modelSequenceTable->outputs());
+        return ToHandle(modelSequenceTable_->outputs());
     }
 
     [[nodiscard]] size_t getBindingsSize(BindingSlotArrayHandle handle) const override {
@@ -432,11 +432,11 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
     }
 
     [[nodiscard]] NameArrayHandle getModelSequenceInputNamesHandle() const override {
-        return ToHandle(_modelSequenceTable->input_names());
+        return ToHandle(modelSequenceTable_->input_names());
     }
 
     [[nodiscard]] NameArrayHandle getModelSequenceOutputNamesHandle() const override {
-        return ToHandle(_modelSequenceTable->output_names());
+        return ToHandle(modelSequenceTable_->output_names());
     }
 
     [[nodiscard]] size_t getNamesSize(NameArrayHandle handle) const override {
@@ -481,7 +481,7 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
 
   private:
     [[nodiscard]] const VGF::SegmentInfo *getSegmentAt(uint32_t segmentIdx) const {
-        const auto *segments = _modelSequenceTable->segments();
+        const auto *segments = modelSequenceTable_->segments();
         assert(segments && "no segment found at given index");
         return segments->Get(segmentIdx);
     }
@@ -492,7 +492,7 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
         return descriptors->Get(segmentIdx);
     }
 
-    const VGF::ModelSequenceTable *_modelSequenceTable;
+    const VGF::ModelSequenceTable *modelSequenceTable_;
 };
 
 size_t ModelSequenceTableDecoderSize() { return sizeof(ModelSequenceTableDecoderImpl); }
@@ -522,12 +522,12 @@ ModelSequenceTableDecoder *CreateModelSequenceTableDecoderInPlace(const void *co
 class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
   public:
     explicit ModelResourceTableDecoderImpl(const void *const data, uint64_t size)
-        : _modelRecTable(flatbuffers::GetRoot<const VGF::ModelResourceTable>(data)) {
+        : modelRecTable_(flatbuffers::GetRoot<const VGF::ModelResourceTable>(data)) {
         (void)size;
     }
 
     [[nodiscard]] size_t size() const override {
-        const auto *entries = _modelRecTable->mrt_entry();
+        const auto *entries = modelRecTable_->mrt_entry();
         return entries == nullptr ? 0 : entries->size();
     }
 
@@ -571,11 +571,11 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
 
   private:
     [[nodiscard]] const VGF::ModelResourceTableEntry *getEntryAt(uint32_t index) const {
-        const auto *entryTable = _modelRecTable->mrt_entry();
+        const auto *entryTable = modelRecTable_->mrt_entry();
         assert(entryTable && "no entryTable found");
         return entryTable->Get(index);
     }
-    const VGF::ModelResourceTable *_modelRecTable;
+    const VGF::ModelResourceTable *modelRecTable_;
 };
 
 size_t ModelResourceTableDecoderSize() { return sizeof(ModelResourceTableDecoderImpl); }
@@ -604,22 +604,22 @@ ModelResourceTableDecoder *CreateModelResourceTableDecoderInPlace(const void *co
 class ConstantDecoderImpl : public ConstantDecoder {
   public:
     explicit ConstantDecoderImpl(const void *const data)
-        : _constantSection(flatbuffers::GetRoot<const VGF::ConstantSection>(data)) {}
+        : constantSection_(flatbuffers::GetRoot<const VGF::ConstantSection>(data)) {}
 
     [[nodiscard]] size_t size() const override {
-        const auto *constants = _constantSection->data();
+        const auto *constants = constantSection_->data();
         return constants == nullptr ? 0 : constants->size();
     }
 
     [[nodiscard]] DataView<uint8_t> getConstant(uint32_t idx) const override {
-        const auto *constants = _constantSection->data();
+        const auto *constants = constantSection_->data();
         return constants == nullptr || constants->Get(idx)->raw() == nullptr
                    ? DataView<uint8_t>()
                    : DataView<uint8_t>(constants->Get(idx)->raw()->data(), constants->Get(idx)->raw()->size());
     }
 
     [[nodiscard]] uint32_t getConstantMrtIndex(uint32_t idx) const override {
-        const auto *constants = _constantSection->data();
+        const auto *constants = constantSection_->data();
         return constants == nullptr ? CONSTANT_INVALID_MRT_INDEX : constants->Get(idx)->mrt_index();
     }
 
@@ -628,7 +628,7 @@ class ConstantDecoderImpl : public ConstantDecoder {
     }
 
     [[nodiscard]] int64_t getConstantSparsityDimension(uint32_t idx) const override {
-        const auto *constants = _constantSection->data();
+        const auto *constants = constantSection_->data();
         if (constants == nullptr) {
             return CONSTANT_INVALID_SPARSITY_DIMENSION;
         }
@@ -640,7 +640,7 @@ class ConstantDecoderImpl : public ConstantDecoder {
     }
 
   private:
-    const VGF::ConstantSection *_constantSection;
+    const VGF::ConstantSection *constantSection_;
 };
 
 class ConstantDecoder_V00_Impl : public ConstantDecoder {
@@ -665,7 +665,7 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         return new (decoderMem) ConstantDecoder_V00_Impl(count, metaData, dataStart, dataSize);
     }
 
-    [[nodiscard]] size_t size() const override { return static_cast<size_t>(_count); }
+    [[nodiscard]] size_t size() const override { return static_cast<size_t>(count_); }
 
     [[nodiscard]] DataView<uint8_t> getConstant(uint32_t idx) const override {
         const auto *metaData = _getPtrToMetaData(idx);
@@ -673,11 +673,11 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
             return {};
         }
 
-        if (!_constantDataWithinBounds(metaData, _dataSize)) {
+        if (!_constantDataWithinBounds(metaData, dataSize_)) {
             return {};
         }
 
-        return DataView<uint8_t>(_data + metaData->offset, static_cast<size_t>(metaData->size));
+        return DataView<uint8_t>(data_ + metaData->offset, static_cast<size_t>(metaData->size));
     }
 
     [[nodiscard]] uint32_t getConstantMrtIndex(uint32_t idx) const override {
@@ -703,7 +703,7 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
 
   private:
     explicit ConstantDecoder_V00_Impl(uint64_t count, const uint8_t *metaData, const uint8_t *data, uint64_t dataSize)
-        : _count(count), _metaData(metaData), _data(data), _dataSize(dataSize) {}
+        : count_(count), metaData_(metaData), data_(data), dataSize_(dataSize) {}
 
     using VerifiedLayout = std::tuple<uint64_t, const uint8_t *, const uint8_t *, uint64_t>;
 
@@ -759,10 +759,10 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
     }
 
     [[nodiscard]] const ConstantMetaData_V00 *_getPtrToMetaData(uint32_t idx) const {
-        if (_metaData == nullptr || static_cast<uint64_t>(idx) >= _count) {
+        if (metaData_ == nullptr || static_cast<uint64_t>(idx) >= count_) {
             return nullptr;
         }
-        return reinterpret_cast<const ConstantMetaData_V00 *>(_metaData + idx * sizeof(ConstantMetaData_V00));
+        return reinterpret_cast<const ConstantMetaData_V00 *>(metaData_ + idx * sizeof(ConstantMetaData_V00));
     }
 
     [[nodiscard]] static bool _constantDataWithinBounds(const ConstantMetaData_V00 *metaData, uint64_t dataSize) {
@@ -784,10 +784,10 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         return true;
     }
 
-    uint64_t _count = 0;
-    const uint8_t *_metaData = nullptr;
-    const uint8_t *_data = nullptr;
-    uint64_t _dataSize = 0;
+    uint64_t count_ = 0;
+    const uint8_t *metaData_ = nullptr;
+    const uint8_t *data_ = nullptr;
+    uint64_t dataSize_ = 0;
 };
 size_t ConstantDecoderSize() { return std::max(sizeof(ConstantDecoderImpl), sizeof(ConstantDecoder_V00_Impl)); }
 
