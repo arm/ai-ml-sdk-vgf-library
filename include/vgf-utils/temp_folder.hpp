@@ -17,5 +17,5 @@ class TempFolder {
     std::filesystem::path relative(std::string_view path) const;
 
   private:
-    std::filesystem::path temp_folder_path;
+    std::filesystem::path tempFolderPath_;
 };

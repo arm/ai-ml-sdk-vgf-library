@@ -19,35 +19,35 @@ namespace mlsdk::vgflib {
 
 template <typename T> class DataView {
   public:
-    constexpr DataView(const T *ptr, size_t size) noexcept : _ptr(ptr), _size(size) {}
+    constexpr DataView(const T *ptr, size_t size) noexcept : ptr_(ptr), size_(size) {}
     constexpr DataView() noexcept = default;
 
-    constexpr size_t size() const noexcept { return _size; }
-    constexpr T const &operator[](uint32_t i) const noexcept { return _ptr[i]; };
+    constexpr size_t size() const noexcept { return size_; }
+    constexpr T const &operator[](uint32_t i) const noexcept { return ptr_[i]; };
 
-    constexpr auto begin() const noexcept { return _ptr; }
-    constexpr auto end() const noexcept { return _ptr + _size; }
+    constexpr auto begin() const noexcept { return ptr_; }
+    constexpr auto end() const noexcept { return ptr_ + size_; }
     constexpr bool empty() const noexcept { return begin() == end(); }
 
     constexpr bool operator==(const DataView<T> &other) const noexcept {
-        if (_size != other._size) {
+        if (size_ != other.size_) {
             return false;
         }
 
-        if (!_ptr && !other._ptr) {
+        if (!ptr_ && !other.ptr_) {
             return true;
         }
 
-        if (!_ptr || !other._ptr) {
+        if (!ptr_ || !other.ptr_) {
             return false;
         }
 
-        return std::memcmp(_ptr, other._ptr, _size) == 0;
+        return std::memcmp(ptr_, other.ptr_, size_) == 0;
     }
 
   private:
-    const T *_ptr = nullptr;
-    size_t _size = 0;
+    const T *ptr_ = nullptr;
+    size_t size_ = 0;
 };
 
 /**

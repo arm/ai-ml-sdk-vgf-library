@@ -29,25 +29,27 @@ constexpr std::string_view rdStateToStr(std::ios::iostate state) {
     return "good";
 }
 
-struct SectionIndexTable {
-    struct SectionIndex : public SectionEntry {
+class SectionIndexTable {
+  public:
+    class SectionIndex : public SectionEntry {
+      public:
         /// Construct a section index table entry
-        SectionIndex(uint64_t size, uint64_t alignment) : SectionEntry(0, size), _alignment(alignment) {
-            assert(alignment > 0);
+        SectionIndex(uint64_t size, uint64_t alignment) : SectionEntry(0, size), alignment_(alignment) {
+            assert(alignment_ > 0);
         }
 
         /// Returned that the computed offset matches the required alignment
-        bool IsAligned() const { return offset % _alignment == 0; }
+        bool IsAligned() const { return offset % alignment_ == 0; }
 
         /// Returns the offset to the end of payload data
         uint64_t EndOfData() const { return offset + size; }
 
         /// Returns the offset to the next section. (data + padding)
-        uint64_t NextOffset() const { return EndOfData() + _padding; }
+        uint64_t NextOffset() const { return EndOfData() + padding_; }
 
         /// Update the padding by using the alignment requirement of the next section
         void UpdatePadding(const SectionIndex &next) {
-            _padding = next._alignment - ((((EndOfData() - 1) % next._alignment) + 1));
+            padding_ = next.alignment_ - ((((EndOfData() - 1) % next.alignment_) + 1));
         }
 
         /// Update the offset by computing from the previous section
@@ -60,8 +62,8 @@ struct SectionIndexTable {
                 logging::error("Failed to write section index, rdstate: " + std::string(rdStateToStr(file.rdstate())));
                 return false;
             }
-            if (_padding != 0) {
-                std::vector<char> padArray(_padding, 0);
+            if (padding_ != 0) {
+                std::vector<char> padArray(padding_, 0);
                 file.write(padArray.data(), static_cast<std::streamsize>(padArray.size()));
                 if (file.fail()) {
                     logging::error("Failed to write section index padding, rdstate: " +
@@ -74,25 +76,25 @@ struct SectionIndexTable {
 
         uint64_t GetSize() const { return size; }
         uint64_t GetOffset() const { return offset; }
-        uint64_t GetPadding() const { return _padding; }
-        uint64_t GetAlignment() const { return _alignment; }
+        uint64_t GetPadding() const { return padding_; }
+        uint64_t GetAlignment() const { return alignment_; }
 
       private:
-        uint64_t _alignment = 1; //< Alignment requirement of the section
-        uint64_t _padding = 0;   //< Padding size (after the data)
+        uint64_t alignment_ = 1; //< Alignment requirement of the section
+        uint64_t padding_ = 0;   //< Padding size (after the data)
     };
 
     /// Add a new section and return a reference to it
     const SectionIndex &AddSection(uint64_t size, uint64_t alignment = 1) {
         assert(alignment != 0);
-        _sections.emplace_back(size, alignment);
-        return _sections.back();
+        sections_.emplace_back(size, alignment);
+        return sections_.back();
     }
 
     /// Walk sections updating padding and offsets
     void Update() {
-        auto current = _sections.begin();
-        for (size_t i = 0; i < _sections.size() - 1; i++) {
+        auto current = sections_.begin();
+        for (size_t i = 0; i < sections_.size() - 1; i++) {
             SectionIndex &section = *current;
             SectionIndex &next = *(++current);
 
@@ -104,7 +106,7 @@ struct SectionIndexTable {
     }
 
   private:
-    std::list<SectionIndex> _sections;
+    std::list<SectionIndex> sections_;
 };
 
 } // namespace mlsdk::vgflib

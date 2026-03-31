@@ -17,13 +17,13 @@ namespace mlsdk::vgflib::logging::utils {
 class Logger {
   public:
     Logger() {
-        EnableLogging([this](LogLevel, const std::string &message) { messages.push_back(message); });
+        EnableLogging([this](LogLevel, const std::string &message) { messages_.push_back(message); });
     }
 
     ~Logger() { DisableLogging(); }
 
     bool contains(std::initializer_list<std::string_view> tokens) const {
-        for (const auto &msg : messages) {
+        for (const auto &msg : messages_) {
             bool allFound = true;
             for (const auto &token : tokens) {
                 if (msg.find(token) == std::string::npos) {
@@ -39,7 +39,7 @@ class Logger {
     }
 
   private:
-    std::vector<std::string> messages;
+    std::vector<std::string> messages_;
 };
 
 } // namespace mlsdk::vgflib::logging::utils

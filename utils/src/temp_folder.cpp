@@ -29,13 +29,13 @@ std::filesystem::path make_non_preferred(const std::filesystem::path &path) {
 
 TempFolder::TempFolder(std::string_view prefix) {
     std::string path_name = std::string(prefix) + std::string("_") + randomString();
-    temp_folder_path = system_temp_folder_path / path_name;
-    temp_folder_path = make_non_preferred(temp_folder_path);
-    std::filesystem::create_directories(temp_folder_path);
+    tempFolderPath_ = system_temp_folder_path / path_name;
+    tempFolderPath_ = make_non_preferred(tempFolderPath_);
+    std::filesystem::create_directories(tempFolderPath_);
 }
 
-TempFolder::~TempFolder() { std::filesystem::remove_all(temp_folder_path); }
+TempFolder::~TempFolder() { std::filesystem::remove_all(tempFolderPath_); }
 
-std::filesystem::path &TempFolder::path() { return temp_folder_path; }
+std::filesystem::path &TempFolder::path() { return tempFolderPath_; }
 
-std::filesystem::path TempFolder::relative(std::string_view path) const { return temp_folder_path / path; }
+std::filesystem::path TempFolder::relative(std::string_view path) const { return tempFolderPath_ / path; }
