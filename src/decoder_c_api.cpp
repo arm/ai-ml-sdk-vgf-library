@@ -122,7 +122,7 @@ size_t mlsdk_decoder_get_module_table_num_entries(const mlsdk_decoder_module_tab
 }
 
 namespace {
-inline mlsdk_decoder_module_type convert_module_type(ModuleType type) {
+mlsdk_decoder_module_type convert_module_type(ModuleType type) {
     switch (type) {
     case ModuleType::COMPUTE:
         return mlsdk_decoder_module_type_compute;
@@ -134,18 +134,18 @@ inline mlsdk_decoder_module_type convert_module_type(ModuleType type) {
     }
 }
 
-inline mlsdk_vk_descriptor_type_optional convert_descriptor_type(std::optional<DescriptorType> type) {
-    mlsdk_vk_descriptor_type_optional desc_type_optional;
-    memset(&desc_type_optional, 0, sizeof(mlsdk_vk_descriptor_type_optional));
+mlsdk_vk_descriptor_type_optional convert_descriptor_type(std::optional<DescriptorType> type) {
+    mlsdk_vk_descriptor_type_optional descTypeOptional;
+    memset(&descTypeOptional, 0, sizeof(mlsdk_vk_descriptor_type_optional));
     if (type.has_value()) {
-        desc_type_optional.value = static_cast<mlsdk_vk_descriptor_type>(*type);
-        desc_type_optional.has_value = true;
+        descTypeOptional.value = static_cast<mlsdk_vk_descriptor_type>(*type);
+        descTypeOptional.has_value = true;
     }
 
-    return desc_type_optional;
+    return descTypeOptional;
 }
 
-inline mlsdk_vk_format convert_vk_format(FormatType format) {
+mlsdk_vk_format convert_vk_format(FormatType format) {
     assert(UndefinedFormat() == mlsdk_vk_format_undefined() && "API vk_format_undefined mismatch");
 
     return static_cast<mlsdk_vk_format>(format);

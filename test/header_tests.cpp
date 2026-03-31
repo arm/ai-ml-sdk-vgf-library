@@ -25,12 +25,12 @@ TEST(CppEncodeDecode, HeaderTest) {
     encoder->Finish();
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
-    std::string vgf_data = buffer.str();
-    ASSERT_TRUE(vgf_data.size() >= HeaderSize());
+    std::string vgfData = buffer.str();
+    ASSERT_TRUE(vgfData.size() >= HeaderSize());
 
     //! [HeaderDecodingSample0 begin]
-    std::unique_ptr<HeaderDecoder> decoder = CreateHeaderDecoder(vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()),
-                                                                 static_cast<uint64_t>(vgf_data.size()));
+    std::unique_ptr<HeaderDecoder> decoder = CreateHeaderDecoder(vgfData.c_str(), static_cast<uint64_t>(HeaderSize()),
+                                                                 static_cast<uint64_t>(vgfData.size()));
     //! [HeaderDecodingSample0 end]
 
     //! [HeaderDecodingSample1 begin]

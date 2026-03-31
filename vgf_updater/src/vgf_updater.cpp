@@ -91,7 +91,7 @@ std::unordered_map<uint32_t, Constant> decodeConstants(const HeaderDecoder &head
                                                        const ModelSequence &sequenceTable) {
     std::unordered_map<uint32_t, Constant> constantsByIndex;
     const auto constantsSize = headerDecoder.GetConstantsSize();
-    if (!constantsSize) {
+    if (constantsSize == 0U) {
         return constantsByIndex;
     }
 
@@ -144,12 +144,13 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
                                                        constantData.mConstantSize, constantData.mSparsityDimension));
         }
 
+        const auto getPushConstRangeRef = [&encoder](const auto &range) {
+            return encoder.AddPushConstRange(range.mStageFlags, range.mOffset, range.mSize);
+        };
         std::vector<PushConstRangeRef> pushConstants{};
         pushConstants.reserve(segment.mPushConstantRanges.size());
-        for (const auto &pushConstantRange : segment.mPushConstantRanges) {
-            pushConstants.push_back(encoder.AddPushConstRange(pushConstantRange.mStageFlags, pushConstantRange.mOffset,
-                                                              pushConstantRange.mSize));
-        }
+        std::transform(segment.mPushConstantRanges.begin(), segment.mPushConstantRanges.end(),
+                       std::back_inserter(pushConstants), getPushConstRangeRef);
 
         std::array<uint32_t, 3> dispatchShape{};
         if (segment.mDispatchShape.size() == 3) {
@@ -233,17 +234,15 @@ void update(const std::string &inputPath, const std::string &outputPath) {
     const auto &[modelInputBindingSlots, modelOutputBindingSlots] =
         encodeSegments(sequenceTable, moduleRefs, resourceRefs, constantsByIndex, resourceTable, *encoder);
 
+    const auto getName = [](const auto &bindingSlot) { return bindingSlot.mName; };
     std::vector<std::string> inputNames;
     inputNames.reserve(sequenceTable.mInputs.size());
-    for (const auto &bindingSlot : sequenceTable.mInputs) {
-        inputNames.push_back(bindingSlot.mName);
-    }
+    std::transform(sequenceTable.mInputs.begin(), sequenceTable.mInputs.end(), std::back_inserter(inputNames), getName);
 
     std::vector<std::string> outputNames;
     outputNames.reserve(sequenceTable.mOutputs.size());
-    for (const auto &bindingSlot : sequenceTable.mOutputs) {
-        outputNames.push_back(bindingSlot.mName);
-    }
+    std::transform(sequenceTable.mOutputs.begin(), sequenceTable.mOutputs.end(), std::back_inserter(outputNames),
+                   getName);
 
     encoder->AddModelSequenceInputsOutputs(modelInputBindingSlots, inputNames, modelOutputBindingSlots, outputNames);
 

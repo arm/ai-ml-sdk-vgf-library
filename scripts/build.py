@@ -274,6 +274,7 @@ class Builder:
                     f"{VGF_LIB_DIR / 'test'}",
                     f"{VGF_LIB_DIR / 'utils'}",
                     f"{VGF_LIB_DIR / 'vgf_dump'}",
+                    f"{VGF_LIB_DIR / 'vgf_updater'}",
                 ]
 
                 lint_cmd = [

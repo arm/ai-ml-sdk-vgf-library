@@ -11,71 +11,71 @@ namespace mlsdk::vgflib::samples {
 
 void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename) {
     // Open the file
-    std::ifstream vgf_file(vgfFilename, std::ios::binary);
-    assert(vgf_file);
-    size_t header_size = vgflib::HeaderSize();
+    std::ifstream vgfFile(vgfFilename, std::ios::binary);
+    assert(vgfFile);
+    size_t headerSize = vgflib::HeaderSize();
 
     // get length of file so we can do some error checking
-    vgf_file.seekg(0, std::ios_base::end);
-    const uint64_t file_size = static_cast<uint64_t>(vgf_file.tellg());
-    assert(header_size <= static_cast<size_t>(file_size));
-    vgf_file.seekg(0, std::ios_base::beg);
+    vgfFile.seekg(0, std::ios_base::end);
+    const uint64_t fileSize = static_cast<uint64_t>(vgfFile.tellg());
+    assert(headerSize <= static_cast<size_t>(fileSize));
+    vgfFile.seekg(0, std::ios_base::beg);
 
     // Read exactly 'headerSize' num bytes of data
-    std::vector<char> header(header_size);
-    vgf_file.read(header.data(), static_cast<std::streamsize>(header.size()));
-    assert(vgf_file);
+    std::vector<char> header(headerSize);
+    vgfFile.read(header.data(), static_cast<std::streamsize>(header.size()));
+    assert(vgfFile);
 
     // Lets create an object to decode the bytes we have just read from file.
-    std::unique_ptr<vgflib::HeaderDecoder> header_decoder =
-        vgflib::CreateHeaderDecoder(header.data(), static_cast<uint64_t>(header.size()), file_size);
+    std::unique_ptr<vgflib::HeaderDecoder> headerDecoder =
+        vgflib::CreateHeaderDecoder(header.data(), static_cast<uint64_t>(header.size()), fileSize);
 
     // Validate that decoding succeeded
-    assert(header_decoder);
+    assert(headerDecoder);
 
     // ** NEW ** Create a space to store the information we need
-    std::vector<uint32_t> cached_indexes;
+    std::vector<uint32_t> cachedIndexes;
     {
         // Lets first load the segment info which is part of the ModelSequenceTable section.
         // The header can tell us exactly where this section is in the file and how large it is.
         // For this example we will load the entire section into memory, though it is possible to memory map the file
         // and access the contents directly.
-        std::vector<char> model_sequence_table_data(header_decoder->GetModelSequenceTableSize());
+        std::vector<char> modelSequenceTableData(headerDecoder->GetModelSequenceTableSize());
 
         // Seek to the position in the file where the section begins
-        vgf_file.seekg(static_cast<std::streamoff>(header_decoder->GetModelSequenceTableOffset()));
+        vgfFile.seekg(static_cast<std::streamoff>(headerDecoder->GetModelSequenceTableOffset()));
 
         // Read the bytes into our allocation
-        vgf_file.read(model_sequence_table_data.data(), static_cast<std::streamsize>(model_sequence_table_data.size()));
+        vgfFile.read(modelSequenceTableData.data(), static_cast<std::streamsize>(modelSequenceTableData.size()));
 
         // Make sure nothing went wrong
-        assert(vgf_file);
+        assert(vgfFile);
 
         // Create the decoder for the Model Sequence Table
-        std::unique_ptr<vgflib::ModelSequenceTableDecoder> mst_decoder =
-            vgflib::CreateModelSequenceTableDecoder(model_sequence_table_data.data(), model_sequence_table_data.size());
+        std::unique_ptr<vgflib::ModelSequenceTableDecoder> mstDecoder =
+            vgflib::CreateModelSequenceTableDecoder(modelSequenceTableData.data(), modelSequenceTableData.size());
 
         // Check for valid section
-        assert(mst_decoder != nullptr);
+        assert(mstDecoder != nullptr);
 
         // We know this file was written based on tutorial 3, so lets verify some things we expect.
-        assert(mst_decoder->modelSequenceTableSize() == 1);                       // We should only have 1 segment
-        uint32_t segIdx = 0;                                                      // Therefore it is index 0
-        assert(mst_decoder->getSegmentType(segIdx) == vgflib::ModuleType::GRAPH); // It should be a SPIR-V graph module
-        assert(mst_decoder->getSegmentName(segIdx) ==
-               "segment_conv2d_rescale_graph2");                            // We know what it should be named
-        assert(mst_decoder->getSegmentDescriptorSetInfosSize(segIdx) == 1); // Only one descriptor set used.
+        assert(mstDecoder->modelSequenceTableSize() == 1);                       // We should only have 1 segment
+        uint32_t segIdx = 0;                                                     // Therefore it is index 0
+        assert(mstDecoder->getSegmentType(segIdx) == vgflib::ModuleType::GRAPH); // It should be a SPIR-V graph module
+        assert(mstDecoder->getSegmentName(segIdx) ==
+               "segment_conv2d_rescale_graph2");                           // We know what it should be named
+        assert(mstDecoder->getSegmentDescriptorSetInfosSize(segIdx) == 1); // Only one descriptor set used.
         // ...etc
 
         // ** NEW ** Unlike tutorial 2, there should be constants this time
-        vgflib::DataView<uint32_t> indexes = mst_decoder->getSegmentConstantIndexes(segIdx);
+        vgflib::DataView<uint32_t> indexes = mstDecoder->getSegmentConstantIndexes(segIdx);
         assert(indexes.size() == 1); // we expect 1 constant required by this segment
 
         // ** NEW ** Each element in indexes, is an index to an entry the constants table.
         // ** NEW ** We will cache the indexes for later, since the DataView will dangle once we leave the current
         // scope.
-        cached_indexes.reserve(indexes.size());
-        std::for_each(indexes.begin(), indexes.end(), [&cached_indexes](uint32_t v) { cached_indexes.push_back(v); });
+        cachedIndexes.reserve(indexes.size());
+        std::for_each(indexes.begin(), indexes.end(), [&cachedIndexes](uint32_t v) { cachedIndexes.push_back(v); });
     }
 
     //===================
@@ -87,22 +87,22 @@ void T4_decode_simple_graph_with_constants_sample(const std::string &vgfFilename
         // a later tutorial.
 
         // Load the constants section from the VGF
-        std::vector<char> constants_data(header_decoder->GetConstantsSize());
-        vgf_file.seekg(static_cast<std::streamoff>(header_decoder->GetConstantsOffset()));
-        vgf_file.read(constants_data.data(), static_cast<std::streamsize>(constants_data.size()));
-        assert(vgf_file);
+        std::vector<char> constantsData(headerDecoder->GetConstantsSize());
+        vgfFile.seekg(static_cast<std::streamoff>(headerDecoder->GetConstantsOffset()));
+        vgfFile.read(constantsData.data(), static_cast<std::streamsize>(constantsData.size()));
+        assert(vgfFile);
 
         // Create the ConstantsDecoder from the section in memory
-        std::unique_ptr<vgflib::ConstantDecoder> constants_decoder =
-            vgflib::CreateConstantDecoder(constants_data.data(), constants_data.size());
+        std::unique_ptr<vgflib::ConstantDecoder> constantsDecoder =
+            vgflib::CreateConstantDecoder(constantsData.data(), constantsData.size());
 
         // Check for valid section
-        assert(constants_decoder != nullptr);
+        assert(constantsDecoder != nullptr);
 
-        assert(constants_decoder->size() == 1); // There should be 1 constant
-        [[maybe_unused]] vgflib::DataView<uint8_t> weights_bytes =
-            constants_decoder->getConstant(0);                                 // Index 0 is weights
-        assert(static_cast<int32_t>(weights_bytes.size()) == 16 * 2 * 2 * 16); // Weights kernel size is 16x2x2x16
+        assert(constantsDecoder->size() == 1); // There should be 1 constant
+        [[maybe_unused]] vgflib::DataView<uint8_t> weightsBytes =
+            constantsDecoder->getConstant(0);                                 // Index 0 is weights
+        assert(static_cast<int32_t>(weightsBytes.size()) == 16 * 2 * 2 * 16); // Weights kernel size is 16x2x2x16
         //=================
         // ** NEW (END) **
         //=================

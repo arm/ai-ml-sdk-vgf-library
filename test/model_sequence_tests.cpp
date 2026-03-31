@@ -100,15 +100,15 @@ TEST(CppModelSequenceTable, DescriptorBindingSlot) {
     encoder->Finish();
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
-    std::string vgf_data = buffer.str();
+    std::string vgfData = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
-        vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgf_data.size()));
+        vgfData.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgfData.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     //! [ModelSequenceTableDecodingSample0 begin]
     std::unique_ptr<ModelSequenceTableDecoder> seqTableDecoder = CreateModelSequenceTableDecoder(
-        vgf_data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
+        vgfData.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
     ASSERT_NE(seqTableDecoder, nullptr);
     //! [ModelSequenceTableDecodingSample0 end]
 

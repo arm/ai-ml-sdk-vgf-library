@@ -53,17 +53,17 @@ TEST(CppModuleTable, Single) {
     encoder->Finish();
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
-    std::string vgf_data = buffer.str();
-    ASSERT_TRUE(vgf_data.size() >= HeaderSize());
+    std::string vgfData = buffer.str();
+    ASSERT_TRUE(vgfData.size() >= HeaderSize());
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
-        vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgf_data.size()));
+        vgfData.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgfData.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     uint32_t moduleIndex = module.reference;
     //! [ModuleTableDecodingSample0 begin]
     std::unique_ptr<ModuleTableDecoder> moduleDecoder = CreateModuleTableDecoder(
-        vgf_data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize());
+        vgfData.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize());
     ASSERT_NE(moduleDecoder, nullptr);
 
     size_t numModules = moduleDecoder->size();
