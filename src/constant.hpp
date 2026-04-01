@@ -20,7 +20,7 @@ constexpr size_t CONSTANT_SECTION_COUNT_SIZE = 8;
 
 constexpr size_t CONSTANT_SECTION_METADATA_OFFSET = CONSTANT_SECTION_COUNT_OFFSET + CONSTANT_SECTION_COUNT_SIZE;
 
-struct ConstantMetaData_V00 {
+struct ConstantMetaDataV00 {
     uint32_t mrtIndex{};
     int32_t sparsityDimension{static_cast<int32_t>(CONSTANT_NOT_SPARSE_DIMENSION)};
     uint64_t size{};
@@ -42,15 +42,15 @@ constexpr size_t CONSTANT_SECTION_METADATA_OFFSET_OFFSET =
     CONSTANT_SECTION_METADATA_SIZE_OFFSET + CONSTANT_SECTION_METADATA_SIZE_SIZE;
 constexpr size_t CONSTANT_SECTION_METADATA_OFFSET_SIZE = 8;
 
-static_assert(sizeof(ConstantMetaData_V00) % 8 == 0);
-static_assert(sizeof(ConstantMetaData_V00) == sizeof(uint32_t) + sizeof(int32_t) + sizeof(uint64_t) + sizeof(uint64_t));
+static_assert(sizeof(ConstantMetaDataV00) % 8 == 0);
+static_assert(sizeof(ConstantMetaDataV00) == sizeof(uint32_t) + sizeof(int32_t) + sizeof(uint64_t) + sizeof(uint64_t));
 
-static_assert(offsetof(ConstantMetaData_V00, mrtIndex) == CONSTANT_SECTION_METADATA_MRT_INDEX_OFFSET,
+static_assert(offsetof(ConstantMetaDataV00, mrtIndex) == CONSTANT_SECTION_METADATA_MRT_INDEX_OFFSET,
               "ConstantMetaData mrtIndex field offset mismatched from spec.");
-static_assert(offsetof(ConstantMetaData_V00, sparsityDimension) == CONSTANT_SECTION_METADATA_SPARSITY_DIMENSION_OFFSET,
+static_assert(offsetof(ConstantMetaDataV00, sparsityDimension) == CONSTANT_SECTION_METADATA_SPARSITY_DIMENSION_OFFSET,
               "ConstantMetaData sparsityDimension field offset mismatched from spec.");
-static_assert(offsetof(ConstantMetaData_V00, size) == CONSTANT_SECTION_METADATA_SIZE_OFFSET,
+static_assert(offsetof(ConstantMetaDataV00, size) == CONSTANT_SECTION_METADATA_SIZE_OFFSET,
               "ConstantMetaData size field offset mismatched from spec.");
-static_assert(offsetof(ConstantMetaData_V00, offset) == CONSTANT_SECTION_METADATA_OFFSET_OFFSET,
+static_assert(offsetof(ConstantMetaDataV00, offset) == CONSTANT_SECTION_METADATA_OFFSET_OFFSET,
               "ConstantMetaData offset field offset mismatched from spec.");
 } // namespace mlsdk::vgflib

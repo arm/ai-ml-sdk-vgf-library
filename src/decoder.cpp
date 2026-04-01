@@ -62,8 +62,8 @@ bool validateSectionsSizesInHeader(const HeaderDecoder &headerDecoder, uint64_t 
 
 // FlatBuffers uses 32-bit offsets; cap verification to what the format can encode and what the platform can address.
 constexpr uint64_t maxFlatbufferBytes() {
-    constexpr auto uoffsetMax = static_cast<uint64_t>(std::numeric_limits<flatbuffers::uoffset_t>::max());
-    return std::min<uint64_t>(SIZE_MAX_VALUE, uoffsetMax);
+    constexpr auto UOFFSET_MAX = static_cast<uint64_t>(std::numeric_limits<flatbuffers::uoffset_t>::max());
+    return std::min<uint64_t>(SIZE_MAX_VALUE, UOFFSET_MAX);
 }
 
 template <class T> constexpr std::string_view verifyTypeName() {
@@ -643,26 +643,26 @@ class ConstantDecoderImpl : public ConstantDecoder {
     const VGF::ConstantSection *constantSection_;
 };
 
-class ConstantDecoder_V00_Impl : public ConstantDecoder {
+class ConstantDecoderV00Impl : public ConstantDecoder {
   public:
-    static std::unique_ptr<ConstantDecoder_V00_Impl> Create(const void *const data, const uint64_t sectionSize) {
+    static std::unique_ptr<ConstantDecoderV00Impl> Create(const void *const data, const uint64_t sectionSize) {
         const auto verified = _verify(data, sectionSize);
         if (!verified.has_value()) {
             return nullptr;
         }
         const auto &[count, metaData, dataStart, dataSize] = *verified;
-        return std::unique_ptr<ConstantDecoder_V00_Impl>(
-            new ConstantDecoder_V00_Impl(count, metaData, dataStart, dataSize));
+        return std::unique_ptr<ConstantDecoderV00Impl>(
+            new ConstantDecoderV00Impl(count, metaData, dataStart, dataSize));
     }
 
-    static ConstantDecoder_V00_Impl *CreateInPlace(const void *const data, const uint64_t sectionSize,
-                                                   void *const decoderMem) {
+    static ConstantDecoderV00Impl *CreateInPlace(const void *const data, const uint64_t sectionSize,
+                                                 void *const decoderMem) {
         const auto verified = _verify(data, sectionSize);
         if (!verified.has_value()) {
             return nullptr;
         }
         const auto &[count, metaData, dataStart, dataSize] = *verified;
-        return new (decoderMem) ConstantDecoder_V00_Impl(count, metaData, dataStart, dataSize);
+        return new (decoderMem) ConstantDecoderV00Impl(count, metaData, dataStart, dataSize);
     }
 
     [[nodiscard]] size_t size() const override { return static_cast<size_t>(count_); }
@@ -702,7 +702,7 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
     }
 
   private:
-    explicit ConstantDecoder_V00_Impl(uint64_t count, const uint8_t *metaData, const uint8_t *data, uint64_t dataSize)
+    explicit ConstantDecoderV00Impl(uint64_t count, const uint8_t *metaData, const uint8_t *data, uint64_t dataSize)
         : count_(count), metaData_(metaData), data_(data), dataSize_(dataSize) {}
 
     using VerifiedLayout = std::tuple<uint64_t, const uint8_t *, const uint8_t *, uint64_t>;
@@ -722,13 +722,13 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         }
 
         const auto declaredCount = ReadBytesAs<uint64_t>(data, CONSTANT_SECTION_COUNT_OFFSET);
-        const uint64_t maxEntries = (sectionSize - CONSTANT_SECTION_METADATA_OFFSET) / sizeof(ConstantMetaData_V00);
+        const uint64_t maxEntries = (sectionSize - CONSTANT_SECTION_METADATA_OFFSET) / sizeof(ConstantMetaDataV00);
         if (declaredCount > maxEntries) {
             logging::error("VerifyConstant: Constant section declares more entries than fit in the buffer");
             return std::nullopt;
         }
 
-        const uint64_t dataOffset = CONSTANT_SECTION_METADATA_OFFSET + declaredCount * sizeof(ConstantMetaData_V00);
+        const uint64_t dataOffset = CONSTANT_SECTION_METADATA_OFFSET + declaredCount * sizeof(ConstantMetaDataV00);
 #if SIZE_MAX < UINT64_MAX
         if (dataOffset > SIZE_MAX_VALUE) {
             logging::error("VerifyConstant: Constant data offset exceeds addressable size");
@@ -742,7 +742,7 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
 
         for (uint64_t idx = 0; idx < declaredCount; ++idx) {
             const auto *entry =
-                reinterpret_cast<const ConstantMetaData_V00 *>(metaData + idx * sizeof(ConstantMetaData_V00));
+                reinterpret_cast<const ConstantMetaDataV00 *>(metaData + idx * sizeof(ConstantMetaDataV00));
             if (!_constantDataWithinBounds(entry, dataSize)) {
                 logging::error("VerifyConstant: Constant metadata offset/size exceeds section bounds at index " +
                                std::to_string(idx));
@@ -758,14 +758,14 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
         return VerifiedLayout{declaredCount, metaData, dataStart, dataSize};
     }
 
-    [[nodiscard]] const ConstantMetaData_V00 *_getPtrToMetaData(uint32_t idx) const {
+    [[nodiscard]] const ConstantMetaDataV00 *_getPtrToMetaData(uint32_t idx) const {
         if (metaData_ == nullptr || static_cast<uint64_t>(idx) >= count_) {
             return nullptr;
         }
-        return reinterpret_cast<const ConstantMetaData_V00 *>(metaData_ + idx * sizeof(ConstantMetaData_V00));
+        return reinterpret_cast<const ConstantMetaDataV00 *>(metaData_ + idx * sizeof(ConstantMetaDataV00));
     }
 
-    [[nodiscard]] static bool _constantDataWithinBounds(const ConstantMetaData_V00 *metaData, uint64_t dataSize) {
+    [[nodiscard]] static bool _constantDataWithinBounds(const ConstantMetaDataV00 *metaData, uint64_t dataSize) {
         if (metaData == nullptr) {
             return false;
         }
@@ -789,7 +789,7 @@ class ConstantDecoder_V00_Impl : public ConstantDecoder {
     const uint8_t *data_ = nullptr;
     uint64_t dataSize_ = 0;
 };
-size_t ConstantDecoderSize() { return std::max(sizeof(ConstantDecoderImpl), sizeof(ConstantDecoder_V00_Impl)); }
+size_t ConstantDecoderSize() { return std::max(sizeof(ConstantDecoderImpl), sizeof(ConstantDecoderV00Impl)); }
 
 std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *const data, const uint64_t size) {
     assert(data != nullptr && "data is null");
@@ -800,7 +800,7 @@ std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *const data, c
     std::unique_ptr<ConstantDecoder> decoder;
     if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
         // V00 constant section
-        decoder = ConstantDecoder_V00_Impl::Create(data, size);
+        decoder = ConstantDecoderV00Impl::Create(data, size);
         if (decoder == nullptr) {
             logging::error("Constant section verification failed");
             return nullptr;
@@ -832,7 +832,7 @@ ConstantDecoder *CreateConstantDecoderInPlace(const void *const data, const uint
     }
     if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
         // V00 constant section
-        auto *decoder = ConstantDecoder_V00_Impl::CreateInPlace(data, size, decoderMem);
+        auto *decoder = ConstantDecoderV00Impl::CreateInPlace(data, size, decoderMem);
         if (decoder == nullptr) {
             logging::error("Constant section verification failed");
             return nullptr;

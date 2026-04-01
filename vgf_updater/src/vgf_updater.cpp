@@ -234,7 +234,7 @@ void update(const std::string &inputPath, const std::string &outputPath) {
     const auto &[modelInputBindingSlots, modelOutputBindingSlots] =
         encodeSegments(sequenceTable, moduleRefs, resourceRefs, constantsByIndex, resourceTable, *encoder);
 
-    const auto getName = [](const auto &bindingSlot) { return bindingSlot.mName; };
+    const auto getName = [](const auto &bindingSlot) -> const std::string & { return bindingSlot.mName; };
     std::vector<std::string> inputNames;
     inputNames.reserve(sequenceTable.mInputs.size());
     std::transform(sequenceTable.mInputs.begin(), sequenceTable.mInputs.end(), std::back_inserter(inputNames), getName);

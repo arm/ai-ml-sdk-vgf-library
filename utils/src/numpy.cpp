@@ -14,7 +14,7 @@ namespace mlsdk::vgfutils::numpy {
 
 namespace {
 
-constexpr std::array<char, 6> numpyMagicBytes = {'\x93', 'N', 'U', 'M', 'P', 'Y'};
+constexpr std::array<char, 6> NUMPY_MAGIC_BYTES = {'\x93', 'N', 'U', 'M', 'P', 'Y'};
 
 bool isLittleEndian() {
     uint16_t num = 1;
@@ -130,7 +130,7 @@ void writeHeader(std::ostream &out, const std::vector<int64_t> &shape, const std
     headerStr += std::string(paddingLen, ' ') + '\n';
 
     // write magic string
-    out.write(numpyMagicBytes.data(), numpyMagicBytes.size());
+    out.write(NUMPY_MAGIC_BYTES.data(), NUMPY_MAGIC_BYTES.size());
 
     // write version and HEADER_LEN
     size_t headerLen = headerStr.size();
@@ -198,11 +198,11 @@ DataPtr parse(const MemoryMap &mapped) {
     size_t headerOffset = 0;
 
     // check magic string
-    if (std::memcmp(mapped.ptr(), numpyMagicBytes.data(), numpyMagicBytes.size()) != 0) {
+    if (std::memcmp(mapped.ptr(), NUMPY_MAGIC_BYTES.data(), NUMPY_MAGIC_BYTES.size()) != 0) {
         throw std::runtime_error("invalid NumPy file format");
     }
 
-    headerOffset += numpyMagicBytes.size();
+    headerOffset += NUMPY_MAGIC_BYTES.size();
     majorVersion = *reinterpret_cast<const uint8_t *>(mapped.ptr(headerOffset));
     headerOffset += 2;
 

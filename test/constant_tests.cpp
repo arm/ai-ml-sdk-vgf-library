@@ -29,9 +29,9 @@ constexpr size_t GB{1024 * 1024 * 1024};
 
 namespace {
 
-std::vector<uint8_t> MakeConstantSectionV00(uint64_t count, const std::vector<ConstantMetaData_V00> &metadata,
+std::vector<uint8_t> MakeConstantSectionV00(uint64_t count, const std::vector<ConstantMetaDataV00> &metadata,
                                             const std::vector<uint8_t> &constant) {
-    const size_t metadataBytes = metadata.size() * sizeof(ConstantMetaData_V00);
+    const size_t metadataBytes = metadata.size() * sizeof(ConstantMetaDataV00);
     std::vector<uint8_t> buffer(CONSTANT_SECTION_METADATA_OFFSET + metadataBytes + constant.size(), 0);
 
     std::memcpy(buffer.data() + CONSTANT_SECTION_VERSION_OFFSET, CONSTANT_SECTION_VERSION,
@@ -228,7 +228,7 @@ TEST(CppVerify, ConstantSizeCapRejected) {
 
 TEST(CppVerify, SectionTooSmallForMetadataRejected) {
     Logger logger;
-    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
+    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaDataV00{}}, {});
     section.resize(CONSTANT_SECTION_METADATA_OFFSET - 1);
     ASSERT_EQ(CreateConstantDecoder(section.data(), section.size()), nullptr);
     EXPECT_TRUE(logger.contains({"VerifyConstant", "Constant section too small to contain metadata"}));
@@ -247,8 +247,8 @@ TEST(CppVerify, ConstantDataOffsetOverflowRejected) {
 
 TEST(CppVerify, DeclaredCountExceedingAvailableMetadataRejected) {
     Logger logger;
-    const std::vector<ConstantMetaData_V00> vecMetaData = {
-        ConstantMetaData_V00{
+    const std::vector<ConstantMetaDataV00> vecMetaData = {
+        ConstantMetaDataV00{
             7,  // mrtIndex
             -1, // sparsityDimension
             1,  // size
@@ -264,8 +264,8 @@ TEST(CppVerify, DeclaredCountExceedingAvailableMetadataRejected) {
 
 TEST(CppVerify, OutOfRangeOffsetsRejected) {
     Logger logger;
-    const std::vector<ConstantMetaData_V00> vecMetadata = {
-        ConstantMetaData_V00{
+    const std::vector<ConstantMetaDataV00> vecMetadata = {
+        ConstantMetaDataV00{
             3,  // mrtIndex
             -1, // sparsityDimension
             10, // size
@@ -282,8 +282,8 @@ TEST(CppVerify, OutOfRangeOffsetsRejected) {
 TEST(CppVerify, BadSparsityDimensionRejected) {
     Logger logger;
     const uint64_t declaredCount = 1;
-    const std::vector<ConstantMetaData_V00> vecMetaData = {
-        ConstantMetaData_V00{
+    const std::vector<ConstantMetaDataV00> vecMetaData = {
+        ConstantMetaDataV00{
             2,  // mrtIndex
             -5, // sparsityDimension (invalid)
             1,  // size
@@ -622,7 +622,7 @@ TEST(CVerify, ConstantSizeCapRejected) {
 
 TEST(CVerify, SectionTooSmallForMetadataRejected) {
     Logger logger;
-    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaData_V00{}}, {});
+    std::vector<uint8_t> section = MakeConstantSectionV00(1, {ConstantMetaDataV00{}}, {});
     section.resize(CONSTANT_SECTION_METADATA_OFFSET - 1);
 
     std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
@@ -646,8 +646,8 @@ TEST(CVerify, ConstantDataOffsetOverflowRejected) {
 
 TEST(CVerify, DeclaredCountExceedingAvailableMetadataRejected) {
     Logger logger;
-    const std::vector<ConstantMetaData_V00> vecMetaData = {
-        ConstantMetaData_V00{
+    const std::vector<ConstantMetaDataV00> vecMetaData = {
+        ConstantMetaDataV00{
             7,  // mrtIndex
             -1, // sparsityDimension
             1,  // size
@@ -666,8 +666,8 @@ TEST(CVerify, DeclaredCountExceedingAvailableMetadataRejected) {
 
 TEST(CVerify, OutOfRangeOffsetsRejected) {
     Logger logger;
-    const std::vector<ConstantMetaData_V00> vecMetadata = {
-        ConstantMetaData_V00{
+    const std::vector<ConstantMetaDataV00> vecMetadata = {
+        ConstantMetaDataV00{
             3,  // mrtIndex
             -1, // sparsityDimension
             10, // size
@@ -687,8 +687,8 @@ TEST(CVerify, OutOfRangeOffsetsRejected) {
 TEST(CVerify, BadSparsityDimensionRejected) {
     Logger logger;
     const uint64_t declaredCount = 1;
-    const std::vector<ConstantMetaData_V00> vecMetaData = {
-        ConstantMetaData_V00{
+    const std::vector<ConstantMetaDataV00> vecMetaData = {
+        ConstantMetaDataV00{
             2,  // mrtIndex
             -5, // sparsityDimension (invalid)
             1,  // size
