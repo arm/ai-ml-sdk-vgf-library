@@ -106,12 +106,12 @@ ResourceCategory fromVGF(VGF::ResourceCategory category) {
 constexpr FourCCValue OldMagicAsFourCC() {
     auto v = HEADER_MAGIC_VALUE_OLD;
 
-    auto ToChar = [](const uint32_t val, uint32_t shift) {
+    auto toChar = [](const uint32_t val, uint32_t shift) {
         uint32_t a = (val >> shift) & 255;
         return static_cast<char>(a);
     };
 
-    return FourCC(ToChar(v, 0), ToChar(v, 8), ToChar(v, 16), ToChar(v, 24));
+    return FourCC(toChar(v, 0), toChar(v, 8), toChar(v, 16), toChar(v, 24));
 }
 
 template <class T> bool VerifyImpl(const void *data, const uint64_t size) {

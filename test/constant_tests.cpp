@@ -197,11 +197,11 @@ TEST(CppEncodeDecode, AddManyLargeNonSparseConstant) {
 }
 TEST(CppVerify, BadData) {
 
-    uint8_t bad_data[16] = {0xde, 0xad, 0xbe, 0xef, 0xba, 0xad, 0xf0, 0x0d,
-                            0xca, 0xfe, 0xba, 0xbe, 0x00, 0x11, 0x22, 0x33};
+    uint8_t badData[16] = {0xde, 0xad, 0xbe, 0xef, 0xba, 0xad, 0xf0, 0x0d,
+                           0xca, 0xfe, 0xba, 0xbe, 0x00, 0x11, 0x22, 0x33};
 
-    const void *bad_data_ptr = static_cast<const void *>(bad_data);
-    ASSERT_EQ(CreateConstantDecoder(bad_data_ptr, sizeof(bad_data)), nullptr);
+    const void *badDataPtr = static_cast<const void *>(badData);
+    ASSERT_EQ(CreateConstantDecoder(badDataPtr, sizeof(badData)), nullptr);
 }
 
 TEST(CppVerify, ConstantHeaderTooSmallRejected) {
@@ -586,12 +586,12 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
 
 TEST(CVerify, BadData) {
 
-    uint8_t bad_data[16] = {0xde, 0xad, 0xbe, 0xef, 0xba, 0xad, 0xf0, 0x0d,
-                            0xca, 0xfe, 0xba, 0xbe, 0x00, 0x11, 0x22, 0x33};
+    uint8_t badData[16] = {0xde, 0xad, 0xbe, 0xef, 0xba, 0xad, 0xf0, 0x0d,
+                           0xca, 0xfe, 0xba, 0xbe, 0x00, 0x11, 0x22, 0x33};
 
     std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
 
-    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(static_cast<const void *>(bad_data), sizeof(bad_data),
+    ASSERT_EQ(mlsdk_decoder_create_constant_table_decoder(static_cast<const void *>(badData), sizeof(badData),
                                                           decoderMemory.data()),
               nullptr);
 }

@@ -560,14 +560,14 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     }
 
     uint32_t shaderIdx = 0;
-    std::vector<ScenarioShaderSubstitutions> shader_substitutions;
+    std::vector<ScenarioShaderSubstitutions> shaderSubstitutions;
     std::vector<ScenarioShaderResource> shaderResources;
     for (auto &module :
          parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
 
         if (module.mType == ModuleType::COMPUTE) {
             std::string shaderRef = "shader_" + std::to_string(shaderIdx) + "_ref";
-            shader_substitutions.emplace_back(shaderRef, std::string(module.mName));
+            shaderSubstitutions.emplace_back(shaderRef, std::string(module.mName));
 
             shaderResources.push_back(ScenarioShaderResource(
                 shaderRef, "TEMPLATE_PATH_SHADER_GLSL_" + std::to_string(shaderIdx), "GLSL", module.mEntryPoint));
@@ -582,7 +582,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     commands.push_back(json{{"dispatch_graph",
                              {
                                  {"bindings", bindings},
-                                 {"shader_substitutions", shader_substitutions},
+                                 {"shader_substitutions", shaderSubstitutions},
                                  {"graph_ref", "vgf_graph_ref"},
                              }}});
     if (add_boundaries) {

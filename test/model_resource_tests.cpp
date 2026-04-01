@@ -25,6 +25,10 @@ using logging::utils::Logger;
 namespace {
 const uint16_t pretendVulkanHeaderVersion = 123;
 
+constexpr DescriptorType VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3;
+constexpr FormatType VK_FORMAT_R4G4_UNORM_PACK8 = 1;
+constexpr FormatType VK_FORMAT_R4G4B4A4_UNORM_PACK16 = 12;
+
 constexpr bool DataViewTests() {
     static_assert(DataView<uint8_t>().empty(), "Default constructor should create an empty view");
     // NOLINTNEXTLINE code coverage
@@ -75,8 +79,6 @@ TEST(CppModelResourceTable, EncodeDecode) {
     std::vector<int64_t> shape1{0, 1, 2, 3};
     std::vector<int64_t> strides1{4, 5, 6, 7};
 
-    DescriptorType VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3;
-    FormatType VK_FORMAT_R4G4_UNORM_PACK8 = 1;
     ResourceRef resource0 =
         encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape1, strides1);
     ResourceRef resource1 =
@@ -85,7 +87,6 @@ TEST(CppModelResourceTable, EncodeDecode) {
     (void)resource1;
 
     //! [MrtEncodeConstant begin]
-    FormatType VK_FORMAT_R4G4B4A4_UNORM_PACK16 = 12;
     std::vector<int64_t> shape2{8, 9, 10, 11};
     std::vector<int64_t> strides2{12, 13, 14, 15};
     ResourceRef resource2 = encoder->AddConstantResource(VK_FORMAT_R4G4B4A4_UNORM_PACK16, shape2, strides2);
@@ -94,16 +95,16 @@ TEST(CppModelResourceTable, EncodeDecode) {
     encoder->Finish();
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
-    std::string vgf_data = buffer.str();
+    std::string vgfData = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
-        vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgf_data.size()));
+        vgfData.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgfData.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     uint32_t mrtIndex = resource0.reference;
     //! [MrtDecodingSample0 begin]
     std::unique_ptr<ModelResourceTableDecoder> mrtDecoder = CreateModelResourceTableDecoder(
-        vgf_data.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
+        vgfData.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
     ASSERT_NE(mrtDecoder, nullptr);
 
     size_t numEntries = mrtDecoder->size();
@@ -143,25 +144,21 @@ TEST(CppModelResourceTable, UnknownDimensions) {
     std::vector<int64_t> shape1{-1, -1, -1, -1};
     std::vector<int64_t> shape2{3, -1, 1, -1};
 
-    DescriptorType VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3;
-    FormatType VK_FORMAT_R4G4_UNORM_PACK8 = 1;
-    FormatType VK_FORMAT_R4G4B4A4_UNORM_PACK16 = 12;
-
     auto resource0 =
         encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape1, {});
     [[maybe_unused]] auto resource1 = encoder->AddConstantResource(VK_FORMAT_R4G4B4A4_UNORM_PACK16, shape2, {});
     encoder->Finish();
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
-    std::string vgf_data = buffer.str();
+    std::string vgfData = buffer.str();
 
     std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
-        vgf_data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgf_data.size()));
+        vgfData.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgfData.size()));
     ASSERT_NE(headerDecoder, nullptr);
 
     uint32_t mrtIndex = resource0.reference;
     std::unique_ptr<ModelResourceTableDecoder> mrtDecoder = CreateModelResourceTableDecoder(
-        vgf_data.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
+        vgfData.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
     ASSERT_NE(mrtDecoder, nullptr);
 
     size_t numEntries = mrtDecoder->size();
@@ -277,13 +274,10 @@ TEST(CModelResourceTable, EncodeDecode) {
     std::vector<int64_t> shape2{8, 9, 10, 11};
     std::vector<int64_t> strides2{12, 13, 14, 15};
 
-    DescriptorType VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3;
-    mlsdk_vk_descriptor_type mlsdk_vk_descriptor_type_storage_image = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    mlsdk_vk_descriptor_type mlsdkVkDescriptorTypeStorageImage = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 
-    FormatType VK_FORMAT_R4G4_UNORM_PACK8 = 1;
-    FormatType VK_FORMAT_R4G4B4A4_UNORM_PACK16 = 12;
-    mlsdk_vk_format mlsdk_vk_format_r4g4_unorm_pack8 = VK_FORMAT_R4G4_UNORM_PACK8;
-    mlsdk_vk_format mlsdk_vk_format_r4g4b4a4_unorm_pack16 = VK_FORMAT_R4G4B4A4_UNORM_PACK16;
+    mlsdk_vk_format mlsdkVkFormatR4g4UnormPack8 = VK_FORMAT_R4G4_UNORM_PACK8;
+    mlsdk_vk_format mlsdkVkFormatR4g4b4a4UnormPack16 = VK_FORMAT_R4G4B4A4_UNORM_PACK16;
 
     auto resource0 =
         encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape1, strides1);
@@ -317,9 +311,8 @@ TEST(CModelResourceTable, EncodeDecode) {
                 mlsdk_decoder_mrt_category_input);
     ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).has_value);
     ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).value ==
-                mlsdk_vk_descriptor_type_storage_image);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource0.reference) ==
-                mlsdk_vk_format_r4g4_unorm_pack8);
+                mlsdkVkDescriptorTypeStorageImage);
+    ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource0.reference) == mlsdkVkFormatR4g4UnormPack8);
 
     mlsdk_decoder_tensor_dimensions tensorShape1;
     mlsdk_decoder_model_resource_table_get_tensor_shape(resourceTableDecoder, resource0.reference, &tensorShape1);
@@ -335,7 +328,7 @@ TEST(CModelResourceTable, EncodeDecode) {
                 mlsdk_decoder_mrt_category_constant);
     ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource1.reference).has_value == false);
     ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource1.reference) ==
-                mlsdk_vk_format_r4g4b4a4_unorm_pack16);
+                mlsdkVkFormatR4g4b4a4UnormPack16);
 
     mlsdk_decoder_tensor_dimensions tensorShape2;
     mlsdk_decoder_model_resource_table_get_tensor_shape(resourceTableDecoder, resource1.reference, &tensorShape2);
@@ -355,13 +348,10 @@ TEST(CModelResourceTable, UnknownDimensions) {
     std::vector<int64_t> shape1{-1, -1, -1, -1};
     std::vector<int64_t> shape2{8, -1, -1, 11};
 
-    DescriptorType VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3;
-    mlsdk_vk_descriptor_type mlsdk_vk_descriptor_type_storage_image = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    mlsdk_vk_descriptor_type mlsdkVkDescriptorTypeStorageImage = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 
-    FormatType VK_FORMAT_R4G4_UNORM_PACK8 = 1;
-    FormatType VK_FORMAT_R4G4B4A4_UNORM_PACK16 = 12;
-    mlsdk_vk_format mlsdk_vk_format_r4g4_unorm_pack8 = VK_FORMAT_R4G4_UNORM_PACK8;
-    mlsdk_vk_format mlsdk_vk_format_r4g4b4a4_unorm_pack16 = VK_FORMAT_R4G4B4A4_UNORM_PACK16;
+    mlsdk_vk_format mlsdkVkFormatR4g4UnormPack8 = VK_FORMAT_R4G4_UNORM_PACK8;
+    mlsdk_vk_format mlsdkVkFormatR4g4b4a4UnormPack16 = VK_FORMAT_R4G4B4A4_UNORM_PACK16;
 
     auto resource0 =
         encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape1, {});
@@ -395,9 +385,8 @@ TEST(CModelResourceTable, UnknownDimensions) {
                 mlsdk_decoder_mrt_category_input);
     ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).has_value);
     ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).value ==
-                mlsdk_vk_descriptor_type_storage_image);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource0.reference) ==
-                mlsdk_vk_format_r4g4_unorm_pack8);
+                mlsdkVkDescriptorTypeStorageImage);
+    ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource0.reference) == mlsdkVkFormatR4g4UnormPack8);
 
     mlsdk_decoder_tensor_dimensions tensorShape1;
     mlsdk_decoder_model_resource_table_get_tensor_shape(resourceTableDecoder, resource0.reference, &tensorShape1);
@@ -408,7 +397,7 @@ TEST(CModelResourceTable, UnknownDimensions) {
                 mlsdk_decoder_mrt_category_constant);
     ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource1.reference).has_value == false);
     ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource1.reference) ==
-                mlsdk_vk_format_r4g4b4a4_unorm_pack16);
+                mlsdkVkFormatR4g4b4a4UnormPack16);
 
     mlsdk_decoder_tensor_dimensions tensorShape2;
     mlsdk_decoder_model_resource_table_get_tensor_shape(resourceTableDecoder, resource1.reference, &tensorShape2);
