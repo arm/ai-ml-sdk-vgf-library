@@ -203,18 +203,18 @@ class EncoderImpl : public Encoder {
         assert(data && "data pointer cannot be nullptr");
         assert(sizeInBytes > 0 && "sizeInBytes cannot be zero");
 
-        constexpr auto minSparsityDim = INT32_MIN_VALUE;
-        constexpr auto maxSparsityDim = INT32_MAX_VALUE;
+        constexpr auto MIN_SPARSITY_DIM = INT32_MIN_VALUE;
+        constexpr auto MAX_SPARSITY_DIM = INT32_MAX_VALUE;
         int32_t sparsityDim32{};
-        if (sparsityDimension < minSparsityDim || sparsityDimension > maxSparsityDim) {
+        if (sparsityDimension < MIN_SPARSITY_DIM || sparsityDimension > MAX_SPARSITY_DIM) {
             logging::error("sparsityDimension must fit in int32_t for on-disk metadata; clamping to range");
             sparsityDim32 = static_cast<int32_t>(
-                std::clamp<int64_t>(sparsityDimension, int64_t{minSparsityDim}, int64_t{maxSparsityDim}));
+                std::clamp<int64_t>(sparsityDimension, int64_t{MIN_SPARSITY_DIM}, int64_t{MAX_SPARSITY_DIM}));
         } else {
             sparsityDim32 = static_cast<int32_t>(sparsityDimension);
         }
 
-        constsMetaData_.emplace_back(ConstantMetaData_V00{
+        constsMetaData_.emplace_back(ConstantMetaDataV00{
             resourceRef.reference,
             sparsityDim32,
             sizeInBytes,
@@ -272,7 +272,7 @@ class EncoderImpl : public Encoder {
 
         auto numConsts = static_cast<uint64_t>(constsMetaData_.size());
         const auto constantSectionSize =
-            CONSTANT_SECTION_METADATA_OFFSET + numConsts * sizeof(ConstantMetaData_V00) + constDataOffset_;
+            CONSTANT_SECTION_METADATA_OFFSET + numConsts * sizeof(ConstantMetaDataV00) + constDataOffset_;
         const auto &constantSection = table.AddSection(constantSectionSize);
 
         // calculate alignments and offsets
@@ -300,7 +300,7 @@ class EncoderImpl : public Encoder {
         output.write(CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
         output.write(reinterpret_cast<const char *>(&numConsts), CONSTANT_SECTION_COUNT_SIZE);
         output.write(reinterpret_cast<const char *>(constsMetaData_.data()),
-                     static_cast<std::streamsize>(numConsts * sizeof(ConstantMetaData_V00)));
+                     static_cast<std::streamsize>(numConsts * sizeof(ConstantMetaDataV00)));
         for (auto &constsData : constsData_) {
             output.write(reinterpret_cast<const char *>(constsData.data()),
                          static_cast<std::streamsize>(constsData.size()));
@@ -335,7 +335,7 @@ class EncoderImpl : public Encoder {
     std::vector<BindingSlotRef> modelSequenceOutputs_;
     std::vector<ModuleType> moduleRefToType_;
 
-    std::vector<ConstantMetaData_V00> constsMetaData_;
+    std::vector<ConstantMetaDataV00> constsMetaData_;
     std::list<std::vector<uint8_t>> constsData_;
     uint64_t constDataOffset_ = 0;
 
