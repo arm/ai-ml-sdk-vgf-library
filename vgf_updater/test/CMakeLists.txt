@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -19,6 +19,7 @@ target_compile_definitions(VGFupdaterTests PRIVATE TEST_DATA_DIR="${TEST_DATA_DI
 
 target_include_directories(VGFupdaterTests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src
 )
 target_compile_options(VGFupdaterTests PRIVATE ${ML_SDK_VGF_LIB_COMPILE_OPTIONS})
 

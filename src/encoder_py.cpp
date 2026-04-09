@@ -22,6 +22,11 @@ class PyEncoder final : public Encoder {
         PYBIND11_OVERRIDE_PURE(ModuleRef, Encoder, AddModule, type, name, entryPoint, code);
     }
 
+    ModuleRef AddModule(ModuleType moduleType, const std::string &name, const std::string &entryPoint,
+                        ShaderType shaderType, const std::string &code) override {
+        PYBIND11_OVERRIDE_PURE(ModuleRef, Encoder, AddModule, moduleType, name, entryPoint, shaderType, code);
+    }
+
     ModuleRef AddPlaceholderModule(ModuleType type, const std::string &name, const std::string &entryPoint) override {
         PYBIND11_OVERRIDE_PURE(ModuleRef, Encoder, AddPlaceholderModule, type, name, entryPoint);
     }
@@ -113,10 +118,24 @@ void pyInitEncoder(py::module m) {
 
     py::class_<Encoder, PyEncoder>(m, "Encoder")
         .def(py::init<>())
-        .def("AddModule", &Encoder::AddModule, py::arg("type"), py::arg("name"), py::arg("entryPoint"),
-             py::arg("code") = py::list())
-        .def("AddPlaceholderModule", &Encoder::AddPlaceholderModule, py::arg("type"), py::arg("name"),
-             py::arg("entryPoint"))
+        .def("AddModule",
+             py::overload_cast<ModuleType, const std::string &, const std::string &, const std::vector<uint32_t> &>(
+                 &Encoder::AddModule),
+             py::arg("type"), py::arg("name"), py::arg("entryPoint"), py::arg("code") = py::list())
+        .def("AddModule",
+             py::overload_cast<ModuleType, const std::string &, const std::string &, ShaderType, const std::string &>(
+                 &Encoder::AddModule),
+             py::arg("type"), py::arg("name"), py::arg("entryPoint"), py::arg("shaderType"), py::arg("code") = "")
+        .def(
+            "AddPlaceholderModule",
+            [](Encoder &encoder, ModuleType type, const std::string &name, const std::string &entryPoint) {
+                py::module_ warnings = py::module_::import("warnings");
+                py::object deprecationWarning = py::module_::import("builtins").attr("DeprecationWarning");
+                warnings.attr("warn")("Encoder.AddPlaceholderModule is deprecated; use AddModule()",
+                                      deprecationWarning);
+                return encoder.AddModule(type, name, entryPoint);
+            },
+            py::arg("type"), py::arg("name"), py::arg("entryPoint"))
         .def("AddBindingSlot", &Encoder::AddBindingSlot, py::arg("binding"), py::arg("resource"))
         .def("AddDescriptorSetInfo", &Encoder::AddDescriptorSetInfo, py::arg("bindings") = py::list())
         .def("AddPushConstRange", &Encoder::AddPushConstRange, py::arg("stageFlags"), py::arg("offset"),

@@ -13,6 +13,8 @@
 namespace mlsdk::vgf_dump {
 
 void dumpSpirv(const std::string &inputFile, const std::string &outputFile, uint32_t index);
+void dumpGlsl(const std::string &inputFile, const std::string &outputFile, uint32_t index);
+void dumpHlsl(const std::string &inputFile, const std::string &outputFile, uint32_t index);
 
 void dumpConstant(const std::string &inputFile, const std::string &outputFile, uint32_t index);
 
@@ -24,6 +26,8 @@ void dumpFile(const std::string &inputFile, const std::string &outputFile);
 
 void getSpirv(const std::string &inputFile, uint32_t index,
               const std::function<void(const uint32_t *, size_t)> &callback);
+void getGlsl(const std::string &inputFile, uint32_t index, const std::function<void(const char *, size_t)> &callback);
+void getHlsl(const std::string &inputFile, uint32_t index, const std::function<void(const char *, size_t)> &callback);
 
 void getConstant(const std::string &inputFile, uint32_t index,
                  const std::function<void(const uint8_t *, size_t)> &callback);

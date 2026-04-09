@@ -36,6 +36,14 @@ extern "C" {
 #    define MLSDKAPI
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#    define MLSDK_DEPRECATED(message) __attribute__((deprecated(message)))
+#elif defined(_MSC_VER)
+#    define MLSDK_DEPRECATED(message) __declspec(deprecated(message))
+#else
+#    define MLSDK_DEPRECATED(message)
+#endif
+
 typedef struct mlsdk_decoder_header_decoder_s *mlsdk_decoder_header_decoder;
 typedef struct mlsdk_decoder_module_table_decoder_s *mlsdk_decoder_module_table_decoder;
 typedef struct mlsdk_decoder_push_constants_range_decoder_s *mlsdk_decoder_push_constants_range_decoder;
@@ -339,17 +347,106 @@ MLSDKAPI const char *mlsdk_decoder_get_module_entry_point(const mlsdk_decoder_mo
  *
  * If no code is stored in the module the SPIR-V code pointer will be set to null and the words to zero.
  */
+MLSDKAPI void mlsdk_decoder_get_spirv_module_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx,
+                                                  mlsdk_decoder_spirv_code *spirvCode);
+
+/**
+ * @brief Gets the SPIR-V code stored in the module (deprecated alias)
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @param spirvCode The place where to store the SPIR-V code
+ *
+ * If no code is stored in the module the SPIR-V code pointer will be set to null and the words to zero.
+ */
+MLSDK_DEPRECATED("Use mlsdk_decoder_get_spirv_module_code instead")
 MLSDKAPI void mlsdk_decoder_get_module_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx,
                                             mlsdk_decoder_spirv_code *spirvCode);
 
 /**
- * @brief Returns true if the module table entry has SPIR-V code
+ * @brief Returns true if the module table entry is a SPIR-V module (deprecated alias)
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @return True if the entry stores a SPIR-V module
+ */
+MLSDK_DEPRECATED("Use mlsdk_decoder_module_is_spirv instead")
+MLSDKAPI bool mlsdk_decoder_module_has_spirv(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx);
+
+/**
+ * @brief Returns true if the module table entry is a SPIR-V module
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @return True if the entry stores a SPIR-V module
+ */
+MLSDKAPI bool mlsdk_decoder_module_is_spirv(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx);
+
+/**
+ * @brief Returns true if the module table entry is a SPIR-V module with associated code
  *
  * @param decoder The pointer to the module table decoder
  * @param idx The index for the entry in the module table
  * @return True if SPIR-V code is present for the entry
  */
-MLSDKAPI bool mlsdk_decoder_module_has_spirv(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx);
+MLSDKAPI bool mlsdk_decoder_module_has_spirv_code(const mlsdk_decoder_module_table_decoder *const decoder,
+                                                  uint32_t idx);
+
+/**
+ * @brief Returns true if the module table entry is a GLSL module
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @return True if the entry stores a GLSL module
+ */
+MLSDKAPI bool mlsdk_decoder_module_is_glsl(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx);
+
+/**
+ * @brief Returns true if the module table entry is a GLSL module with associated code
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @return True if GLSL code is present for the entry
+ */
+MLSDKAPI bool mlsdk_decoder_module_has_glsl_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx);
+
+/**
+ * @brief Returns true if the module table entry is a HLSL module
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @return True if the entry stores a HLSL module
+ */
+MLSDKAPI bool mlsdk_decoder_module_is_hlsl(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx);
+
+/**
+ * @brief Returns true if the module table entry is a HLSL module with associated code
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @return True if HLSL code is present for the entry
+ */
+MLSDKAPI bool mlsdk_decoder_module_has_hlsl_code(const mlsdk_decoder_module_table_decoder *const decoder, uint32_t idx);
+
+/**
+ * @brief Returns the GLSL source code for the idx-entry
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @return Char pointer to GLSL source code or nullptr when unavailable
+ */
+MLSDKAPI const char *mlsdk_decoder_get_module_glsl_code(const mlsdk_decoder_module_table_decoder *const decoder,
+                                                        uint32_t idx);
+
+/**
+ * @brief Returns the HLSL source code for the idx-entry
+ *
+ * @param decoder The pointer to the module table decoder
+ * @param idx The index for the entry in the module table
+ * @return Char pointer to HLSL source code or nullptr when unavailable
+ */
+MLSDKAPI const char *mlsdk_decoder_get_module_hlsl_code(const mlsdk_decoder_module_table_decoder *const decoder,
+                                                        uint32_t idx);
 
 /**********************************************************************************************************************/
 

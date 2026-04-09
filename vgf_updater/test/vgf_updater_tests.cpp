@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -58,10 +58,10 @@ class VGFUpdaterTest : public ::testing::Test {
   protected:
     const fs::path dataDirectory = TEST_DATA_DIR;
     const fs::path singleMaxpoolVgfOutdated = dataDirectory / "single_maxpool_graph_pre_v0_4_0.vgf";
-    const fs::path singleMaxpoolVgfLatest = dataDirectory / "single_maxpool_graph_v0_4_0.vgf";
+    const fs::path singleMaxpoolVgfLatest = dataDirectory / "single_maxpool_graph_v0_4_1.vgf";
 
     const fs::path simpleConv2dVgfOutdated = dataDirectory / "simple_conv2d_rescale_graph_outdated.vgf";
-    const fs::path simpleConv2dVgfLatest = dataDirectory / "simple_conv2d_rescale_graph.vgf";
+    const fs::path simpleConv2dVgfLatest = dataDirectory / "simple_conv2d_rescale_graph_v0_4_1.vgf";
 };
 
 TEST_F(VGFUpdaterTest, fileOfLatestVersion) {
@@ -75,7 +75,7 @@ TEST_F(VGFUpdaterTest, fileOfLatestVersion) {
     mlsdk::vgf_updater::update(singleMaxpoolVgfLatest.string(), outputPath.string());
     const auto out = testing::internal::GetCapturedStdout();
     EXPECT_FALSE(fs::exists(outputPath));
-    EXPECT_EQ(out, "VGF file is already at the latest version: 0.4.0\n");
+    EXPECT_EQ(out, "VGF file is already at the latest version: 0.4.1\n");
 }
 
 TEST_F(VGFUpdaterTest, simpleMaxpoolGraph) {

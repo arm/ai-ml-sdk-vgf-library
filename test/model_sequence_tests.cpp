@@ -29,7 +29,7 @@ TEST(CppModelSequenceTable, SegmentInfo) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment");
 
@@ -56,7 +56,7 @@ TEST(CppModelSequenceTable, DescripterSetInfo) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo();
     std::vector<DescriptorSetInfoRef> descriptors = {descriptor};
@@ -144,7 +144,7 @@ TEST(CppModelSequenceTable, SegmentBindingSlot) {
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     //! [BindingSlotEncodingSample2 begin]
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
     //! [BindingSlotEncodingSample2 end]
 
     auto inputRef = ResourceRef{2};
@@ -218,7 +218,7 @@ TEST(CppModelSequenceTable, BindingSlot) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     BindingSlotRef inputBinding = encoder->AddBindingSlot(1, ResourceRef{2});
     std::vector<BindingSlotRef> inputBindings = {inputBinding};
@@ -268,7 +268,7 @@ TEST(CppModelSequenceTable, SegmentConstants) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     std::vector<ConstantRef> constants = {{1}, {2}, {3}};
 
@@ -301,7 +301,7 @@ TEST(CppModelSequenceTable, SegmentDispatchShape) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     std::array<uint32_t, 3> dispatchShape = {1, 2, 3};
 
@@ -334,7 +334,7 @@ TEST(CppModelSequenceTable, PushConstantRange) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     PushConstRangeRef pushConstRange = encoder->AddPushConstRange(1, 2, 3);
     std::vector<PushConstRangeRef> pushConstRanges = {pushConstRange};
@@ -418,7 +418,7 @@ TEST(CModelSequenceTable, SegmentInfo) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment");
 
@@ -473,7 +473,7 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo();
     std::vector<DescriptorSetInfoRef> descriptors = {descriptor};
@@ -526,7 +526,7 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     BindingSlotRef binding = encoder->AddBindingSlot(1, ResourceRef{2});
     std::vector<BindingSlotRef> bindings = {binding};
@@ -590,7 +590,7 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     BindingSlotRef inputBinding = encoder->AddBindingSlot(1, ResourceRef{2});
     std::vector<BindingSlotRef> inputBindings = {inputBinding};
@@ -667,7 +667,7 @@ TEST(CModelSequenceTable, BindingSlot) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     BindingSlotRef inputBinding = encoder->AddBindingSlot(1, ResourceRef{2});
     std::vector<BindingSlotRef> inputBindings = {inputBinding};
@@ -745,7 +745,7 @@ TEST(CModelSequenceTable, SegmentConstants) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     std::vector<ConstantRef> constants = {{1}, {2}, {3}};
 
@@ -804,7 +804,7 @@ TEST(CModelSequenceTable, SegmentDispatchShape) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     std::array<uint32_t, 3> dispatchShape = {1, 2, 3};
 
@@ -861,7 +861,7 @@ TEST(CModelSequenceTable, PushConstantRange) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::GRAPH, "test_module", "entry_point");
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
     //! [PushConstRangesEncodingSample0 begin]
     PushConstRangeRef pushConstRange = encoder->AddPushConstRange(1, 2, 3);

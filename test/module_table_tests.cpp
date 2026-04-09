@@ -70,8 +70,8 @@ TEST(CppModuleTable, Single) {
 
     ASSERT_TRUE(moduleIndex < numModules);
 
-    if (moduleDecoder->hasSPIRV(moduleIndex)) {
-        DataView<uint32_t> moduleCode = moduleDecoder->getModuleCode(moduleIndex);
+    if (moduleDecoder->hasSPIRVCode(moduleIndex)) {
+        DataView<uint32_t> moduleCode = moduleDecoder->getSPIRVModuleCode(moduleIndex);
         ASSERT_FALSE(moduleCode.empty());
 
         //...
@@ -81,16 +81,23 @@ TEST(CppModuleTable, Single) {
     ASSERT_TRUE(numModules == 1);
     ASSERT_TRUE(moduleDecoder->getModuleType(moduleIndex) == ModuleType::GRAPH);
     ASSERT_TRUE(moduleDecoder->getModuleName(moduleIndex) == "test");
-    ASSERT_TRUE(moduleDecoder->hasSPIRV(moduleIndex));
+    ASSERT_TRUE(moduleDecoder->isSPIRV(moduleIndex));
+    ASSERT_TRUE(moduleDecoder->hasSPIRVCode(moduleIndex));
+    ASSERT_FALSE(moduleDecoder->isGLSL(moduleIndex));
+    ASSERT_FALSE(moduleDecoder->hasGLSLCode(moduleIndex));
+    ASSERT_FALSE(moduleDecoder->isHLSL(moduleIndex));
+    ASSERT_FALSE(moduleDecoder->hasHLSLCode(moduleIndex));
+    ASSERT_TRUE(moduleDecoder->getGLSLModuleCode(moduleIndex).empty());
+    ASSERT_TRUE(moduleDecoder->getHLSLModuleCode(moduleIndex).empty());
     ASSERT_TRUE(moduleDecoder->getModuleEntryPoint(moduleIndex) == "main");
-    ASSERT_TRUE(moduleDecoder->getModuleCode(moduleIndex) == DataView<uint32_t>(code.data(), code.size()));
+    ASSERT_TRUE(moduleDecoder->getSPIRVModuleCode(moduleIndex) == DataView<uint32_t>(code.data(), code.size()));
 }
 
 TEST(CppModuleTable, Single2) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::COMPUTE, "test", "main");
+    ModuleRef module = encoder->AddModule(ModuleType::COMPUTE, "test", "main");
     encoder->Finish();
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
@@ -108,9 +115,85 @@ TEST(CppModuleTable, Single2) {
     ASSERT_TRUE(decoder->size() == 1);
     ASSERT_TRUE(decoder->getModuleType(module.reference) == ModuleType::COMPUTE);
     ASSERT_TRUE(decoder->getModuleName(module.reference) == "test");
-    ASSERT_TRUE(decoder->hasSPIRV(module.reference) == false);
+    ASSERT_TRUE(decoder->isSPIRV(module.reference));
+    ASSERT_FALSE(decoder->hasSPIRVCode(module.reference));
+    ASSERT_FALSE(decoder->isGLSL(module.reference));
+    ASSERT_FALSE(decoder->hasGLSLCode(module.reference));
+    ASSERT_FALSE(decoder->isHLSL(module.reference));
+    ASSERT_FALSE(decoder->hasHLSLCode(module.reference));
+    ASSERT_TRUE(decoder->getGLSLModuleCode(module.reference).empty());
+    ASSERT_TRUE(decoder->getHLSLModuleCode(module.reference).empty());
     ASSERT_TRUE(decoder->getModuleEntryPoint(module.reference) == "main");
-    ASSERT_TRUE(decoder->getModuleCode(module.reference).empty());
+    ASSERT_TRUE(decoder->getSPIRVModuleCode(module.reference).empty());
+}
+
+TEST(CppModuleTable, SingleGLSLModule) {
+    std::stringstream buffer;
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    ModuleRef module = encoder->AddModule(ModuleType::COMPUTE, "glsl", "main", ShaderType::GLSL, "void main(){}");
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    std::string data = buffer.str();
+    ASSERT_TRUE(data.size() >= HeaderSize());
+
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
+    ASSERT_NE(headerDecoder, nullptr);
+
+    std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(
+        data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize());
+    ASSERT_NE(decoder, nullptr);
+
+    ASSERT_TRUE(decoder->size() == 1);
+    ASSERT_TRUE(decoder->getModuleType(module.reference) == ModuleType::COMPUTE);
+    ASSERT_TRUE(decoder->getModuleName(module.reference) == "glsl");
+    ASSERT_TRUE(decoder->getModuleEntryPoint(module.reference) == "main");
+    ASSERT_FALSE(decoder->isSPIRV(module.reference));
+    ASSERT_FALSE(decoder->hasSPIRVCode(module.reference));
+    ASSERT_TRUE(decoder->isGLSL(module.reference));
+    ASSERT_TRUE(decoder->hasGLSLCode(module.reference));
+    ASSERT_FALSE(decoder->isHLSL(module.reference));
+    ASSERT_FALSE(decoder->hasHLSLCode(module.reference));
+    ASSERT_TRUE(decoder->getGLSLModuleCode(module.reference) == "void main(){}");
+    ASSERT_TRUE(decoder->getHLSLModuleCode(module.reference).empty());
+    ASSERT_TRUE(decoder->getSPIRVModuleCode(module.reference).empty());
+}
+
+TEST(CppModuleTable, SingleHLSLModule) {
+    std::stringstream buffer;
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    ModuleRef module =
+        encoder->AddModule(ModuleType::COMPUTE, "hlsl", "main", ShaderType::HLSL, "[numthreads(1,1,1)] void main(){}");
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    std::string data = buffer.str();
+    ASSERT_TRUE(data.size() >= HeaderSize());
+
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
+    ASSERT_NE(headerDecoder, nullptr);
+
+    std::unique_ptr<ModuleTableDecoder> decoder = CreateModuleTableDecoder(
+        data.c_str() + headerDecoder->GetModuleTableOffset(), headerDecoder->GetModuleTableSize());
+    ASSERT_NE(decoder, nullptr);
+
+    ASSERT_TRUE(decoder->size() == 1);
+    ASSERT_TRUE(decoder->getModuleType(module.reference) == ModuleType::COMPUTE);
+    ASSERT_TRUE(decoder->getModuleName(module.reference) == "hlsl");
+    ASSERT_TRUE(decoder->getModuleEntryPoint(module.reference) == "main");
+    ASSERT_FALSE(decoder->isSPIRV(module.reference));
+    ASSERT_FALSE(decoder->hasSPIRVCode(module.reference));
+    ASSERT_FALSE(decoder->isGLSL(module.reference));
+    ASSERT_FALSE(decoder->hasGLSLCode(module.reference));
+    ASSERT_TRUE(decoder->isHLSL(module.reference));
+    ASSERT_TRUE(decoder->hasHLSLCode(module.reference));
+    ASSERT_TRUE(decoder->getGLSLModuleCode(module.reference).empty());
+    ASSERT_TRUE(decoder->getHLSLModuleCode(module.reference) == "[numthreads(1,1,1)] void main(){}");
+    ASSERT_TRUE(decoder->getSPIRVModuleCode(module.reference).empty());
 }
 
 TEST(CppVerify, ModuleSizeWrapRejected) {
@@ -231,10 +314,17 @@ TEST(CModuleTable, Single) {
     ASSERT_TRUE(mlsdk_decoder_get_module_type(decoder, module.reference) == mlsdk_decoder_module_type_graph);
     ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_name(decoder, module.reference)) == "test");
     ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_entry_point(decoder, module.reference)) == "main");
-    ASSERT_TRUE(mlsdk_decoder_module_has_spirv(decoder, module.reference));
+    ASSERT_TRUE(mlsdk_decoder_module_is_spirv(decoder, module.reference));
+    ASSERT_TRUE(mlsdk_decoder_module_has_spirv_code(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_is_glsl(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_has_glsl_code(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_is_hlsl(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_has_hlsl_code(decoder, module.reference));
+    ASSERT_EQ(mlsdk_decoder_get_module_glsl_code(decoder, module.reference), nullptr);
+    ASSERT_EQ(mlsdk_decoder_get_module_hlsl_code(decoder, module.reference), nullptr);
 
     mlsdk_decoder_spirv_code spirv;
-    mlsdk_decoder_get_module_code(decoder, module.reference, &spirv);
+    mlsdk_decoder_get_spirv_module_code(decoder, module.reference, &spirv);
     ASSERT_TRUE(DataView<uint32_t>(spirv.code, spirv.words) == DataView<uint32_t>(code.data(), code.size()));
 }
 
@@ -242,7 +332,7 @@ TEST(CModuleTable, Single2) {
     std::stringstream buffer;
 
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddPlaceholderModule(ModuleType::COMPUTE, "test", "main");
+    ModuleRef module = encoder->AddModule(ModuleType::COMPUTE, "test", "main");
     encoder->Finish();
     ASSERT_TRUE(encoder->WriteTo(buffer));
 
@@ -272,10 +362,117 @@ TEST(CModuleTable, Single2) {
     ASSERT_TRUE(mlsdk_decoder_get_module_type(decoder, module.reference) == mlsdk_decoder_module_type_compute);
     ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_name(decoder, module.reference)) == "test");
     ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_entry_point(decoder, module.reference)) == "main");
-    ASSERT_FALSE(mlsdk_decoder_module_has_spirv(decoder, module.reference));
+    ASSERT_TRUE(mlsdk_decoder_module_is_spirv(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_has_spirv_code(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_is_glsl(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_has_glsl_code(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_is_hlsl(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_has_hlsl_code(decoder, module.reference));
+    ASSERT_EQ(mlsdk_decoder_get_module_glsl_code(decoder, module.reference), nullptr);
+    ASSERT_EQ(mlsdk_decoder_get_module_hlsl_code(decoder, module.reference), nullptr);
 
     mlsdk_decoder_spirv_code spirv;
-    mlsdk_decoder_get_module_code(decoder, module.reference, &spirv);
+    mlsdk_decoder_get_spirv_module_code(decoder, module.reference, &spirv);
+    ASSERT_TRUE(spirv.code == nullptr);
+    ASSERT_TRUE(spirv.words == 0);
+}
+
+TEST(CModuleTable, SingleGLSLModule) {
+    std::stringstream buffer;
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    ModuleRef module = encoder->AddModule(ModuleType::COMPUTE, "glsl", "main", ShaderType::GLSL, "void main(){}");
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    std::string data = buffer.str();
+    ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
+
+    std::vector<uint8_t> headerDecoderMemory;
+    headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
+
+    mlsdk_decoder_vgf_section_info moduleSection;
+    mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
+    ASSERT_TRUE(moduleSection.size > 0);
+    ASSERT_TRUE(moduleSection.offset == HEADER_HEADER_SIZE_VALUE);
+
+    std::vector<uint8_t> decoderMemory;
+    decoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
+    mlsdk_decoder_module_table_decoder *decoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, decoderMemory.data());
+    ASSERT_NE(decoder, nullptr);
+
+    ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(decoder) == 1);
+    ASSERT_TRUE(mlsdk_decoder_get_module_type(decoder, module.reference) == mlsdk_decoder_module_type_compute);
+    ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_name(decoder, module.reference)) == "glsl");
+    ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_entry_point(decoder, module.reference)) == "main");
+    ASSERT_FALSE(mlsdk_decoder_module_is_spirv(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_has_spirv_code(decoder, module.reference));
+    ASSERT_TRUE(mlsdk_decoder_module_is_glsl(decoder, module.reference));
+    ASSERT_TRUE(mlsdk_decoder_module_has_glsl_code(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_is_hlsl(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_has_hlsl_code(decoder, module.reference));
+    ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_glsl_code(decoder, module.reference)) == "void main(){}");
+    ASSERT_EQ(mlsdk_decoder_get_module_hlsl_code(decoder, module.reference), nullptr);
+
+    mlsdk_decoder_spirv_code spirv;
+    mlsdk_decoder_get_spirv_module_code(decoder, module.reference, &spirv);
+    ASSERT_TRUE(spirv.code == nullptr);
+    ASSERT_TRUE(spirv.words == 0);
+}
+
+TEST(CModuleTable, SingleHLSLModule) {
+    std::stringstream buffer;
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    ModuleRef module =
+        encoder->AddModule(ModuleType::COMPUTE, "hlsl", "main", ShaderType::HLSL, "[numthreads(1,1,1)] void main(){}");
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    std::string data = buffer.str();
+    ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
+
+    std::vector<uint8_t> headerDecoderMemory;
+    headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
+
+    mlsdk_decoder_vgf_section_info moduleSection;
+    mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_modules, &moduleSection);
+    ASSERT_TRUE(moduleSection.size > 0);
+    ASSERT_TRUE(moduleSection.offset == HEADER_HEADER_SIZE_VALUE);
+
+    std::vector<uint8_t> decoderMemory;
+    decoderMemory.resize(mlsdk_decoder_module_table_decoder_mem_reqs());
+    mlsdk_decoder_module_table_decoder *decoder = mlsdk_decoder_create_module_table_decoder(
+        data.c_str() + moduleSection.offset, moduleSection.size, decoderMemory.data());
+    ASSERT_NE(decoder, nullptr);
+
+    ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(decoder) == 1);
+    ASSERT_TRUE(mlsdk_decoder_get_module_type(decoder, module.reference) == mlsdk_decoder_module_type_compute);
+    ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_name(decoder, module.reference)) == "hlsl");
+    ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_entry_point(decoder, module.reference)) == "main");
+    ASSERT_FALSE(mlsdk_decoder_module_is_spirv(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_has_spirv_code(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_is_glsl(decoder, module.reference));
+    ASSERT_FALSE(mlsdk_decoder_module_has_glsl_code(decoder, module.reference));
+    ASSERT_TRUE(mlsdk_decoder_module_is_hlsl(decoder, module.reference));
+    ASSERT_TRUE(mlsdk_decoder_module_has_hlsl_code(decoder, module.reference));
+    ASSERT_EQ(mlsdk_decoder_get_module_glsl_code(decoder, module.reference), nullptr);
+    ASSERT_TRUE(std::string_view(mlsdk_decoder_get_module_hlsl_code(decoder, module.reference)) ==
+                "[numthreads(1,1,1)] void main(){}");
+
+    mlsdk_decoder_spirv_code spirv;
+    mlsdk_decoder_get_spirv_module_code(decoder, module.reference, &spirv);
     ASSERT_TRUE(spirv.code == nullptr);
     ASSERT_TRUE(spirv.words == 0);
 }

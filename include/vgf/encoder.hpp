@@ -62,13 +62,25 @@ class Encoder {
     virtual ModuleRef AddModule(ModuleType type, const std::string &name, const std::string &entryPoint,
                                 const std::vector<uint32_t> &code = {}) = 0;
 
+    /// \brief Adds a module, with code, to the VGF
+    ///
+    /// \param moduleType The type of the module
+    /// \param name Unique string name of the module
+    /// \param entryPoint Entry point into the shader e.g. "main"
+    /// \param shaderType The type of the shader GLSL/HLSL/etc
+    /// \param code String representing GLSL/HLSL/etc code
+    /// \return ModuleRef Type containing information for the added module
+    virtual ModuleRef AddModule(ModuleType moduleType, const std::string &name, const std::string &entryPoint,
+                                ShaderType shaderType, const std::string &code = {}) = 0;
+
     /// \brief Adds a placeholder module to the VGF where the code will be provisioned at load/decode time
     ///
     /// \param type The type of the module
     /// \param name Unique string name of the module
     /// \param entryPoint Entry point into the shader e.g. "main"
     /// \return ModuleRef Type containing information for the added module
-    virtual ModuleRef AddPlaceholderModule(ModuleType type, const std::string &name, const std::string &entryPoint) = 0;
+    [[deprecated("Use AddModule instead")]] virtual ModuleRef
+    AddPlaceholderModule(ModuleType type, const std::string &name, const std::string &entryPoint) = 0;
 
     /// \brief Add an INPUT resource to the model resource table
     ///

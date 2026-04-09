@@ -20,9 +20,7 @@ def test_encode_decode_model_sequence_table_segment_info():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
 
-    module = encoder.AddPlaceholderModule(
-        vgf.ModuleType.Graph, "test_module", "entry_point"
-    )
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
 
     segment = encoder.AddSegmentInfo(module, "test_segment")
 
@@ -54,9 +52,7 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_empty():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
 
-    module = encoder.AddPlaceholderModule(
-        vgf.ModuleType.Graph, "test_module", "entry_point"
-    )
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
 
     descriptor = encoder.AddDescriptorSetInfo()
     descriptors = [descriptor]
@@ -89,9 +85,7 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_binding_slot():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
 
-    module = encoder.AddPlaceholderModule(
-        vgf.ModuleType.Graph, "test_module", "entry_point"
-    )
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
 
     binding = encoder.AddBindingSlot(1, vgf.ResourceRef(2))
     bindings = [binding]
@@ -151,9 +145,7 @@ def test_encode_decode_model_sequence_table_segment_input_output_binding_slot():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
 
-    module = encoder.AddPlaceholderModule(
-        vgf.ModuleType.Graph, "test_module", "entry_point"
-    )
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
 
     inputBinding = encoder.AddBindingSlot(1, vgf.ResourceRef(2))
     inputBindings = [inputBinding]
@@ -207,9 +199,7 @@ def test_encode_decode_model_sequence_table_input_output_binding_slot():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
 
-    module = encoder.AddPlaceholderModule(
-        vgf.ModuleType.Graph, "test_module", "entry_point"
-    )
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
 
     inputBinding = encoder.AddBindingSlot(1, vgf.ResourceRef(2))
     inputBindings = [inputBinding]
@@ -267,9 +257,7 @@ def test_encode_decode_model_sequence_table_segment_constants():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
 
-    module = encoder.AddPlaceholderModule(
-        vgf.ModuleType.Graph, "test_module", "entry_point"
-    )
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
 
     constants = [vgf.ConstantRef(1), vgf.ConstantRef(2), vgf.ConstantRef(3)]
 
@@ -306,9 +294,7 @@ def test_encode_decode_model_sequence_table_segment_dispatch_shape():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
 
-    module = encoder.AddPlaceholderModule(
-        vgf.ModuleType.Graph, "test_module", "entry_point"
-    )
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
 
     dispatchShape = np.array([1, 2, 3], dtype=np.uint32)
 
@@ -348,9 +334,7 @@ def test_encode_decode_model_sequence_table_segment_push_constant_range():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
 
-    module = encoder.AddPlaceholderModule(
-        vgf.ModuleType.Graph, "test_module", "entry_point"
-    )
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
 
     pushConstRange = encoder.AddPushConstRange(10, 0, 5)
     pushConstRanges = [pushConstRange]

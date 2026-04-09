@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,8 +9,18 @@ table SPIRV {
     words: [uint32];
 }
 
+table GLSL {
+    code: string;
+}
+
+table HLSL {
+    code: string;
+}
+
 union ModuleCode {
     SPIRV,
+    GLSL,
+    HLSL
 }
 
 enum ModuleType:uint8 {

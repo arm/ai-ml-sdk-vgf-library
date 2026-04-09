@@ -32,6 +32,18 @@ VGF::ModuleType toVGF(ModuleType type) {
     }
 }
 
+VGF::ModuleCode toVGF(ShaderType type) {
+    switch (type) {
+    case ShaderType::GLSL:
+        return VGF::ModuleCode::ModuleCode_GLSL;
+    case ShaderType::HLSL:
+        return VGF::ModuleCode::ModuleCode_HLSL;
+    default:
+        assert(false && "unknown Moduletype");
+        return VGF::ModuleCode::ModuleCode_NONE;
+    }
+}
+
 VGF::ResourceCategory toVGF(ResourceCategory category) {
     switch (category) {
     case ResourceCategory::INPUT:
@@ -60,8 +72,8 @@ class EncoderImpl : public Encoder {
                         const std::vector<uint32_t> &code) override {
         assert(!finished_ && "cannot add modules when marked finished");
         if (code.empty()) {
-            modules_.emplace_back(
-                VGF::CreateModuleDirect(moduleBuilder_, toVGF(type), name.c_str(), entryPoint.c_str()));
+            modules_.emplace_back(VGF::CreateModuleDirect(moduleBuilder_, toVGF(type), name.c_str(), entryPoint.c_str(),
+                                                          VGF::ModuleCode::ModuleCode_SPIRV));
         } else {
             auto spirv = VGF::CreateSPIRVDirect(moduleBuilder_, &code);
             modules_.emplace_back(VGF::CreateModuleDirect(moduleBuilder_, toVGF(type), name.c_str(), entryPoint.c_str(),
@@ -76,7 +88,43 @@ class EncoderImpl : public Encoder {
         return {moduleRef};
     }
 
+    ModuleRef AddModule(ModuleType moduleType, const std::string &name, const std::string &entryPoint,
+                        ShaderType shaderType, const std::string &code) override {
+        assert(!finished_ && "cannot add modules when marked finished");
+
+        if (code.empty()) {
+            modules_.emplace_back(VGF::CreateModuleDirect(moduleBuilder_, toVGF(moduleType), name.c_str(),
+                                                          entryPoint.c_str(), toVGF(shaderType)));
+        } else {
+            switch (shaderType) {
+            case ShaderType::GLSL: {
+                auto glsl = VGF::CreateGLSLDirect(moduleBuilder_, code.c_str());
+                modules_.emplace_back(VGF::CreateModuleDirect(moduleBuilder_, toVGF(moduleType), name.c_str(),
+                                                              entryPoint.c_str(), toVGF(shaderType), glsl.Union()));
+                break;
+            }
+            case ShaderType::HLSL: {
+                auto hlsl = VGF::CreateHLSLDirect(moduleBuilder_, code.c_str());
+                modules_.emplace_back(VGF::CreateModuleDirect(moduleBuilder_, toVGF(moduleType), name.c_str(),
+                                                              entryPoint.c_str(), toVGF(shaderType), hlsl.Union()));
+                break;
+            }
+            default:
+                assert(false && "unknown shader type");
+                break;
+            }
+        }
+        auto moduleRef = static_cast<ModuleRef::RefType>(modules_.size() - 1);
+        logging::debug("Added module. Name: " + name + " EntryPoint: " + entryPoint + " Type: " +
+                       std::to_string(static_cast<int>(moduleType)) + " ModuleRef: " + std::to_string(moduleRef));
+        moduleRefToType_.push_back(moduleType);
+        assert(moduleRef == moduleRefToType_.size() - 1);
+        assert(modules_.size() == moduleRefToType_.size());
+        return {moduleRef};
+    }
+
     ModuleRef AddPlaceholderModule(ModuleType type, const std::string &name, const std::string &entryPoint) override {
+        logging::warning("AddPlaceholderModule is deprecated use AddModule instead");
         return AddModule(type, name, entryPoint, {});
     }
 

@@ -159,7 +159,25 @@ class PyModuleTableDecoder final : public ModuleTableDecoder {
         PYBIND11_OVERRIDE_PURE(ModuleType, ModuleTableDecoder, getModuleType, idx);
     }
 
-    bool hasSPIRV(uint32_t idx) const override { PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, hasSPIRV, idx); }
+    bool hasSPIRV(uint32_t idx) const override { return isSPIRV(idx); }
+
+    bool isSPIRV(uint32_t idx) const override { PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, isSPIRV, idx); }
+
+    bool hasSPIRVCode(uint32_t idx) const override {
+        PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, hasSPIRVCode, idx);
+    }
+
+    bool isGLSL(uint32_t idx) const override { PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, isGLSL, idx); }
+
+    bool hasGLSLCode(uint32_t idx) const override {
+        PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, hasGLSLCode, idx);
+    }
+
+    bool isHLSL(uint32_t idx) const override { PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, isHLSL, idx); }
+
+    bool hasHLSLCode(uint32_t idx) const override {
+        PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, hasHLSLCode, idx);
+    }
 
     std::string_view getModuleName(uint32_t idx) const override {
         PYBIND11_OVERRIDE_PURE(std::string_view, ModuleTableDecoder, getModuleName, idx);
@@ -169,8 +187,18 @@ class PyModuleTableDecoder final : public ModuleTableDecoder {
         PYBIND11_OVERRIDE_PURE(std::string_view, ModuleTableDecoder, getModuleEntryPoint, idx);
     }
 
-    DataView<uint32_t> getModuleCode(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(DataView<uint32_t>, ModuleTableDecoder, getModuleCode, idx);
+    DataView<uint32_t> getModuleCode(uint32_t idx) const override { return getSPIRVModuleCode(idx); }
+
+    DataView<uint32_t> getSPIRVModuleCode(uint32_t idx) const override {
+        PYBIND11_OVERRIDE_PURE(DataView<uint32_t>, ModuleTableDecoder, getSPIRVModuleCode, idx);
+    }
+
+    std::string_view getGLSLModuleCode(uint32_t idx) const override {
+        PYBIND11_OVERRIDE_PURE(std::string_view, ModuleTableDecoder, getGLSLModuleCode, idx);
+    }
+
+    std::string_view getHLSLModuleCode(uint32_t idx) const override {
+        PYBIND11_OVERRIDE_PURE(std::string_view, ModuleTableDecoder, getHLSLModuleCode, idx);
     }
 };
 
@@ -180,15 +208,42 @@ void pyInitModuleTableDecoder(py::module m) {
         .def(py::init<>())
         .def("size", &ModuleTableDecoder::size)
         .def("getModuleType", &ModuleTableDecoder::getModuleType, py::arg("idx"))
-        .def("hasSPIRV", &ModuleTableDecoder::hasSPIRV, py::arg("idx"))
+        .def(
+            "hasSPIRV",
+            [](const ModuleTableDecoder &decoder, uint32_t idx) {
+                py::module_ warnings = py::module_::import("warnings");
+                py::object deprecationWarning = py::module_::import("builtins").attr("DeprecationWarning");
+                warnings.attr("warn")("ModuleTableDecoder.hasSPIRV is deprecated; use isSPIRV()", deprecationWarning,
+                                      2);
+                return decoder.isSPIRV(idx);
+            },
+            py::arg("idx"))
+        .def("isSPIRV", &ModuleTableDecoder::isSPIRV, py::arg("idx"))
+        .def("hasSPIRVCode", &ModuleTableDecoder::hasSPIRVCode, py::arg("idx"))
+        .def("isGLSL", &ModuleTableDecoder::isGLSL, py::arg("idx"))
+        .def("hasGLSLCode", &ModuleTableDecoder::hasGLSLCode, py::arg("idx"))
+        .def("isHLSL", &ModuleTableDecoder::isHLSL, py::arg("idx"))
+        .def("hasHLSLCode", &ModuleTableDecoder::hasHLSLCode, py::arg("idx"))
         .def("getModuleName", &ModuleTableDecoder::getModuleName, py::arg("idx"))
         .def("getModuleEntryPoint", &ModuleTableDecoder::getModuleEntryPoint, py::arg("idx"))
         .def(
             "getModuleCode",
             [](const ModuleTableDecoder &decoder, uint32_t idx) {
-                return pyDataView<uint32_t>(decoder.getModuleCode(idx));
+                py::module_ warnings = py::module_::import("warnings");
+                py::object deprecationWarning = py::module_::import("builtins").attr("DeprecationWarning");
+                warnings.attr("warn")("ModuleTableDecoder.getModuleCode is deprecated; use getSPIRVModuleCode()",
+                                      deprecationWarning, 2);
+                return pyDataView<uint32_t>(decoder.getSPIRVModuleCode(idx));
             },
-            py::arg("idx"));
+            py::arg("idx"))
+        .def(
+            "getSPIRVModuleCode",
+            [](const ModuleTableDecoder &decoder, uint32_t idx) {
+                return pyDataView<uint32_t>(decoder.getSPIRVModuleCode(idx));
+            },
+            py::arg("idx"))
+        .def("getGLSLModuleCode", &ModuleTableDecoder::getGLSLModuleCode, py::arg("idx"))
+        .def("getHLSLModuleCode", &ModuleTableDecoder::getHLSLModuleCode, py::arg("idx"));
 
     m.def("ModuleTableDecoderSize", &ModuleTableDecoderSize);
     m.def(

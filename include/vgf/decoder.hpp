@@ -181,39 +181,126 @@ class ModuleTableDecoder {
     virtual size_t size() const = 0;
 
     /**
-     * @brief Retrieves the moduleType of module 'idx'
+     * @brief Returns the module type of the idx-entry
      *
-     * @param idx
+     * @param idx The index for the entry in the module table
+     * @return The module type of the entry
      */
     virtual ModuleType getModuleType(uint32_t idx) const = 0;
 
     /**
-     * @brief Checks if the table entry 'idx' has SPIR-V code
+     * @brief Returns true if the module table entry is a SPIR-V module (deprecated alias)
      *
-     * @param idx
+     * @param idx The index for the entry in the module table
+     * @return True if the entry stores a SPIR-V module
      */
-    virtual bool hasSPIRV(uint32_t idx) const = 0;
+    [[deprecated("Use isSPIRV instead")]] virtual bool hasSPIRV(uint32_t idx) const = 0;
 
     /**
-     * @brief Retrieves the module name of module 'idx'
+     * @brief Returns true if the module table entry is a SPIR-V module
      *
-     * @param idx
+     * @param idx The index for the entry in the module table
+     * @return True if the entry stores a SPIR-V module
+     */
+    virtual bool isSPIRV(uint32_t idx) const = 0;
+
+    /**
+     * @brief Returns true if the module table entry is a SPIR-V module with associated code
+     *
+     * @param idx The index for the entry in the module table
+     * @return True if SPIR-V code is present for the entry
+     */
+    virtual bool hasSPIRVCode(uint32_t idx) const = 0;
+
+    /**
+     * @brief Returns true if the module table entry is a GLSL module
+     *
+     * @param idx The index for the entry in the module table
+     * @return True if the entry stores a GLSL module
+     */
+    virtual bool isGLSL(uint32_t idx) const = 0;
+
+    /**
+     * @brief Returns true if the module table entry is a GLSL module with associated code
+     *
+     * @param idx The index for the entry in the module table
+     * @return True if GLSL code is present for the entry
+     */
+    virtual bool hasGLSLCode(uint32_t idx) const = 0;
+
+    /**
+     * @brief Returns true if the module table entry is a HLSL module
+     *
+     * @param idx The index for the entry in the module table
+     * @return True if the entry stores a HLSL module
+     */
+    virtual bool isHLSL(uint32_t idx) const = 0;
+
+    /**
+     * @brief Returns true if the module table entry is a HLSL module with associated code
+     *
+     * @param idx The index for the entry in the module table
+     * @return True if HLSL code is present for the entry
+     */
+    virtual bool hasHLSLCode(uint32_t idx) const = 0;
+
+    /**
+     * @brief Returns the module name of the idx-entry
+     *
+     * @param idx The index for the entry in the module table
+     * @return String view to the module name
      */
     virtual std::string_view getModuleName(uint32_t idx) const = 0;
 
     /**
-     * @brief Returns the entry point of module 'idx'
+     * @brief Returns the SPIR-V entry point name stored in the module
      *
-     * @param idx
+     * @param idx The index for the entry in the module table
+     * @return String view to the entry point name
+     *
+     * If no entry point is stored in the module an empty string view is returned.
      */
     virtual std::string_view getModuleEntryPoint(uint32_t idx) const = 0;
 
     /**
-     * @brief Retrieves the SPIR-V code of the module 'idx' in the Module Table
+     * @brief Gets the SPIR-V code stored in the module (deprecated alias)
      *
-     * @param idx
+     * @param idx The index for the entry in the module table
+     * @return A view of the SPIR-V code stored in the module
+     *
+     * If no code is stored in the module the returned view is empty.
      */
-    virtual DataView<uint32_t> getModuleCode(uint32_t idx) const = 0;
+    [[deprecated("Use getSPIRVModuleCode instead")]] virtual DataView<uint32_t> getModuleCode(uint32_t idx) const = 0;
+
+    /**
+     * @brief Gets the SPIR-V code stored in the module
+     *
+     * @param idx The index for the entry in the module table
+     * @return A view of the SPIR-V code stored in the module
+     *
+     * If no code is stored in the module the returned view is empty.
+     */
+    virtual DataView<uint32_t> getSPIRVModuleCode(uint32_t idx) const = 0;
+
+    /**
+     * @brief Returns the GLSL source code for the idx-entry
+     *
+     * @param idx The index for the entry in the module table
+     * @return String view to GLSL source code
+     *
+     * If no GLSL source is stored in the module an empty string view is returned.
+     */
+    virtual std::string_view getGLSLModuleCode(uint32_t idx) const = 0;
+
+    /**
+     * @brief Returns the HLSL source code for the idx-entry
+     *
+     * @param idx The index for the entry in the module table
+     * @return String view to HLSL source code
+     *
+     * If no HLSL source is stored in the module an empty string view is returned.
+     */
+    virtual std::string_view getHLSLModuleCode(uint32_t idx) const = 0;
 };
 
 /**
