@@ -54,7 +54,7 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_empty():
 
     module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
 
-    descriptor = encoder.AddDescriptorSetInfo()
+    descriptor = encoder.AddDescriptorSetInfo([], 7)
     descriptors = [descriptor]
 
     segment = encoder.AddSegmentInfo(module, "test_segment", descriptors)
@@ -79,6 +79,7 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_empty():
 
     assert seqTableDecoder.modelSequenceTableSize() == 1
     assert seqTableDecoder.getSegmentDescriptorSetInfosSize(segment.reference) == 1
+    assert seqTableDecoder.getSegmentDescriptorSetIndex(segment.reference, 0) == 7
 
 
 def test_encode_decode_model_sequence_table_descriptor_set_info_binding_slot():
@@ -90,7 +91,7 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_binding_slot():
     binding = encoder.AddBindingSlot(1, vgf.ResourceRef(2))
     bindings = [binding]
 
-    descriptor = encoder.AddDescriptorSetInfo(bindings)
+    descriptor = encoder.AddDescriptorSetInfo(bindings, 5)
     descriptors = [descriptor]
 
     segment = encoder.AddSegmentInfo(module, "test_segment", descriptors)
@@ -115,6 +116,7 @@ def test_encode_decode_model_sequence_table_descriptor_set_info_binding_slot():
 
     assert seqTableDecoder.modelSequenceTableSize() == 1
     assert seqTableDecoder.getSegmentDescriptorSetInfosSize(segment.reference) == 1
+    assert seqTableDecoder.getSegmentDescriptorSetIndex(segment.reference, 0) == 5
 
     segmentIndex = segment.reference
     discriptorSetInfoIndex = descriptor.reference

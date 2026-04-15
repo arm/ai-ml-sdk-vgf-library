@@ -354,6 +354,10 @@ void to_json(nlohmann::json &j, const PushConstantRange &pushConstantRange) {
                        {"size", pushConstantRange.mSize}};
 }
 
+void to_json(nlohmann::json &j, const DescriptorSetInfo &descriptorSetInfo) {
+    j = nlohmann::json{{"bindings", descriptorSetInfo.mBindings}, {"set_index", descriptorSetInfo.mSetIndex}};
+}
+
 void to_json(nlohmann::json &j, const Segment &segment) {
     j = nlohmann::json{{"index", segment.mIndex},
                        {"type", moduleTypeToString(segment.mType)},

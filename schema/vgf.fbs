@@ -69,6 +69,10 @@ table BindingSlot {
 
 table DescriptorSetInfo {
     bindings: [BindingSlot];
+    // Optional explicit descriptor set index. When omitted, consumers can
+    // fall back to descriptor position in SegmentInfo.set_infos.
+    // 4294967295 is UINT32_MAX (unset sentinel in schema language).
+    set_index: uint = 4294967295;
 }
 
 table PushConstantRange {

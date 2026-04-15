@@ -113,11 +113,12 @@ ModelSequence parseModelSequenceTable(const void *data, uint64_t size) {
         const auto *segOutputsHandle = decoder->getSegmentOutputBindingSlotsHandle(i);
         std::vector<BindingSlot> segmentOutputs = parseBindingSlots(*decoder, segOutputsHandle);
 
-        std::vector<std::vector<BindingSlot>> segmentDescriptorSetInfos;
+        std::vector<DescriptorSetInfo> segmentDescriptorSetInfos;
         segmentDescriptorSetInfos.reserve(decoder->getSegmentDescriptorSetInfosSize(i));
         for (uint32_t j = 0; j < decoder->getSegmentDescriptorSetInfosSize(i); ++j) {
             const auto *descSlotsHandle = decoder->getDescriptorBindingSlotsHandle(i, j);
-            segmentDescriptorSetInfos.emplace_back(parseBindingSlots(*decoder, descSlotsHandle));
+            segmentDescriptorSetInfos.emplace_back(parseBindingSlots(*decoder, descSlotsHandle),
+                                                   decoder->getSegmentDescriptorSetIndex(i, j));
         }
 
         const auto *pcrHandle = decoder->getSegmentPushConstRange(i);

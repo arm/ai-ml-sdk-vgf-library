@@ -56,11 +56,20 @@ struct PushConstantRange {
     uint32_t mSize{0};
 };
 
+struct DescriptorSetInfo {
+    DescriptorSetInfo() = default;
+    DescriptorSetInfo(std::vector<BindingSlot> bindings, uint32_t setIndex)
+        : mBindings(std::move(bindings)), mSetIndex(setIndex) {}
+
+    std::vector<BindingSlot> mBindings;
+    uint32_t mSetIndex{0};
+};
+
 struct Segment {
     Segment() = default;
     Segment(uint32_t index, mlsdk::vgflib::ModuleType type, uint32_t moduleIndex, std::string_view &name,
             std::vector<BindingSlot> inputs, std::vector<BindingSlot> outputs,
-            std::vector<std::vector<BindingSlot>> descriptorSetInfos, std::vector<PushConstantRange> pushConstantRanges,
+            std::vector<DescriptorSetInfo> descriptorSetInfos, std::vector<PushConstantRange> pushConstantRanges,
             std::vector<uint32_t> constants, std::vector<uint32_t> dispatchShape)
         : mIndex(index), mType(type), mModuleIndex(moduleIndex), mName(name), mInputs(std::move(inputs)),
           mOutputs(std::move(outputs)), mDescriptorSetInfos(std::move(descriptorSetInfos)),
@@ -73,7 +82,7 @@ struct Segment {
     std::string mName;
     std::vector<BindingSlot> mInputs;
     std::vector<BindingSlot> mOutputs;
-    std::vector<std::vector<BindingSlot>> mDescriptorSetInfos;
+    std::vector<DescriptorSetInfo> mDescriptorSetInfos;
     std::vector<PushConstantRange> mPushConstantRanges;
     std::vector<uint32_t> mConstants;
     std::vector<uint32_t> mDispatchShape;

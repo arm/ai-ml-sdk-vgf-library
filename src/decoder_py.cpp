@@ -266,6 +266,10 @@ class PyModelSequenceTableDecoder final : public ModelSequenceTableDecoder {
         PYBIND11_OVERRIDE_PURE(size_t, ModelSequenceTableDecoder, getSegmentDescriptorSetInfosSize, segmentIdx);
     }
 
+    uint32_t getSegmentDescriptorSetIndex(uint32_t segmentIdx, uint32_t descIdx) const override {
+        PYBIND11_OVERRIDE_PURE(uint32_t, ModelSequenceTableDecoder, getSegmentDescriptorSetIndex, segmentIdx, descIdx);
+    }
+
     DataView<uint32_t> getSegmentConstantIndexes(uint32_t segmentIdx) const override {
         PYBIND11_OVERRIDE_PURE(DataView<uint32_t>, ModelSequenceTableDecoder, getSegmentConstantIndexes, segmentIdx);
     }
@@ -368,6 +372,8 @@ void pyInitModelSequenceTableDecoder(py::module m) {
         .def("modelSequenceTableSize", &ModelSequenceTableDecoder::modelSequenceTableSize)
         .def("getSegmentDescriptorSetInfosSize", &ModelSequenceTableDecoder::getSegmentDescriptorSetInfosSize,
              py::arg("segmentIdx"))
+        .def("getSegmentDescriptorSetIndex", &ModelSequenceTableDecoder::getSegmentDescriptorSetIndex,
+             py::arg("segmentIdx"), py::arg("descIdx"))
         .def(
             "getSegmentConstantIndexes",
             [](const ModelSequenceTableDecoder &decoder, uint32_t segmentIdx) {

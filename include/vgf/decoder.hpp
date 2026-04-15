@@ -490,6 +490,18 @@ class ModelSequenceTableDecoder {
     virtual size_t getSegmentDescriptorSetInfosSize(uint32_t segmentIdx) const = 0;
 
     /**
+     * @brief Returns the descriptor set index for descriptor 'descIdx' in
+     *        segment 'segmentIdx'
+     *
+     * @param segmentIdx
+     * @param descIdx
+     *
+     * If the explicit descriptor set index is not encoded in the file, this
+     * method falls back to returning descIdx (legacy positional semantics).
+     */
+    virtual uint32_t getSegmentDescriptorSetIndex(uint32_t segmentIdx, uint32_t descIdx) const = 0;
+
+    /**
      * @brief Returns the constants that are linked to segment 'segmentIdx' in the Model Sequence Table
      *
      * @param segmentIdx
