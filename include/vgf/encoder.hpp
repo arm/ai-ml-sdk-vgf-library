@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cstddef>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -142,8 +143,13 @@ class Encoder {
     /// \brief Add descriptor set info for bindings
     ///
     /// \param bindings Vector of binding slot references
+    /// \param setIndex Explicit descriptor set index. When set to
+    ///                 std::numeric_limits<uint32_t>::max(), it is treated as
+    ///                 unspecified and omitted from serialization for backward
+    ///                 compatibility.
     /// \return DescriptorSetInfoRef type containing information for the added descriptor set
-    virtual DescriptorSetInfoRef AddDescriptorSetInfo(const std::vector<BindingSlotRef> &bindings = {}) = 0;
+    virtual DescriptorSetInfoRef AddDescriptorSetInfo(const std::vector<BindingSlotRef> &bindings = {},
+                                                      uint32_t setIndex = std::numeric_limits<uint32_t>::max()) = 0;
 
     /// \brief Add push constant range to segment info
     ///

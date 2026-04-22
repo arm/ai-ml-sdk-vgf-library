@@ -58,7 +58,7 @@ TEST(CppModelSequenceTable, DescripterSetInfo) {
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
-    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo();
+    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo({}, 7);
     std::vector<DescriptorSetInfoRef> descriptors = {descriptor};
 
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
@@ -78,6 +78,38 @@ TEST(CppModelSequenceTable, DescripterSetInfo) {
 
     ASSERT_TRUE(decoder->modelSequenceTableSize() == 1);
     ASSERT_TRUE(decoder->getSegmentDescriptorSetInfosSize(segment.reference) == 1);
+    ASSERT_TRUE(decoder->getSegmentDescriptorSetIndex(segment.reference, 0) == 7);
+}
+
+TEST(CppModelSequenceTable, DescripterSetInfoLegacyFallback) {
+    std::stringstream buffer;
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
+
+    DescriptorSetInfoRef descriptor0 = encoder->AddDescriptorSetInfo();
+    DescriptorSetInfoRef descriptor1 = encoder->AddDescriptorSetInfo();
+    std::vector<DescriptorSetInfoRef> descriptors = {descriptor0, descriptor1};
+
+    SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
+
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    std::string data = buffer.str();
+
+    std::unique_ptr<HeaderDecoder> headerDecoder =
+        CreateHeaderDecoder(data.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
+    ASSERT_NE(headerDecoder, nullptr);
+
+    std::unique_ptr<ModelSequenceTableDecoder> decoder = CreateModelSequenceTableDecoder(
+        data.c_str() + headerDecoder->GetModelSequenceTableOffset(), headerDecoder->GetModelSequenceTableSize());
+    ASSERT_NE(decoder, nullptr);
+
+    ASSERT_TRUE(decoder->modelSequenceTableSize() == 1);
+    ASSERT_TRUE(decoder->getSegmentDescriptorSetInfosSize(segment.reference) == 2);
+    ASSERT_TRUE(decoder->getSegmentDescriptorSetIndex(segment.reference, 0) == 0);
+    ASSERT_TRUE(decoder->getSegmentDescriptorSetIndex(segment.reference, 1) == 1);
 }
 
 TEST(CppModelSequenceTable, DescriptorBindingSlot) {
@@ -92,7 +124,7 @@ TEST(CppModelSequenceTable, DescriptorBindingSlot) {
     BindingSlotRef binding = encoder->AddBindingSlot(1, ResourceRef{2});
     std::vector<BindingSlotRef> bindings = {binding};
 
-    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo(bindings);
+    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo(bindings, 3);
     std::vector<DescriptorSetInfoRef> descriptors = {descriptor};
 
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
@@ -114,6 +146,7 @@ TEST(CppModelSequenceTable, DescriptorBindingSlot) {
 
     ASSERT_TRUE(seqTableDecoder->modelSequenceTableSize() == 1);
     ASSERT_TRUE(seqTableDecoder->getSegmentDescriptorSetInfosSize(segment.reference) == 1);
+    ASSERT_TRUE(seqTableDecoder->getSegmentDescriptorSetIndex(segment.reference, 0) == 3);
 
     uint32_t segmentIndex = segment.reference;
     uint32_t discriptorSetInfoIndex = descriptor.reference;
@@ -159,8 +192,8 @@ TEST(CppModelSequenceTable, SegmentBindingSlot) {
     std::vector<BindingSlotRef> inputBindings = {inputBinding};
     std::vector<BindingSlotRef> outputBindings = {outputBinding};
 
-    DescriptorSetInfoRef inputDescriptorRef = encoder->AddDescriptorSetInfo(inputBindings);
-    DescriptorSetInfoRef outputDescriptorRef = encoder->AddDescriptorSetInfo(outputBindings);
+    DescriptorSetInfoRef inputDescriptorRef = encoder->AddDescriptorSetInfo(inputBindings, 4);
+    DescriptorSetInfoRef outputDescriptorRef = encoder->AddDescriptorSetInfo(outputBindings, 9);
 
     std::vector<DescriptorSetInfoRef> descriptorRefs = {inputDescriptorRef, outputDescriptorRef};
     //! [BindingSlotEncodingSample1 end]
@@ -191,6 +224,8 @@ TEST(CppModelSequenceTable, SegmentBindingSlot) {
     ASSERT_NE(seqTableDecoder, nullptr);
 
     ASSERT_TRUE(seqTableDecoder->modelSequenceTableSize() == 1);
+    ASSERT_TRUE(seqTableDecoder->getSegmentDescriptorSetIndex(segment.reference, 0) == 4);
+    ASSERT_TRUE(seqTableDecoder->getSegmentDescriptorSetIndex(segment.reference, 1) == 9);
 
     BindingSlotArrayHandle bindingSlotsHandle = seqTableDecoder->getSegmentInputBindingSlotsHandle(segment.reference);
 
@@ -475,7 +510,7 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
     std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
 
-    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo();
+    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo({}, 11);
     std::vector<DescriptorSetInfoRef> descriptors = {descriptor};
 
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
@@ -520,6 +555,8 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
     ASSERT_TRUE(
         mlsdk_decoder_model_sequence_get_segment_descriptorset_info_size(modelSequenceDecoder, segment.reference) == 1);
+    ASSERT_TRUE(
+        mlsdk_decoder_model_sequence_get_segment_descriptorset_index(modelSequenceDecoder, segment.reference, 0) == 11);
 }
 
 TEST(CModelSequenceTable, DescriptorBindingSlot) {
@@ -531,7 +568,7 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
     BindingSlotRef binding = encoder->AddBindingSlot(1, ResourceRef{2});
     std::vector<BindingSlotRef> bindings = {binding};
 
-    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo(bindings);
+    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo(bindings, 5);
     std::vector<DescriptorSetInfoRef> descriptors = {descriptor};
 
     SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
@@ -577,6 +614,8 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
     ASSERT_TRUE(mlsdk_decoder_get_model_sequence_table_size(modelSequenceDecoder) == 1);
     ASSERT_TRUE(
         mlsdk_decoder_model_sequence_get_segment_descriptorset_info_size(modelSequenceDecoder, segment.reference) == 1);
+    ASSERT_TRUE(
+        mlsdk_decoder_model_sequence_get_segment_descriptorset_index(modelSequenceDecoder, segment.reference, 0) == 5);
 
     mlsdk_decoder_binding_slots_handle handle = mlsdk_decoder_model_sequence_get_segment_descriptor_binding_slot(
         modelSequenceDecoder, segment.reference, descriptor.reference);

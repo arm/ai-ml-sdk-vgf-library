@@ -133,7 +133,12 @@ void FuzzCDecoderAccessors(const uint8_t *data, size_t size) {
         const auto count = mlsdk_decoder_get_model_sequence_table_size(seqDec);
         if (count > 0) {
             const auto idx = static_cast<uint32_t>(std::min<size_t>(count - 1, UINT32_MAX));
-            mlsdk_decoder_model_sequence_get_segment_descriptorset_info_size(seqDec, idx);
+            const auto descCount = mlsdk_decoder_model_sequence_get_segment_descriptorset_info_size(seqDec, idx);
+            if (descCount > 0) {
+                mlsdk_decoder_model_sequence_get_segment_descriptorset_index(seqDec, idx, 0);
+                const auto dIdx = static_cast<uint32_t>(std::min<size_t>(descCount - 1, UINT32_MAX));
+                mlsdk_decoder_model_sequence_get_segment_descriptorset_index(seqDec, idx, dIdx);
+            }
             mlsdk_decoder_constant_indexes constIdx{};
             mlsdk_decoder_model_sequence_get_segment_constant_indexes(seqDec, idx, &constIdx);
             mlsdk_decoder_model_sequence_get_segment_type(seqDec, idx);

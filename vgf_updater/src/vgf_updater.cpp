@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -165,10 +166,11 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
             std::copy(segment.mDispatchShape.begin(), segment.mDispatchShape.end(), dispatchShape.begin());
         }
 
-        for (const auto &dsc : segment.mDescriptorSetInfos) {
+        uint32_t descriptorIdx = 0;
+        for (const auto &dscInfo : segment.mDescriptorSetInfos) {
             std::vector<BindingSlotRef> descriptorBindingSlotsRefs;
 
-            for (const auto &slot : dsc) {
+            for (const auto &slot : dscInfo.mBindings) {
                 const auto &resource = resourceTable[slot.mMrtIndex];
                 const auto resourceRef = resourceRefs[slot.mMrtIndex];
                 const auto binding = encoder.AddBindingSlot(slot.mBinding, resourceRef);
@@ -184,7 +186,11 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
                     modelOutputBindingSlots.push_back(binding);
                 }
             }
-            descriptorSetInfoRefs.push_back(encoder.AddDescriptorSetInfo(descriptorBindingSlotsRefs));
+            const auto descriptorPosition = static_cast<uint32_t>(descriptorIdx);
+            const uint32_t encodedSetIndex =
+                (dscInfo.mSetIndex == descriptorPosition) ? std::numeric_limits<uint32_t>::max() : dscInfo.mSetIndex;
+            descriptorSetInfoRefs.push_back(encoder.AddDescriptorSetInfo(descriptorBindingSlotsRefs, encodedSetIndex));
+            ++descriptorIdx;
         }
 
         encoder.AddSegmentInfo(moduleRefs[segment.mModuleIndex], segment.mName, descriptorSetInfoRefs,

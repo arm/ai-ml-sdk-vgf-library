@@ -136,13 +136,13 @@ class EncoderImpl : public Encoder {
         return {static_cast<uint32_t>(bindingSlots_.size() - 1)};
     }
 
-    DescriptorSetInfoRef AddDescriptorSetInfo(const std::vector<BindingSlotRef> &bindings) override {
+    DescriptorSetInfoRef AddDescriptorSetInfo(const std::vector<BindingSlotRef> &bindings, uint32_t setIndex) override {
         assert(!finished_ && "cannot add descriptor set infos when marked finished");
 
         auto bindingOffsets = modelSequenceBuilder_.CreateVector<flatbuffers::Offset<VGF::BindingSlot>>(
             bindings.size(), [this, &bindings](size_t i) { return bindingSlots_[bindings[i].reference]; });
 
-        descriptorSetInfos_.emplace_back(VGF::CreateDescriptorSetInfo(modelSequenceBuilder_, bindingOffsets));
+        descriptorSetInfos_.emplace_back(VGF::CreateDescriptorSetInfo(modelSequenceBuilder_, bindingOffsets, setIndex));
 
         return {static_cast<uint32_t>(descriptorSetInfos_.size() - 1)};
     }

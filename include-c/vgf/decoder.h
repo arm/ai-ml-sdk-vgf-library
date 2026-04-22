@@ -586,6 +586,20 @@ MLSDKAPI size_t mlsdk_decoder_model_sequence_get_segment_descriptorset_info_size
     const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder, uint32_t segIdx);
 
 /**
+ * @brief Returns the descriptor set index for the descriptor set info at descIdx
+ *
+ * @param modelSequenceDecoder The pointer to the model sequence decoder
+ * @param segIdx The index for the segment in the model sequence
+ * @param descIdx The index of the descriptor set info in the segment
+ * @return Descriptor set index used by that descriptor set info
+ *
+ * If an explicit descriptor set index is not encoded, this function falls
+ * back to descIdx (legacy positional semantics).
+ */
+MLSDKAPI uint32_t mlsdk_decoder_model_sequence_get_segment_descriptorset_index(
+    const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder, uint32_t segIdx, uint32_t descIdx);
+
+/**
  * @brief Gets the constant indexes for the given segment into the constant section
  *
  * @param modelSequenceDecoder The pointer to the model sequence decoder

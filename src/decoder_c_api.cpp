@@ -340,6 +340,13 @@ size_t mlsdk_decoder_model_sequence_get_segment_descriptorset_info_size(
             ->getSegmentDescriptorSetInfosSize(segIdx));
 }
 
+uint32_t mlsdk_decoder_model_sequence_get_segment_descriptorset_index(
+    const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder, uint32_t segIdx, uint32_t descIdx) {
+    assert(modelSequenceDecoder != nullptr && "modelSequenceDecoder is null");
+    return reinterpret_cast<const ModelSequenceTableDecoder *>(modelSequenceDecoder)
+        ->getSegmentDescriptorSetIndex(segIdx, descIdx);
+}
+
 void mlsdk_decoder_model_sequence_get_segment_constant_indexes(
     const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder, uint32_t segIdx,
     mlsdk_decoder_constant_indexes *constant) {

@@ -5,6 +5,7 @@
 
 #include "vgf/encoder.hpp"
 
+#include <limits>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <sstream>
@@ -35,8 +36,8 @@ class PyEncoder final : public Encoder {
         PYBIND11_OVERRIDE_PURE(BindingSlotRef, Encoder, AddBindingSlot, binding, resource);
     }
 
-    DescriptorSetInfoRef AddDescriptorSetInfo(const std::vector<BindingSlotRef> &bindings) override {
-        PYBIND11_OVERRIDE_PURE(DescriptorSetInfoRef, Encoder, AddDescriptorSetInfo, bindings);
+    DescriptorSetInfoRef AddDescriptorSetInfo(const std::vector<BindingSlotRef> &bindings, uint32_t setIndex) override {
+        PYBIND11_OVERRIDE_PURE(DescriptorSetInfoRef, Encoder, AddDescriptorSetInfo, bindings, setIndex);
     }
 
     PushConstRangeRef AddPushConstRange(uint32_t stageFlags, uint32_t offset, uint32_t size) override {
@@ -137,7 +138,8 @@ void pyInitEncoder(py::module m) {
             },
             py::arg("type"), py::arg("name"), py::arg("entryPoint"))
         .def("AddBindingSlot", &Encoder::AddBindingSlot, py::arg("binding"), py::arg("resource"))
-        .def("AddDescriptorSetInfo", &Encoder::AddDescriptorSetInfo, py::arg("bindings") = py::list())
+        .def("AddDescriptorSetInfo", &Encoder::AddDescriptorSetInfo, py::arg("bindings") = py::list(),
+             py::arg("setIndex") = std::numeric_limits<uint32_t>::max())
         .def("AddPushConstRange", &Encoder::AddPushConstRange, py::arg("stageFlags"), py::arg("offset"),
              py::arg("size"))
         .def("AddSegmentInfo", &Encoder::AddSegmentInfo, py::arg("module"), py::arg("name"),

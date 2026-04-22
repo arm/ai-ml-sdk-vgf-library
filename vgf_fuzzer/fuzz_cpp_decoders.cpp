@@ -102,7 +102,12 @@ void FuzzCppDecoderAccessors(const uint8_t *data, size_t size) {
         const auto count = seqDec->modelSequenceTableSize();
         if (count > 0) {
             const auto idx = static_cast<uint32_t>(std::min<size_t>(count - 1, UINT32_MAX));
-            seqDec->getSegmentDescriptorSetInfosSize(idx);
+            const auto descCount = seqDec->getSegmentDescriptorSetInfosSize(idx);
+            if (descCount > 0) {
+                seqDec->getSegmentDescriptorSetIndex(idx, 0);
+                const auto dIdx = static_cast<uint32_t>(std::min<size_t>(descCount - 1, UINT32_MAX));
+                seqDec->getSegmentDescriptorSetIndex(idx, dIdx);
+            }
             seqDec->getSegmentConstantIndexes(idx);
             seqDec->getSegmentType(idx);
             seqDec->getSegmentName(idx);

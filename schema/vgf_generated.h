@@ -753,16 +753,21 @@ inline ::flatbuffers::Offset<BindingSlot> CreateBindingSlot(
 struct DescriptorSetInfo FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef DescriptorSetInfoBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_BINDINGS = 4
+    VT_BINDINGS = 4,
+    VT_SET_INDEX = 6
   };
   const ::flatbuffers::Vector<::flatbuffers::Offset<VGF::BindingSlot>> *bindings() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<VGF::BindingSlot>> *>(VT_BINDINGS);
+  }
+  uint32_t set_index() const {
+    return GetField<uint32_t>(VT_SET_INDEX, 4294967295);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_BINDINGS) &&
            verifier.VerifyVector(bindings()) &&
            verifier.VerifyVectorOfTables(bindings()) &&
+           VerifyField<uint32_t>(verifier, VT_SET_INDEX, 4) &&
            verifier.EndTable();
   }
 };
@@ -773,6 +778,9 @@ struct DescriptorSetInfoBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_bindings(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<VGF::BindingSlot>>> bindings) {
     fbb_.AddOffset(DescriptorSetInfo::VT_BINDINGS, bindings);
+  }
+  void add_set_index(uint32_t set_index) {
+    fbb_.AddElement<uint32_t>(DescriptorSetInfo::VT_SET_INDEX, set_index, 4294967295);
   }
   explicit DescriptorSetInfoBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -787,19 +795,23 @@ struct DescriptorSetInfoBuilder {
 
 inline ::flatbuffers::Offset<DescriptorSetInfo> CreateDescriptorSetInfo(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<VGF::BindingSlot>>> bindings = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<VGF::BindingSlot>>> bindings = 0,
+    uint32_t set_index = 4294967295) {
   DescriptorSetInfoBuilder builder_(_fbb);
+  builder_.add_set_index(set_index);
   builder_.add_bindings(bindings);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<DescriptorSetInfo> CreateDescriptorSetInfoDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<::flatbuffers::Offset<VGF::BindingSlot>> *bindings = nullptr) {
+    const std::vector<::flatbuffers::Offset<VGF::BindingSlot>> *bindings = nullptr,
+    uint32_t set_index = 4294967295) {
   auto bindings__ = bindings ? _fbb.CreateVector<::flatbuffers::Offset<VGF::BindingSlot>>(*bindings) : 0;
   return VGF::CreateDescriptorSetInfo(
       _fbb,
-      bindings__);
+      bindings__,
+      set_index);
 }
 
 struct PushConstantRange FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

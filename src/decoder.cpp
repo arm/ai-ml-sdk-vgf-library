@@ -430,6 +430,17 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
         return descriptors == nullptr ? 0 : descriptors->size();
     }
 
+    [[nodiscard]] uint32_t getSegmentDescriptorSetIndex(uint32_t segmentIdx, uint32_t descIdx) const override {
+        const auto *descriptorSetInfo = getDescriptorAt(getSegmentAt(segmentIdx), descIdx);
+        const uint32_t setIndex = descriptorSetInfo->set_index();
+        if (setIndex != std::numeric_limits<uint32_t>::max()) {
+            return setIndex;
+        }
+        // Legacy encoding did not include explicit descriptor set ids; use
+        // descriptor position as a backward-compatible fallback.
+        return descIdx;
+    }
+
     [[nodiscard]] DataView<uint32_t> getSegmentConstantIndexes(uint32_t segmentIdx) const override {
         const auto *constants = getSegmentAt(segmentIdx)->constants();
         if (constants == nullptr) {
