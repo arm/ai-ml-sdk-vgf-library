@@ -29,25 +29,46 @@ using namespace vgfutils;
 namespace {
 
 ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
+    auto maybeAddSamplerConfig = [&resource, &encoder](ResourceRef resourceRef) {
+        if (resource.mSamplerConfig.has_value()) {
+            const auto &samplerConfig = *resource.mSamplerConfig;
+            encoder.AddSamplerConfig(resourceRef, samplerConfig.mMinFilter, samplerConfig.mMagFilter,
+                                     samplerConfig.mAddressModeU, samplerConfig.mAddressModeV,
+                                     samplerConfig.mBorderColor);
+        }
+    };
+
     switch (resource.mCategory) {
     case ResourceCategory::INPUT:
         if (!resource.mDescriptorType.has_value()) {
             throw std::runtime_error("Input resource missing descriptor type");
         }
-        return encoder.AddInputResource(resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape,
-                                        resource.mStride);
+        {
+            const auto resourceRef = encoder.AddInputResource(resource.mDescriptorType.value(), resource.mVkFormat,
+                                                              resource.mShape, resource.mStride);
+            maybeAddSamplerConfig(resourceRef);
+            return resourceRef;
+        }
     case ResourceCategory::OUTPUT:
         if (!resource.mDescriptorType.has_value()) {
             throw std::runtime_error("Output resource missing descriptor type");
         }
-        return encoder.AddOutputResource(resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape,
-                                         resource.mStride);
+        {
+            const auto resourceRef = encoder.AddOutputResource(resource.mDescriptorType.value(), resource.mVkFormat,
+                                                               resource.mShape, resource.mStride);
+            maybeAddSamplerConfig(resourceRef);
+            return resourceRef;
+        }
     case ResourceCategory::INTERMEDIATE:
         if (!resource.mDescriptorType.has_value()) {
             throw std::runtime_error("Intermediate resource missing descriptor type");
         }
-        return encoder.AddIntermediateResource(resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape,
-                                               resource.mStride);
+        {
+            const auto resourceRef = encoder.AddIntermediateResource(
+                resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape, resource.mStride);
+            maybeAddSamplerConfig(resourceRef);
+            return resourceRef;
+        }
     case ResourceCategory::CONSTANT:
         return encoder.AddConstantResource(resource.mVkFormat, resource.mShape, resource.mStride);
     }

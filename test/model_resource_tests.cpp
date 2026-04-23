@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -26,6 +27,7 @@ namespace {
 const uint16_t pretendVulkanHeaderVersion = 123;
 
 constexpr DescriptorType VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3;
+constexpr DescriptorType VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1;
 constexpr FormatType VK_FORMAT_R4G4_UNORM_PACK8 = 1;
 constexpr FormatType VK_FORMAT_R4G4B4A4_UNORM_PACK16 = 12;
 
@@ -182,6 +184,51 @@ TEST(CppModelResourceTable, UnknownDimensions) {
     ASSERT_TRUE(mrtDecoder->getDescriptorType(resource1.reference).has_value() == false);
     ASSERT_TRUE(mrtDecoder->getVkFormat(resource1.reference) == VK_FORMAT_R4G4B4A4_UNORM_PACK16);
     ASSERT_TRUE(mrtDecoder->getTensorShape(resource1.reference) == DataView<int64_t>(shape2.data(), shape2.size()));
+}
+
+TEST(CppModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
+    std::stringstream buffer;
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    std::vector<int64_t> shape{1, 2, 3, 4};
+    std::vector<int64_t> strides{8, 12, 16, 20};
+
+    constexpr uint32_t SAMPLER_MIN_FILTER = 0;     // VK_FILTER_NEAREST
+    constexpr uint32_t SAMPLER_MAG_FILTER = 1;     // VK_FILTER_LINEAR
+    constexpr uint32_t SAMPLER_ADDRESS_MODE_U = 2; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+    constexpr uint32_t SAMPLER_ADDRESS_MODE_V = 3; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
+    constexpr uint32_t SAMPLER_BORDER_COLOR = 4;   // VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE
+
+    ResourceRef sampledResource = encoder->AddInputResource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                                            VK_FORMAT_R4G4_UNORM_PACK8, shape, strides);
+    encoder->AddSamplerConfig(sampledResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER, SAMPLER_ADDRESS_MODE_U,
+                              SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
+
+    ResourceRef defaultResource =
+        encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape, strides);
+
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    std::string vgfData = buffer.str();
+    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
+        vgfData.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgfData.size()));
+    ASSERT_NE(headerDecoder, nullptr);
+
+    std::unique_ptr<ModelResourceTableDecoder> mrtDecoder = CreateModelResourceTableDecoder(
+        vgfData.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
+    ASSERT_NE(mrtDecoder, nullptr);
+
+    const SamplerConfigHandle sampledHandle = mrtDecoder->getSamplerConfigHandle(sampledResource.reference);
+    ASSERT_NE(sampledHandle, nullptr);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigMinFilter(sampledHandle), SAMPLER_MIN_FILTER);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigMagFilter(sampledHandle), SAMPLER_MAG_FILTER);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigAddressModeU(sampledHandle), SAMPLER_ADDRESS_MODE_U);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigAddressModeV(sampledHandle), SAMPLER_ADDRESS_MODE_V);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigBorderColor(sampledHandle), SAMPLER_BORDER_COLOR);
+
+    const SamplerConfigHandle defaultHandle = mrtDecoder->getSamplerConfigHandle(defaultResource.reference);
+    EXPECT_EQ(defaultHandle, nullptr);
 }
 
 TEST(CppVerify, ModelResourceSizeWrapRejected) {
@@ -403,6 +450,67 @@ TEST(CModelResourceTable, UnknownDimensions) {
     mlsdk_decoder_model_resource_table_get_tensor_shape(resourceTableDecoder, resource1.reference, &tensorShape2);
     ASSERT_TRUE(DataView<int64_t>(tensorShape2.data, tensorShape2.size) ==
                 DataView<int64_t>(shape2.data(), shape2.size()));
+}
+
+TEST(CModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
+    std::stringstream buffer;
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    std::vector<int64_t> shape{1, 2, 3, 4};
+    std::vector<int64_t> strides{8, 12, 16, 20};
+
+    constexpr uint32_t SAMPLER_MIN_FILTER = 0;     // VK_FILTER_NEAREST
+    constexpr uint32_t SAMPLER_MAG_FILTER = 1;     // VK_FILTER_LINEAR
+    constexpr uint32_t SAMPLER_ADDRESS_MODE_U = 2; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+    constexpr uint32_t SAMPLER_ADDRESS_MODE_V = 3; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
+    constexpr uint32_t SAMPLER_BORDER_COLOR = 4;   // VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE
+
+    auto sampledResource = encoder->AddInputResource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                                     VK_FORMAT_R4G4_UNORM_PACK8, shape, strides);
+    encoder->AddSamplerConfig(sampledResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER, SAMPLER_ADDRESS_MODE_U,
+                              SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
+    auto defaultResource =
+        encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape, strides);
+
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+    std::string data = buffer.str();
+
+    std::vector<uint8_t> headerDecoderMemory;
+    headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
+
+    mlsdk_decoder_vgf_section_info section;
+    mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_resources, &section);
+
+    std::vector<uint8_t> resourceTableDecoderMemory;
+    resourceTableDecoderMemory.resize(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
+    mlsdk_decoder_model_resource_table_decoder *resourceTableDecoder =
+        mlsdk_decoder_create_model_resource_table_decoder(data.c_str() + section.offset, section.size,
+                                                          resourceTableDecoderMemory.data());
+    ASSERT_NE(resourceTableDecoder, nullptr);
+
+    mlsdk_decoder_sampler_config_handle sampledHandle =
+        mlsdk_decoder_model_resource_table_get_sampler_config_handle(resourceTableDecoder, sampledResource.reference);
+    ASSERT_NE(sampledHandle, nullptr);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_min_filter(resourceTableDecoder, sampledHandle) ==
+                SAMPLER_MIN_FILTER);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_mag_filter(resourceTableDecoder, sampledHandle) ==
+                SAMPLER_MAG_FILTER);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_u(
+                    resourceTableDecoder, sampledHandle) == SAMPLER_ADDRESS_MODE_U);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_v(
+                    resourceTableDecoder, sampledHandle) == SAMPLER_ADDRESS_MODE_V);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_border_color(
+                    resourceTableDecoder, sampledHandle) == SAMPLER_BORDER_COLOR);
+
+    mlsdk_decoder_sampler_config_handle defaultHandle =
+        mlsdk_decoder_model_resource_table_get_sampler_config_handle(resourceTableDecoder, defaultResource.reference);
+    ASSERT_TRUE(defaultHandle == nullptr);
 }
 
 TEST(CVerify, ModelResourceSizeWrapRejected) {

@@ -49,6 +49,7 @@ def gather_unique_enum_values(vk_name, file_in):
                     name_to_value[name] = value
                 else:
                     value_to_name[name_to_value[str(value)]] += " / " + name
+                    name_to_value[name] = name_to_value[str(value)]
 
     return value_to_name, name_to_value
 
@@ -412,6 +413,13 @@ def main():
             "VkDescriptorType", "DescriptorType", vkHeader
         )
         vkFormatFuncs = generate_enum_code("VkFormat", "FormatType", vkHeader)
+        vkFilterFuncs = generate_enum_code("VkFilter", "FilterType", vkHeader)
+        vkSamplerAddressModeFuncs = generate_enum_code(
+            "VkSamplerAddressMode", "SamplerAddressModeType", vkHeader
+        )
+        vkBorderColorFuncs = generate_enum_code(
+            "VkBorderColor", "BorderColorType", vkHeader
+        )
         with open(args.vulkan_format_traits, "r") as vkFormatTraits:
             with open(args.vulkan_enums, "r") as vkEnums:
                 vkFormatTraitsFunctions = generate_func_for_format_type_traits(
@@ -427,6 +435,9 @@ def main():
                     dst_header.write(vkHeaderVersion)
                     dst_header.write(vkDescriptorTypeFuncs)
                     dst_header.write(vkFormatFuncs)
+                    dst_header.write(vkFilterFuncs)
+                    dst_header.write(vkSamplerAddressModeFuncs)
+                    dst_header.write(vkBorderColorFuncs)
                     dst_header.write(vkFormatTraitsFunctions)
                 else:
                     dst_header.write(src_line)

@@ -98,6 +98,14 @@ void FuzzCDecoderAccessors(const uint8_t *data, size_t size) {
             mlsdk_decoder_tensor_dimensions dims{};
             mlsdk_decoder_model_resource_table_get_tensor_shape(mrtDec, idx, &dims);
             mlsdk_decoder_model_resource_table_get_tensor_strides(mrtDec, idx, &dims);
+            const auto samplerConfigHandle = mlsdk_decoder_model_resource_table_get_sampler_config_handle(mrtDec, idx);
+            if (samplerConfigHandle != nullptr) {
+                mlsdk_decoder_model_resource_table_sampler_config_get_min_filter(mrtDec, samplerConfigHandle);
+                mlsdk_decoder_model_resource_table_sampler_config_get_mag_filter(mrtDec, samplerConfigHandle);
+                mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_u(mrtDec, samplerConfigHandle);
+                mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_v(mrtDec, samplerConfigHandle);
+                mlsdk_decoder_model_resource_table_sampler_config_get_border_color(mrtDec, samplerConfigHandle);
+            }
         }
     }
 

@@ -85,6 +85,13 @@ class PyEncoder final : public Encoder {
         PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddConstantResource, vkFormat, shape, strides);
     }
 
+    void AddSamplerConfig(ResourceRef resource, uint32_t samplerMinFilter, uint32_t samplerMagFilter,
+                          uint32_t samplerAddressModeU, uint32_t samplerAddressModeV,
+                          uint32_t samplerBorderColor) override {
+        PYBIND11_OVERRIDE_PURE(void, Encoder, AddSamplerConfig, resource, samplerMinFilter, samplerMagFilter,
+                               samplerAddressModeU, samplerAddressModeV, samplerBorderColor);
+    }
+
     ConstantRef AddConstant(ResourceRef resourceRef, const void *data, size_t sizeInBytes,
                             int64_t sparsityDimension) override {
         PYBIND11_OVERRIDE_PURE(ConstantRef, Encoder, AddConstant, resourceRef, data, sizeInBytes, sparsityDimension);
@@ -156,6 +163,9 @@ void pyInitEncoder(py::module m) {
              py::arg("vkFormat"), py::arg("shape"), py::arg("strides"))
         .def("AddConstantResource", &Encoder::AddConstantResource, py::arg("vkFormat"), py::arg("shape"),
              py::arg("strides"))
+        .def("AddSamplerConfig", &Encoder::AddSamplerConfig, py::arg("resource"), py::arg("samplerMinFilter"),
+             py::arg("samplerMagFilter"), py::arg("samplerAddressModeU"), py::arg("samplerAddressModeV"),
+             py::arg("samplerBorderColor"))
         .def(
             "AddConstant",
             [](Encoder &encoder, ResourceRef resRef, const py::buffer &buffer, int64_t sparsityDimension) {

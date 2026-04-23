@@ -44,6 +44,18 @@ table Description {
     strides: [int64];
 }
 
+table SamplerConfig {
+    min_filter: uint32;
+    mag_filter: uint32;
+    address_mode_u: uint32;
+    address_mode_v: uint32;
+    border_color: uint32;
+}
+
+union ExtraConfig {
+    SamplerConfig
+}
+
 enum ResourceCategory:uint8 {
     INPUT,
     OUTPUT,
@@ -56,6 +68,9 @@ table ModelResourceTableEntry {
     vk_format: uint32; // make the format opaque on disk
     category: ResourceCategory;
     description: Description;
+    // Optional config extension point for resource-specific metadata.
+    // NONE indicates no extra config is present.
+    extra_config: ExtraConfig;
 }
 
 table ModelResourceTable {

@@ -456,6 +456,30 @@ class PyModelResourceTableDecoder final : public ModelResourceTableDecoder {
     DataView<int64_t> getTensorStride(uint32_t id) const override {
         PYBIND11_OVERRIDE_PURE(DataView<int64_t>, ModelResourceTableDecoder, getTensorStride, id);
     }
+
+    SamplerConfigHandle getSamplerConfigHandle(uint32_t id) const override {
+        PYBIND11_OVERRIDE_PURE(SamplerConfigHandle, ModelResourceTableDecoder, getSamplerConfigHandle, id);
+    }
+
+    uint32_t getSamplerConfigMinFilter(SamplerConfigHandle handle) const override {
+        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigMinFilter, handle);
+    }
+
+    uint32_t getSamplerConfigMagFilter(SamplerConfigHandle handle) const override {
+        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigMagFilter, handle);
+    }
+
+    uint32_t getSamplerConfigAddressModeU(SamplerConfigHandle handle) const override {
+        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigAddressModeU, handle);
+    }
+
+    uint32_t getSamplerConfigAddressModeV(SamplerConfigHandle handle) const override {
+        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigAddressModeV, handle);
+    }
+
+    uint32_t getSamplerConfigBorderColor(SamplerConfigHandle handle) const override {
+        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigBorderColor, handle);
+    }
 };
 
 void pyInitModelResourceTableDecoder(py::module m) {
@@ -476,7 +500,16 @@ void pyInitModelResourceTableDecoder(py::module m) {
             [](const ModelResourceTableDecoder &decoder, uint32_t id) {
                 return pyDataView<int64_t>(decoder.getTensorStride(id));
             },
-            py::arg("id"));
+            py::arg("id"))
+        .def("getSamplerConfigHandle", &ModelResourceTableDecoder::getSamplerConfigHandle, py::arg("id"),
+             py::return_value_policy::reference)
+        .def("getSamplerConfigMinFilter", &ModelResourceTableDecoder::getSamplerConfigMinFilter, py::arg("handle"))
+        .def("getSamplerConfigMagFilter", &ModelResourceTableDecoder::getSamplerConfigMagFilter, py::arg("handle"))
+        .def("getSamplerConfigAddressModeU", &ModelResourceTableDecoder::getSamplerConfigAddressModeU,
+             py::arg("handle"))
+        .def("getSamplerConfigAddressModeV", &ModelResourceTableDecoder::getSamplerConfigAddressModeV,
+             py::arg("handle"))
+        .def("getSamplerConfigBorderColor", &ModelResourceTableDecoder::getSamplerConfigBorderColor, py::arg("handle"));
 
     m.def("ModelResourceTableDecoderSize", &ModelResourceTableDecoderSize);
     m.def(
@@ -539,6 +572,7 @@ void pyInitDecoder(py::module m) {
     py::class_<BindingSlotArrayHandle_s>(m, "BindingSlotArrayHandle_s").def(py::init<>());
     py::class_<NameArrayHandle_s>(m, "NameArrayHandle_s").def(py::init<>());
     py::class_<PushConstantRangeHandle_s>(m, "PushConstantRangeHandle_s").def(py::init<>());
+    py::class_<SamplerConfigHandle_s>(m, "SamplerConfigHandle_s");
 
     pyInitHeaderDecoder(m);
     pyInitModuleTableDecoder(m);

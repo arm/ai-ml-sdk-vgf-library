@@ -328,6 +328,9 @@ std::unique_ptr<ModuleTableDecoder> CreateModuleTableDecoder(const void *data, u
 ModuleTableDecoder *CreateModuleTableDecoderInPlace(const void *data, uint64_t size, void *decoderMem);
 
 // ModelResourceTableDecoder
+struct SamplerConfigHandle_s {};
+using SamplerConfigHandle = const SamplerConfigHandle_s *;
+
 class ModelResourceTableDecoder {
   public:
     virtual ~ModelResourceTableDecoder() = default;
@@ -371,6 +374,49 @@ class ModelResourceTableDecoder {
      * @param id
      */
     virtual DataView<int64_t> getTensorStride(uint32_t id) const = 0;
+
+    /**
+     * @brief Returns a handle to the sampler config for MRT entry 'id'
+     *
+     * @param id
+     * @returns nullptr when no sampler config is present
+     */
+    virtual SamplerConfigHandle getSamplerConfigHandle(uint32_t id) const = 0;
+
+    /**
+     * @brief Returns VkFilter min filter value from sampler config handle
+     *
+     * @param handle
+     */
+    virtual uint32_t getSamplerConfigMinFilter(SamplerConfigHandle handle) const = 0;
+
+    /**
+     * @brief Returns VkFilter mag filter value from sampler config handle
+     *
+     * @param handle
+     */
+    virtual uint32_t getSamplerConfigMagFilter(SamplerConfigHandle handle) const = 0;
+
+    /**
+     * @brief Returns VkSamplerAddressMode U value from sampler config handle
+     *
+     * @param handle
+     */
+    virtual uint32_t getSamplerConfigAddressModeU(SamplerConfigHandle handle) const = 0;
+
+    /**
+     * @brief Returns VkSamplerAddressMode V value from sampler config handle
+     *
+     * @param handle
+     */
+    virtual uint32_t getSamplerConfigAddressModeV(SamplerConfigHandle handle) const = 0;
+
+    /**
+     * @brief Returns VkBorderColor value from sampler config handle
+     *
+     * @param handle
+     */
+    virtual uint32_t getSamplerConfigBorderColor(SamplerConfigHandle handle) const = 0;
 };
 
 /**

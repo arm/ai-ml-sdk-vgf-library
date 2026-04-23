@@ -9,6 +9,7 @@
 #include "vgf/types.hpp"
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -29,13 +30,23 @@ struct BindingSlot {
     uint32_t mMrtIndex{0};
 };
 
+struct ResourceSamplerConfig {
+    ResourceSamplerConfig() = default;
+    ResourceSamplerConfig(uint32_t minFilter, uint32_t magFilter, uint32_t addressModeU, uint32_t addressModeV,
+                          uint32_t borderColor)
+        : mMinFilter(minFilter), mMagFilter(magFilter), mAddressModeU(addressModeU), mAddressModeV(addressModeV),
+          mBorderColor(borderColor) {}
+
+    uint32_t mMinFilter{0};
+    uint32_t mMagFilter{0};
+    uint32_t mAddressModeU{0};
+    uint32_t mAddressModeV{0};
+    uint32_t mBorderColor{0};
+};
+
 struct Resource {
     Resource() = default;
-    Resource(uint32_t index, mlsdk::vgflib::ResourceCategory category,
-             std::optional<mlsdk::vgflib::DescriptorType> descriptorType, mlsdk::vgflib::VkFormat vkFormat,
-             mlsdk::vgflib::DataView<int64_t> shape, mlsdk::vgflib::DataView<int64_t> stride)
-        : mIndex(index), mCategory(category), mDescriptorType(descriptorType), mVkFormat(vkFormat),
-          mShape(shape.begin(), shape.end()), mStride(stride.begin(), stride.end()) {}
+    Resource(uint32_t index, const mlsdk::vgflib::ModelResourceTableDecoder &decoder);
 
     uint32_t mIndex{0};
     mlsdk::vgflib::ResourceCategory mCategory{mlsdk::vgflib::ResourceCategory::INPUT};
@@ -43,6 +54,7 @@ struct Resource {
     mlsdk::vgflib::FormatType mVkFormat{mlsdk::vgflib::UndefinedFormat()};
     std::vector<int64_t> mShape;
     std::vector<int64_t> mStride;
+    std::optional<ResourceSamplerConfig> mSamplerConfig{std::nullopt};
 };
 
 struct PushConstantRange {

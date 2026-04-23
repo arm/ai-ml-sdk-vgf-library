@@ -76,6 +76,14 @@ void FuzzCppDecoderAccessors(const uint8_t *data, size_t size) {
             mrtDec->getCategory(idx);
             mrtDec->getTensorShape(idx);
             mrtDec->getTensorStride(idx);
+            const auto samplerConfigHandle = mrtDec->getSamplerConfigHandle(idx);
+            if (samplerConfigHandle != nullptr) {
+                mrtDec->getSamplerConfigMinFilter(samplerConfigHandle);
+                mrtDec->getSamplerConfigMagFilter(samplerConfigHandle);
+                mrtDec->getSamplerConfigAddressModeU(samplerConfigHandle);
+                mrtDec->getSamplerConfigAddressModeV(samplerConfigHandle);
+                mrtDec->getSamplerConfigBorderColor(samplerConfigHandle);
+            }
         }
     }
 
