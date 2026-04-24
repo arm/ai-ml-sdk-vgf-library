@@ -214,14 +214,14 @@ class EncoderImpl : public Encoder {
                                            FormatType vkFormat, const std::vector<int64_t> &shape,
                                            const std::vector<int64_t> &strides) {
         assert(!finished_ && "cannot add resource when marked as finished");
-
-        EncodedDescriptorType encodedDescType =
-            vkDescriptorType ? static_cast<EncodedDescriptorType>(*vkDescriptorType) : NullOptDescriptorType();
-
-        auto description = VGF::CreateDescriptionDirect(modelResourceBuilder_, &shape, &strides);
-        resources_.emplace_back(VGF::CreateModelResourceTableEntry(
-            modelResourceBuilder_, encodedDescType, static_cast<uint32_t>(vkFormat), toVGF(category), description));
-        return {static_cast<uint32_t>(resources_.size() - 1)};
+        resourceRecords_.emplace_back(ResourceRecord{
+            category,
+            vkDescriptorType,
+            vkFormat,
+            shape,
+            strides,
+        });
+        return {static_cast<uint32_t>(resourceRecords_.size() - 1)};
     }
 
     ResourceRef AddInputResource(DescriptorType vkDescriptorType, FormatType vkFormat,
@@ -283,8 +283,20 @@ class EncoderImpl : public Encoder {
         auto moduleSection = VGF::CreateModuleTable(moduleBuilder_, moduleBuilder_.CreateVector(modules_));
         moduleBuilder_.Finish(moduleSection);
 
-        auto modelResourceTable =
-            VGF::CreateModelResourceTable(modelResourceBuilder_, modelResourceBuilder_.CreateVector(resources_));
+        auto modelResourceTableEntries =
+            modelResourceBuilder_.CreateVector<flatbuffers::Offset<VGF::ModelResourceTableEntry>>(
+                resourceRecords_.size(), [this](size_t i) {
+                    const auto &resource = resourceRecords_[i];
+                    EncodedDescriptorType encodedDescType =
+                        resource.vkDescriptorType ? static_cast<EncodedDescriptorType>(*resource.vkDescriptorType)
+                                                  : NullOptDescriptorType();
+                    auto description =
+                        VGF::CreateDescriptionDirect(modelResourceBuilder_, &resource.shape, &resource.strides);
+                    return VGF::CreateModelResourceTableEntry(modelResourceBuilder_, encodedDescType,
+                                                              static_cast<uint32_t>(resource.vkFormat),
+                                                              toVGF(resource.category), description);
+                });
+        auto modelResourceTable = VGF::CreateModelResourceTable(modelResourceBuilder_, modelResourceTableEntries);
         modelResourceBuilder_.Finish(modelResourceTable);
 
         auto modelSequenceInputOffsets = modelSequenceBuilder_.CreateVector<flatbuffers::Offset<VGF::BindingSlot>>(
@@ -366,13 +378,21 @@ class EncoderImpl : public Encoder {
     }
 
   private:
+    struct ResourceRecord {
+        ResourceCategory category;
+        std::optional<DescriptorType> vkDescriptorType;
+        FormatType vkFormat;
+        std::vector<int64_t> shape;
+        std::vector<int64_t> strides;
+    };
+
     bool finished_ = false;
     flatbuffers::FlatBufferBuilder moduleBuilder_;
     flatbuffers::FlatBufferBuilder modelSequenceBuilder_;
     flatbuffers::FlatBufferBuilder modelResourceBuilder_;
 
     std::vector<flatbuffers::Offset<VGF::Module>> modules_;
-    std::vector<flatbuffers::Offset<VGF::ModelResourceTableEntry>> resources_;
+    std::vector<ResourceRecord> resourceRecords_;
     std::vector<flatbuffers::Offset<VGF::BindingSlot>> bindingSlots_;
     std::vector<flatbuffers::Offset<VGF::DescriptorSetInfo>> descriptorSetInfos_;
     std::vector<flatbuffers::Offset<VGF::SegmentInfo>> segmentInfos_;
