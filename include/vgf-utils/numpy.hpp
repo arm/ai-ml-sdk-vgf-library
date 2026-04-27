@@ -33,7 +33,7 @@ struct DataPtr {
 
     DataPtr() = default;
     DataPtr(const char *ptr, const std::vector<int64_t> &shape, const DType &dtype)
-        : ptr(ptr), shape(shape), dtype(dtype){};
+        : ptr(ptr), shape(shape), dtype(dtype) {}
 
     uint64_t size() const;
 };
