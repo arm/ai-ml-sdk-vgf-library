@@ -55,6 +55,7 @@ struct Resource {
     std::vector<int64_t> mShape;
     std::vector<int64_t> mStride;
     std::optional<ResourceSamplerConfig> mSamplerConfig{std::nullopt};
+    std::optional<mlsdk::vgflib::AliasGroupId> mAliasGroupId{std::nullopt};
 };
 
 struct PushConstantRange {

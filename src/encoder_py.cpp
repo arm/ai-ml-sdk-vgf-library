@@ -64,20 +64,24 @@ class PyEncoder final : public Encoder {
     }
 
     ResourceRef AddInputResource(DescriptorType vkDescriptorType, FormatType vkFormat,
-                                 const std::vector<int64_t> &shape, const std::vector<int64_t> &strides) override {
-        PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddInputResource, vkDescriptorType, vkFormat, shape, strides);
+                                 const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
+                                 std::optional<AliasGroupId> aliasGroupId) override {
+        PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddInputResource, vkDescriptorType, vkFormat, shape, strides,
+                               aliasGroupId);
     }
 
     ResourceRef AddOutputResource(DescriptorType vkDescriptorType, FormatType vkFormat,
-                                  const std::vector<int64_t> &shape, const std::vector<int64_t> &strides) override {
-        PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddOutputResource, vkDescriptorType, vkFormat, shape, strides);
+                                  const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
+                                  std::optional<AliasGroupId> aliasGroupId) override {
+        PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddOutputResource, vkDescriptorType, vkFormat, shape, strides,
+                               aliasGroupId);
     }
 
     ResourceRef AddIntermediateResource(DescriptorType vkDescriptorType, FormatType vkFormat,
-                                        const std::vector<int64_t> &shape,
-                                        const std::vector<int64_t> &strides) override {
+                                        const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
+                                        std::optional<AliasGroupId> aliasGroupId) override {
         PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddIntermediateResource, vkDescriptorType, vkFormat, shape,
-                               strides);
+                               strides, aliasGroupId);
     }
 
     ResourceRef AddConstantResource(FormatType vkFormat, const std::vector<int64_t> &shape,
@@ -90,6 +94,10 @@ class PyEncoder final : public Encoder {
                           uint32_t samplerBorderColor) override {
         PYBIND11_OVERRIDE_PURE(void, Encoder, AddSamplerConfig, resource, samplerMinFilter, samplerMagFilter,
                                samplerAddressModeU, samplerAddressModeV, samplerBorderColor);
+    }
+
+    void SetAliasGroup(ResourceRef resource, AliasGroupId aliasGroupId) override {
+        PYBIND11_OVERRIDE_PURE(void, Encoder, SetAliasGroup, resource, aliasGroupId);
     }
 
     ConstantRef AddConstant(ResourceRef resourceRef, const void *data, size_t sizeInBytes,
@@ -156,16 +164,17 @@ void pyInitEncoder(py::module m) {
         .def("AddModelSequenceInputsOutputs", &Encoder::AddModelSequenceInputsOutputs, py::arg("inputs") = py::list(),
              py::arg("inputNames") = py::list(), py::arg("outputs") = py::list(), py::arg("outputNames") = py::list())
         .def("AddInputResource", &Encoder::AddInputResource, py::arg("vkDescriptorType"), py::arg("vkFormat"),
-             py::arg("shape"), py::arg("strides"))
+             py::arg("shape"), py::arg("strides"), py::arg("aliasGroupId") = py::none())
         .def("AddOutputResource", &Encoder::AddOutputResource, py::arg("vkDescriptorType"), py::arg("vkFormat"),
-             py::arg("shape"), py::arg("strides"))
+             py::arg("shape"), py::arg("strides"), py::arg("aliasGroupId") = py::none())
         .def("AddIntermediateResource", &Encoder::AddIntermediateResource, py::arg("vkDescriptorType"),
-             py::arg("vkFormat"), py::arg("shape"), py::arg("strides"))
+             py::arg("vkFormat"), py::arg("shape"), py::arg("strides"), py::arg("aliasGroupId") = py::none())
         .def("AddConstantResource", &Encoder::AddConstantResource, py::arg("vkFormat"), py::arg("shape"),
              py::arg("strides"))
         .def("AddSamplerConfig", &Encoder::AddSamplerConfig, py::arg("resource"), py::arg("samplerMinFilter"),
              py::arg("samplerMagFilter"), py::arg("samplerAddressModeU"), py::arg("samplerAddressModeV"),
              py::arg("samplerBorderColor"))
+        .def("SetAliasGroup", &Encoder::SetAliasGroup, py::arg("resource"), py::arg("aliasGroupId"))
         .def(
             "AddConstant",
             [](Encoder &encoder, ResourceRef resRef, const py::buffer &buffer, int64_t sparsityDimension) {

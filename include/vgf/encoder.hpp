@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -89,9 +90,11 @@ class Encoder {
     /// \param vkFormat VkFormat of the resource data
     /// \param shape Vector representation of the resource shape. "-1" values represent an unshaped dimension
     /// \param strides Vector representation of the resource stride. An empty strides is assumed packed layout
+    /// \param aliasGroupId Optional alias group shared with peer MRT entries
     /// \return ResourceRef type containing information for the added table entry
     virtual ResourceRef AddInputResource(DescriptorType descriptorType, FormatType vkFormat,
-                                         const std::vector<int64_t> &shape, const std::vector<int64_t> &strides) = 0;
+                                         const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
+                                         std::optional<AliasGroupId> aliasGroupId = std::nullopt) = 0;
 
     /// \brief Add an OUTPUT resource to the model resource table
     ///
@@ -99,9 +102,11 @@ class Encoder {
     /// \param vkFormat VkFormat of the resource data
     /// \param shape Vector representation of the resource shape. "-1" values represent an unshaped dimension
     /// \param strides Vector representation of the resource stride. An empty strides is assumed packed layout
+    /// \param aliasGroupId Optional alias group shared with peer MRT entries
     /// \return ResourceRef type containing information for the added table entry
     virtual ResourceRef AddOutputResource(DescriptorType descriptorType, FormatType vkFormat,
-                                          const std::vector<int64_t> &shape, const std::vector<int64_t> &strides) = 0;
+                                          const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
+                                          std::optional<AliasGroupId> aliasGroupId = std::nullopt) = 0;
 
     /// \brief Add an INTERMEDIATE resource to the model resource table
     ///
@@ -109,10 +114,11 @@ class Encoder {
     /// \param vkFormat VkFormat of the resource data
     /// \param shape Vector representation of the resource shape. "-1" values represent an unshaped dimension
     /// \param strides Vector representation of the resource stride. An empty strides is assumed packed layout
+    /// \param aliasGroupId Optional alias group shared with peer MRT entries
     /// \return ResourceRef type containing information for the added table entry
     virtual ResourceRef AddIntermediateResource(DescriptorType descriptorType, FormatType vkFormat,
-                                                const std::vector<int64_t> &shape,
-                                                const std::vector<int64_t> &strides) = 0;
+                                                const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
+                                                std::optional<AliasGroupId> aliasGroupId = std::nullopt) = 0;
 
     /// \brief Add a CONSTANT tensor to the model resource table
     ///
@@ -134,6 +140,15 @@ class Encoder {
     virtual void AddSamplerConfig(ResourceRef resource, uint32_t samplerMinFilter, uint32_t samplerMagFilter,
                                   uint32_t samplerAddressModeU, uint32_t samplerAddressModeV,
                                   uint32_t samplerBorderColor) = 0;
+
+    /// \brief Assign an alias group to an existing non-constant MRT entry
+    ///
+    /// \param resource Resource reference used in model resource table
+    /// \param aliasGroupId Alias group shared with peer MRT entries
+    ///
+    /// Reapplying the same alias group is a no-op. Applying a different alias
+    /// group to a resource that already has one is invalid.
+    virtual void SetAliasGroup(ResourceRef resource, AliasGroupId aliasGroupId) = 0;
 
     /// \brief Add constant values to a constant resource type in the model resource table
     ///

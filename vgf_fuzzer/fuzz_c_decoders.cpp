@@ -92,7 +92,10 @@ void FuzzCDecoderAccessors(const uint8_t *data, size_t size) {
         const auto count = mlsdk_decoder_get_model_resource_table_num_entries(mrtDec);
         if (count > 0) {
             const auto idx = static_cast<uint32_t>(std::min<size_t>(count - 1, UINT32_MAX));
-            mlsdk_decoder_get_vk_descriptor_type(mrtDec, idx);
+            mlsdk_vk_descriptor_type descriptorType = 0;
+            (void)mlsdk_decoder_get_vk_descriptor_type(mrtDec, idx, &descriptorType);
+            mlsdk_alias_group_id aliasGroupId = 0;
+            (void)mlsdk_decoder_model_resource_table_get_alias_group_id(mrtDec, idx, &aliasGroupId);
             mlsdk_decoder_get_vk_format(mrtDec, idx);
             mlsdk_decoder_model_resource_table_get_category(mrtDec, idx);
             mlsdk_decoder_tensor_dimensions dims{};

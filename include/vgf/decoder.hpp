@@ -348,6 +348,13 @@ class ModelResourceTableDecoder {
     virtual std::optional<DescriptorType> getDescriptorType(uint32_t id) const = 0;
 
     /**
+     * @brief Returns the alias group id of the MRT entry 'id' when the entry shares storage with peer MRT entries
+     *
+     * @param id
+     */
+    virtual std::optional<AliasGroupId> getAliasGroupId(uint32_t id) const = 0;
+
+    /**
      * @brief Returns the VkFormat of the MRT entry 'id'
      *
      * @param id

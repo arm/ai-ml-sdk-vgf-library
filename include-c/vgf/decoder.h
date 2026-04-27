@@ -82,13 +82,10 @@ typedef enum {
 typedef int32_t mlsdk_vk_descriptor_type;
 
 /**
- * @brief Optional mlsdk_vk_descriptor_type
+ * @brief Type for alias group ids
  *
  */
-typedef struct {
-    mlsdk_vk_descriptor_type value;
-    bool has_value;
-} mlsdk_vk_descriptor_type_optional;
+typedef uint32_t mlsdk_alias_group_id;
 
 /**
  * @brief Carrier type for VkFormat
@@ -782,15 +779,28 @@ MLSDKAPI size_t mlsdk_decoder_get_model_resource_table_num_entries(
     const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder);
 
 /**
- * @brief Returns the vk_descriptor_type of the idx-entry in the model resource table
- * or mlsdk_vk_descriptor_type_none for types with no corresponding descriptor type
+ * @brief Gets the vk_descriptor_type of the idx-entry in the model resource table when present
  *
  * @param modelResourceTableDecoder The pointer to the model resource table decoder
  * @param idx The index for the entry in the model resource table
- * @return The model resource vk_descriptor_type of the entry
+ * @param descriptorType The pointer to receive the model resource vk_descriptor_type of the entry
+ * @return true when the entry has a corresponding descriptor type, false otherwise
  */
-MLSDKAPI mlsdk_vk_descriptor_type_optional mlsdk_decoder_get_vk_descriptor_type(
-    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder, uint32_t idx);
+MLSDKAPI bool
+mlsdk_decoder_get_vk_descriptor_type(const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+                                     uint32_t idx, mlsdk_vk_descriptor_type *descriptorType);
+
+/**
+ * @brief Returns the alias group id of the idx-entry in the model resource table when present
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param idx The index for the entry in the model resource table
+ * @param aliasGroupId The pointer to receive the alias group id when present
+ * @return true when the entry shares storage with peer MRT resources, false otherwise
+ */
+MLSDKAPI bool mlsdk_decoder_model_resource_table_get_alias_group_id(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder, uint32_t idx,
+    mlsdk_alias_group_id *aliasGroupId);
 
 /**
  * @brief Returns the vk_format of the idx-entry in the model resource table

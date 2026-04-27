@@ -610,6 +610,15 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
         return static_cast<DescriptorType>(decDescType);
     }
 
+    [[nodiscard]] std::optional<AliasGroupId> getAliasGroupId(uint32_t id) const override {
+        const auto *entry = getEntryAt(id);
+        const AliasGroupId aliasGroupId = entry->alias_group_id();
+        if (aliasGroupId == INVALID_ALIAS_GROUP_ID) {
+            return std::nullopt;
+        }
+        return aliasGroupId;
+    }
+
     [[nodiscard]] FormatType getVkFormat(uint32_t id) const override {
         const auto *entry = getEntryAt(id);
         return static_cast<FormatType>(entry->vk_format());

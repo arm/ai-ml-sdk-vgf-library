@@ -72,6 +72,10 @@ void FuzzCppDecoderAccessors(const uint8_t *data, size_t size) {
         if (count > 0) {
             const auto idx = static_cast<uint32_t>(std::min<size_t>(count - 1, UINT32_MAX));
             mrtDec->getDescriptorType(idx);
+            const auto aliasGroupId = mrtDec->getAliasGroupId(idx);
+            if (aliasGroupId.has_value()) {
+                aliasGroupId.value();
+            }
             mrtDec->getVkFormat(idx);
             mrtDec->getCategory(idx);
             mrtDec->getTensorShape(idx);
