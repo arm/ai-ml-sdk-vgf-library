@@ -210,7 +210,7 @@ struct ScenarioTensorResource {
 
     ScenarioTensorResource(const std::string &uid, const std::string &path, bool isInput, VkFormat format,
                            const DataView<int64_t> &dims)
-        : ScenarioTensorResource("tensor", uid, path, isInput, format, dims){};
+        : ScenarioTensorResource("tensor", uid, path, isInput, format, dims) {}
 
     std::string mName;
     std::string mUid;
@@ -241,7 +241,7 @@ struct ScenarioGraphResource {
         : mName(name), mUid(uid), mPath(path), mIsSrc(isSrc), mFormat(format), mDims(dims.begin(), dims.end()) {}
 
     ScenarioGraphResource(const std::string &uid, const std::string &src)
-        : ScenarioGraphResource("graph", uid, src, true, UndefinedFormat(), {}){};
+        : ScenarioGraphResource("graph", uid, src, true, UndefinedFormat(), {}) {}
 
     std::string mName;
     std::string mUid;
@@ -273,7 +273,7 @@ struct ScenarioShaderResource {
 
     ScenarioShaderResource(const std::string &uid, const std::string &src, const std::string &type,
                            const std::string &entry)
-        : ScenarioShaderResource("shader", uid, src, type, entry){};
+        : ScenarioShaderResource("shader", uid, src, type, entry) {}
 
     std::string mName;
     std::string mUid;

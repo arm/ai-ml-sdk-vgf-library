@@ -16,7 +16,7 @@ from datetime import timezone
 
 try:
     import argcomplete
-except:
+except ImportError:
     argcomplete = None
 
 VGF_LIB_DIR = pathlib.Path(__file__).parent / ".."
