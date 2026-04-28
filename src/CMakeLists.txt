@@ -6,6 +6,7 @@
 set(VGF_SOURCES
     decoder_c_api.cpp
     decoder.cpp
+    encoder_c_api.cpp
     encoder.cpp
     logging_c_api.cpp
     logging.cpp

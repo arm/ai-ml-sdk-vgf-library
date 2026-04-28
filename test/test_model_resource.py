@@ -233,10 +233,23 @@ def test_encode_decode_model_resource_table_alias_group_fields():
         VK_FORMAT_R4G4_UNORM_PACK8,
         intermediate_shape,
         intermediate_strides,
+        SHARED_ALIAS_GROUP,
     )
-    encoder.SetAliasGroup(intermediate_resource, SHARED_ALIAS_GROUP)
-    encoder.SetAliasGroup(intermediate_resource, SHARED_ALIAS_GROUP)
     encoder.AddSamplerConfig(intermediate_resource, 0, 1, 2, 3, 4)
+    output_resource = encoder.AddOutputResource(
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        VK_FORMAT_R4G4B4A4_UNORM_PACK16,
+        input_shape,
+        [],
+        SHARED_ALIAS_GROUP,
+    )
+    late_assigned_resource = encoder.AddIntermediateResource(
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        VK_FORMAT_R4G4B4A4_UNORM_PACK16,
+        input_shape,
+        [],
+    )
+    encoder.SetAliasGroup(late_assigned_resource, SHARED_ALIAS_GROUP)
     default_resource = encoder.AddOutputResource(
         VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
         VK_FORMAT_R4G4B4A4_UNORM_PACK16,
@@ -262,6 +275,11 @@ def test_encode_decode_model_resource_table_alias_group_fields():
     assert mrtDecoder.getAliasGroupId(input_resource.reference) == SHARED_ALIAS_GROUP
     assert (
         mrtDecoder.getAliasGroupId(intermediate_resource.reference)
+        == SHARED_ALIAS_GROUP
+    )
+    assert mrtDecoder.getAliasGroupId(output_resource.reference) == SHARED_ALIAS_GROUP
+    assert (
+        mrtDecoder.getAliasGroupId(late_assigned_resource.reference)
         == SHARED_ALIAS_GROUP
     )
     assert (

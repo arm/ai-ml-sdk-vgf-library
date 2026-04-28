@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "vgf/decoder.h"
+#include "vgf/encoder.h"
 
 void FuzzCDecoders(const uint8_t *data, size_t size) {
     std::vector<uint8_t> hdrMem(mlsdk_decoder_header_decoder_mem_reqs());
@@ -214,4 +215,78 @@ void FuzzCDecoderAccessors(const uint8_t *data, size_t size) {
             }
         }
     }
+}
+
+void FuzzCEncoderSmoke(const uint8_t *data, size_t size) {
+    const auto vkHeaderVersion = size >= sizeof(uint16_t) ? static_cast<uint16_t>(data[0] | (data[1] << 8)) : 0;
+    constexpr mlsdk_encoder_vk_descriptor_type combinedImageSamplerDescriptorType = 1;
+    constexpr uint32_t samplerMinFilter = 0;
+    constexpr uint32_t samplerMagFilter = 1;
+    constexpr uint32_t samplerAddressModeU = 2;
+    constexpr uint32_t samplerAddressModeV = 3;
+    constexpr uint32_t samplerBorderColor = 4;
+    constexpr mlsdk_encoder_alias_group_id aliasGroupId = 17;
+    auto *encoder = mlsdk_encoder_create(vkHeaderVersion);
+    if (encoder == nullptr) {
+        return;
+    }
+
+    const uint32_t spirv[] = {0x07230203, 0x00010000};
+    const auto spirvModule = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_compute, "spirv_module",
+                                                            "main", spirv, std::size(spirv));
+    (void)mlsdk_encoder_add_source_module(encoder, mlsdk_encoder_module_type_graph, "glsl_module", "main",
+                                          mlsdk_encoder_shader_type_glsl, "void main(){}");
+    (void)mlsdk_encoder_add_source_module(encoder, mlsdk_encoder_module_type_compute, "hlsl_module", "main",
+                                          mlsdk_encoder_shader_type_hlsl, "[numthreads(1,1,1)] void main(){}");
+
+    const int64_t shape[] = {1, 2};
+    const int64_t strides[] = {2, 1};
+    const auto inputResource =
+        mlsdk_encoder_add_input_resource_with_alias_group(encoder, combinedImageSamplerDescriptorType, 0, shape,
+                                                          std::size(shape), strides, std::size(strides), aliasGroupId);
+    mlsdk_encoder_add_sampler_config(encoder, inputResource, samplerMinFilter, samplerMagFilter, samplerAddressModeU,
+                                     samplerAddressModeV, samplerBorderColor);
+    const auto outputResource = mlsdk_encoder_add_output_resource_with_alias_group(
+        encoder, 0, 0, shape, std::size(shape), nullptr, 0, aliasGroupId);
+    const auto intermediateResource = mlsdk_encoder_add_intermediate_resource_with_alias_group(
+        encoder, 0, 0, shape, std::size(shape), nullptr, 0, aliasGroupId);
+    const auto lateAssignedResource =
+        mlsdk_encoder_add_intermediate_resource(encoder, 0, 0, shape, std::size(shape), nullptr, 0);
+    mlsdk_encoder_set_alias_group(encoder, lateAssignedResource, aliasGroupId);
+    const auto constantResource = mlsdk_encoder_add_constant_resource(encoder, 0, shape, std::size(shape), nullptr, 0);
+
+    const uint8_t constantData[] = {1, 2, 3, 4};
+    const auto constant = mlsdk_encoder_add_constant(encoder, constantResource, constantData, std::size(constantData),
+                                                     MLSDK_ENCODER_CONSTANT_NOT_SPARSE_DIMENSION);
+
+    const auto inputBinding = mlsdk_encoder_add_binding_slot(encoder, 0, inputResource);
+    const auto outputBinding = mlsdk_encoder_add_binding_slot(encoder, 1, outputResource);
+    const auto intermediateBinding = mlsdk_encoder_add_binding_slot(encoder, 2, intermediateResource);
+    const auto constantBinding = mlsdk_encoder_add_binding_slot(encoder, 3, constantResource);
+
+    const mlsdk_encoder_binding_slot_ref descriptorBindings[] = {inputBinding, outputBinding, intermediateBinding,
+                                                                 constantBinding};
+    const mlsdk_encoder_descriptor_set_info_ref descriptors[] = {
+        mlsdk_encoder_add_descriptor_set_info(encoder, descriptorBindings, std::size(descriptorBindings), 0),
+        mlsdk_encoder_add_descriptor_set_info(encoder, nullptr, 0, MLSDK_ENCODER_DESCRIPTOR_SET_INDEX_UNSPECIFIED)};
+
+    const auto pushConstRange = mlsdk_encoder_add_push_const_range(encoder, 1, 0, 4);
+    const uint32_t dispatchShape[] = {1, 1, 1};
+    const mlsdk_encoder_binding_slot_ref inputs[] = {inputBinding};
+    const mlsdk_encoder_binding_slot_ref outputs[] = {outputBinding};
+    const mlsdk_encoder_constant_ref constants[] = {constant};
+    const mlsdk_encoder_push_const_range_ref pushConstRanges[] = {pushConstRange};
+    (void)mlsdk_encoder_add_segment_info(encoder, spirvModule, "segment", descriptors, std::size(descriptors), inputs,
+                                         std::size(inputs), outputs, std::size(outputs), constants,
+                                         std::size(constants), dispatchShape, pushConstRanges,
+                                         std::size(pushConstRanges));
+
+    const char *inputNames[] = {"input"};
+    const char *outputNames[] = {"output"};
+    mlsdk_encoder_add_model_sequence_inputs_outputs(encoder, inputs, std::size(inputs), inputNames,
+                                                    std::size(inputNames), outputs, std::size(outputs), outputNames,
+                                                    std::size(outputNames));
+    mlsdk_encoder_finish(encoder);
+    (void)mlsdk_encoder_write_to_file(encoder, "");
+    mlsdk_encoder_destroy(encoder);
 }

@@ -450,17 +450,14 @@ TEST(CppVerify, ModelSequenceFlatbufferVerifyRejected) {
 }
 
 TEST(CModelSequenceTable, SegmentInfo) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_graph,
+                                                                     "test_module", "entry_point", nullptr, 0);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
+    mlsdk_encoder_segment_info_ref segment = mlsdk_encoder_add_segment_info(
+        encoder, module, "test_segment", nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0, nullptr, nullptr, 0);
 
-    SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment");
-
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
@@ -505,20 +502,18 @@ TEST(CModelSequenceTable, SegmentInfo) {
 }
 
 TEST(CModelSequenceTable, DescripterSetInfo) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_graph,
+                                                                     "test_module", "entry_point", nullptr, 0);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
+    mlsdk_encoder_descriptor_set_info_ref descriptor = mlsdk_encoder_add_descriptor_set_info(encoder, nullptr, 0, 11);
+    std::vector<mlsdk_encoder_descriptor_set_info_ref> descriptors = {descriptor};
 
-    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo({}, 11);
-    std::vector<DescriptorSetInfoRef> descriptors = {descriptor};
+    mlsdk_encoder_segment_info_ref segment =
+        mlsdk_encoder_add_segment_info(encoder, module, "test_segment", descriptors.data(), descriptors.size(), nullptr,
+                                       0, nullptr, 0, nullptr, 0, nullptr, nullptr, 0);
 
-    SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
-
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
@@ -560,23 +555,22 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
 }
 
 TEST(CModelSequenceTable, DescriptorBindingSlot) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_graph,
+                                                                     "test_module", "entry_point", nullptr, 0);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
+    mlsdk_encoder_binding_slot_ref binding = mlsdk_encoder_add_binding_slot(encoder, 1, {2});
+    std::vector<mlsdk_encoder_binding_slot_ref> bindings = {binding};
 
-    BindingSlotRef binding = encoder->AddBindingSlot(1, ResourceRef{2});
-    std::vector<BindingSlotRef> bindings = {binding};
+    mlsdk_encoder_descriptor_set_info_ref descriptor =
+        mlsdk_encoder_add_descriptor_set_info(encoder, bindings.data(), bindings.size(), 5);
+    std::vector<mlsdk_encoder_descriptor_set_info_ref> descriptors = {descriptor};
 
-    DescriptorSetInfoRef descriptor = encoder->AddDescriptorSetInfo(bindings, 5);
-    std::vector<DescriptorSetInfoRef> descriptors = {descriptor};
+    mlsdk_encoder_segment_info_ref segment =
+        mlsdk_encoder_add_segment_info(encoder, module, "test_segment", descriptors.data(), descriptors.size(), nullptr,
+                                       0, nullptr, 0, nullptr, 0, nullptr, nullptr, 0);
 
-    SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", descriptors);
-
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
@@ -626,24 +620,26 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
 }
 
 TEST(CModelSequenceTable, SegmentBindingSlot) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_graph,
+                                                                     "test_module", "entry_point", nullptr, 0);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
+    mlsdk_encoder_binding_slot_ref inputBinding = mlsdk_encoder_add_binding_slot(encoder, 1, {2});
+    std::vector<mlsdk_encoder_binding_slot_ref> inputBindings = {inputBinding};
 
-    BindingSlotRef inputBinding = encoder->AddBindingSlot(1, ResourceRef{2});
-    std::vector<BindingSlotRef> inputBindings = {inputBinding};
+    mlsdk_encoder_binding_slot_ref outputBinding = mlsdk_encoder_add_binding_slot(encoder, 4, {5});
+    std::vector<mlsdk_encoder_binding_slot_ref> outputBindings = {outputBinding};
 
-    BindingSlotRef outputBinding = encoder->AddBindingSlot(4, ResourceRef{5});
-    std::vector<BindingSlotRef> outputBindings = {outputBinding};
+    mlsdk_encoder_segment_info_ref segment = mlsdk_encoder_add_segment_info(
+        encoder, module, "test_segment", nullptr, 0, inputBindings.data(), inputBindings.size(), outputBindings.data(),
+        outputBindings.size(), nullptr, 0, nullptr, nullptr, 0);
+    const char *encodedInputNames[] = {"input"};
+    const char *encodedOutputNames[] = {"output"};
+    mlsdk_encoder_add_model_sequence_inputs_outputs(
+        encoder, inputBindings.data(), inputBindings.size(), encodedInputNames, std::size(encodedInputNames),
+        outputBindings.data(), outputBindings.size(), encodedOutputNames, std::size(encodedOutputNames));
 
-    SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, inputBindings, outputBindings);
-    encoder->AddModelSequenceInputsOutputs(inputBindings, {"input"}, outputBindings, {"output"});
-
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
@@ -703,25 +699,27 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
 }
 
 TEST(CModelSequenceTable, BindingSlot) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_graph,
+                                                                     "test_module", "entry_point", nullptr, 0);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
+    mlsdk_encoder_binding_slot_ref inputBinding = mlsdk_encoder_add_binding_slot(encoder, 1, {2});
+    std::vector<mlsdk_encoder_binding_slot_ref> inputBindings = {inputBinding};
 
-    BindingSlotRef inputBinding = encoder->AddBindingSlot(1, ResourceRef{2});
-    std::vector<BindingSlotRef> inputBindings = {inputBinding};
+    mlsdk_encoder_binding_slot_ref outputBinding = mlsdk_encoder_add_binding_slot(encoder, 4, {5});
+    std::vector<mlsdk_encoder_binding_slot_ref> outputBindings = {outputBinding};
 
-    BindingSlotRef outputBinding = encoder->AddBindingSlot(4, ResourceRef{5});
-    std::vector<BindingSlotRef> outputBindings = {outputBinding};
+    const char *encodedInputNames[] = {"input_0"};
+    const char *encodedOutputNames[] = {"output_0"};
+    mlsdk_encoder_add_model_sequence_inputs_outputs(
+        encoder, inputBindings.data(), inputBindings.size(), encodedInputNames, std::size(encodedInputNames),
+        outputBindings.data(), outputBindings.size(), encodedOutputNames, std::size(encodedOutputNames));
 
-    encoder->AddModelSequenceInputsOutputs(inputBindings, {"input_0"}, outputBindings, {"output_0"});
+    mlsdk_encoder_add_segment_info(encoder, module, "test_segment", nullptr, 0, inputBindings.data(),
+                                   inputBindings.size(), outputBindings.data(), outputBindings.size(), nullptr, 0,
+                                   nullptr, nullptr, 0);
 
-    encoder->AddSegmentInfo(module, "test_segment", {}, inputBindings, outputBindings);
-
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
@@ -781,19 +779,17 @@ TEST(CModelSequenceTable, BindingSlot) {
 }
 
 TEST(CModelSequenceTable, SegmentConstants) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_graph,
+                                                                     "test_module", "entry_point", nullptr, 0);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
+    std::vector<mlsdk_encoder_constant_ref> constants = {{1}, {2}, {3}};
 
-    std::vector<ConstantRef> constants = {{1}, {2}, {3}};
+    mlsdk_encoder_segment_info_ref segment =
+        mlsdk_encoder_add_segment_info(encoder, module, "test_segment", nullptr, 0, nullptr, 0, nullptr, 0,
+                                       constants.data(), constants.size(), nullptr, nullptr, 0);
 
-    SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, {}, {}, constants);
-
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
@@ -840,19 +836,17 @@ TEST(CModelSequenceTable, SegmentConstants) {
 }
 
 TEST(CModelSequenceTable, SegmentDispatchShape) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_graph,
+                                                                     "test_module", "entry_point", nullptr, 0);
 
     std::array<uint32_t, 3> dispatchShape = {1, 2, 3};
 
-    SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, {}, {}, {}, dispatchShape);
+    mlsdk_encoder_segment_info_ref segment =
+        mlsdk_encoder_add_segment_info(encoder, module, "test_segment", nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0,
+                                       dispatchShape.data(), nullptr, 0);
 
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
@@ -897,22 +891,20 @@ TEST(CModelSequenceTable, SegmentDispatchShape) {
 }
 
 TEST(CModelSequenceTable, PushConstantRange) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test_module", "entry_point");
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_graph,
+                                                                     "test_module", "entry_point", nullptr, 0);
 
     //! [PushConstRangesEncodingSample0 begin]
-    PushConstRangeRef pushConstRange = encoder->AddPushConstRange(1, 2, 3);
-    std::vector<PushConstRangeRef> pushConstRanges = {pushConstRange};
+    mlsdk_encoder_push_const_range_ref pushConstRange = mlsdk_encoder_add_push_const_range(encoder, 1, 2, 3);
+    std::vector<mlsdk_encoder_push_const_range_ref> pushConstRanges = {pushConstRange};
     //! [PushConstRangesEncodingSample0 end]
 
-    SegmentInfoRef segment = encoder->AddSegmentInfo(module, "test_segment", {}, {}, {}, {}, {}, pushConstRanges);
+    mlsdk_encoder_segment_info_ref segment =
+        mlsdk_encoder_add_segment_info(encoder, module, "test_segment", nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0,
+                                       nullptr, pushConstRanges.data(), pushConstRanges.size());
 
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;

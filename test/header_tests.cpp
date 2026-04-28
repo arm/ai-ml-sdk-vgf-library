@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "common.hpp"
 #include "vgf/decoder.h"
 #include "vgf/decoder.hpp"
 #include "vgf/encoder.hpp"
@@ -90,13 +91,8 @@ TEST(CppEncode, FailToWrite) {
 }
 
 TEST(CDecode, HeaderTest) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> decoderMemory;

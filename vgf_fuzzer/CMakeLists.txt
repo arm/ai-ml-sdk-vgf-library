@@ -15,8 +15,8 @@ message(STATUS "Building vgf_fuzzer (clang/libFuzzer + ASan + UBSan)")
 
 add_executable(vgf_fuzzer
     main.cpp
-    fuzz_c_decoders.cpp
-    fuzz_cpp_decoders.cpp
+    fuzz_c_api.cpp
+    fuzz_cpp_api.cpp
 )
 
 target_link_libraries(vgf_fuzzer PRIVATE

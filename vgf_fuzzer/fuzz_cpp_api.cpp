@@ -9,9 +9,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <sstream>
 #include <vector>
 
 #include "vgf/decoder.hpp"
+#include "vgf/encoder.hpp"
 
 using namespace mlsdk::vgflib;
 
@@ -182,4 +184,54 @@ void FuzzCppDecoderAccessors(const uint8_t *data, size_t size) {
             }
         }
     }
+}
+
+void FuzzCppEncoderSmoke(const uint8_t *data, size_t size) {
+    const auto vkHeaderVersion = size >= sizeof(uint16_t) ? static_cast<uint16_t>(data[0] | (data[1] << 8)) : 0;
+    constexpr DescriptorType combinedImageSamplerDescriptorType = 1;
+    constexpr uint32_t samplerMinFilter = 0;
+    constexpr uint32_t samplerMagFilter = 1;
+    constexpr uint32_t samplerAddressModeU = 2;
+    constexpr uint32_t samplerAddressModeV = 3;
+    constexpr uint32_t samplerBorderColor = 4;
+    auto encoder = CreateEncoder(vkHeaderVersion);
+    if (encoder == nullptr) {
+        return;
+    }
+
+    const std::vector<uint32_t> spirv{0x07230203, 0x00010000};
+    const auto spirvModule = encoder->AddModule(ModuleType::COMPUTE, "spirv_module", "main", spirv);
+    (void)encoder->AddModule(ModuleType::GRAPH, "glsl_module", "main", ShaderType::GLSL, "void main(){}");
+    (void)encoder->AddModule(ModuleType::COMPUTE, "hlsl_module", "main", ShaderType::HLSL,
+                             "[numthreads(1,1,1)] void main(){}");
+
+    const std::vector<int64_t> shape{1, 2};
+    const std::vector<int64_t> strides{2, 1};
+    const auto inputResource = encoder->AddInputResource(combinedImageSamplerDescriptorType, 0, shape, strides);
+    encoder->AddSamplerConfig(inputResource, samplerMinFilter, samplerMagFilter, samplerAddressModeU,
+                              samplerAddressModeV, samplerBorderColor);
+    const auto outputResource = encoder->AddOutputResource(0, 0, shape, {});
+    const auto intermediateResource = encoder->AddIntermediateResource(0, 0, shape, {});
+    const auto constantResource = encoder->AddConstantResource(0, shape, {});
+
+    const std::vector<uint8_t> constantData{1, 2, 3, 4};
+    const auto constant = encoder->AddConstant(constantResource, constantData.data(), constantData.size());
+
+    const auto inputBinding = encoder->AddBindingSlot(0, inputResource);
+    const auto outputBinding = encoder->AddBindingSlot(1, outputResource);
+    const auto intermediateBinding = encoder->AddBindingSlot(2, intermediateResource);
+    const auto constantBinding = encoder->AddBindingSlot(3, constantResource);
+
+    const auto descriptor =
+        encoder->AddDescriptorSetInfo({inputBinding, outputBinding, intermediateBinding, constantBinding}, 0);
+    const auto legacyDescriptor = encoder->AddDescriptorSetInfo();
+    const auto pushConstRange = encoder->AddPushConstRange(1, 0, 4);
+    const std::array<uint32_t, 3> dispatchShape{1, 1, 1};
+    encoder->AddSegmentInfo(spirvModule, "segment", {descriptor, legacyDescriptor}, {inputBinding}, {outputBinding},
+                            {constant}, dispatchShape, {pushConstRange});
+    encoder->AddModelSequenceInputsOutputs({inputBinding}, {"input"}, {outputBinding}, {"output"});
+    encoder->Finish();
+
+    std::stringstream output;
+    (void)encoder->WriteTo(output);
 }

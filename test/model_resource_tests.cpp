@@ -250,11 +250,16 @@ TEST(CppModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
     ResourceRef inputResource =
         encoder->AddInputResource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, inputShape,
                                   inputStrides, SHARED_ALIAS_GROUP);
-    ResourceRef intermediateResource = encoder->AddIntermediateResource(
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, intermediateShape, intermediateStrides);
-    encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
+    ResourceRef intermediateResource =
+        encoder->AddIntermediateResource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8,
+                                         intermediateShape, intermediateStrides, SHARED_ALIAS_GROUP);
     encoder->AddSamplerConfig(intermediateResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER, SAMPLER_ADDRESS_MODE_U,
                               SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
+    ResourceRef outputResource = encoder->AddOutputResource(
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4B4A4_UNORM_PACK16, inputShape, {}, SHARED_ALIAS_GROUP);
+    ResourceRef lateAssignedResource = encoder->AddIntermediateResource(
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4B4A4_UNORM_PACK16, inputShape, {});
+    encoder->SetAliasGroup(lateAssignedResource, SHARED_ALIAS_GROUP);
     ResourceRef defaultResource =
         encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4B4A4_UNORM_PACK16, inputShape, {});
 
@@ -278,6 +283,16 @@ TEST(CppModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
         mrtDecoder->getAliasGroupId(intermediateResource.reference);
     ASSERT_TRUE(intermediateAliasGroupId.has_value());
     EXPECT_EQ(intermediateAliasGroupId.value(), SHARED_ALIAS_GROUP);
+
+    const std::optional<AliasGroupId> outputAliasGroupId = mrtDecoder->getAliasGroupId(outputResource.reference);
+    ASSERT_TRUE(outputAliasGroupId.has_value());
+    EXPECT_EQ(outputAliasGroupId.value(), SHARED_ALIAS_GROUP);
+
+    const std::optional<AliasGroupId> lateAssignedAliasGroupId =
+        mrtDecoder->getAliasGroupId(lateAssignedResource.reference);
+    ASSERT_TRUE(lateAssignedAliasGroupId.has_value());
+    EXPECT_EQ(lateAssignedAliasGroupId.value(), SHARED_ALIAS_GROUP);
+
     EXPECT_EQ(mrtDecoder->getCategory(intermediateResource.reference), ResourceCategory::INTERMEDIATE);
     EXPECT_EQ(mrtDecoder->getDescriptorType(intermediateResource.reference), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     EXPECT_EQ(mrtDecoder->getVkFormat(intermediateResource.reference), VK_FORMAT_R4G4_UNORM_PACK8);
@@ -351,13 +366,8 @@ TEST(CppVerify, ModelResourceFlatbufferVerifyRejected) {
 }
 
 TEST(CModelResourceTable, EmptyTable) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
@@ -382,9 +392,6 @@ TEST(CModelResourceTable, EmptyTable) {
 }
 
 TEST(CModelResourceTable, EncodeDecode) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     std::vector<int64_t> shape1{0, 1, 2, 3};
     std::vector<int64_t> strides1{4, 5, 6, 7};
     std::vector<int64_t> shape2{8, 9, 10, 11};
@@ -395,13 +402,14 @@ TEST(CModelResourceTable, EncodeDecode) {
     mlsdk_vk_format mlsdkVkFormatR4g4UnormPack8 = VK_FORMAT_R4G4_UNORM_PACK8;
     mlsdk_vk_format mlsdkVkFormatR4g4b4a4UnormPack16 = VK_FORMAT_R4G4B4A4_UNORM_PACK16;
 
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
     auto resource0 =
-        encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape1, strides1);
-    auto resource1 = encoder->AddConstantResource(VK_FORMAT_R4G4B4A4_UNORM_PACK16, shape2, strides2);
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
+        mlsdk_encoder_add_input_resource(encoder, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8,
+                                         shape1.data(), shape1.size(), strides1.data(), strides1.size());
+    auto resource1 = mlsdk_encoder_add_constant_resource(encoder, VK_FORMAT_R4G4B4A4_UNORM_PACK16, shape2.data(),
+                                                         shape2.size(), strides2.data(), strides2.size());
 
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
@@ -461,9 +469,6 @@ TEST(CModelResourceTable, EncodeDecode) {
 }
 
 TEST(CModelResourceTable, UnknownDimensions) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     std::vector<int64_t> shape1{-1, -1, -1, -1};
     std::vector<int64_t> shape2{8, -1, -1, 11};
 
@@ -472,13 +477,14 @@ TEST(CModelResourceTable, UnknownDimensions) {
     mlsdk_vk_format mlsdkVkFormatR4g4UnormPack8 = VK_FORMAT_R4G4_UNORM_PACK8;
     mlsdk_vk_format mlsdkVkFormatR4g4b4a4UnormPack16 = VK_FORMAT_R4G4B4A4_UNORM_PACK16;
 
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
     auto resource0 =
-        encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape1, {});
-    auto resource1 = encoder->AddConstantResource(VK_FORMAT_R4G4B4A4_UNORM_PACK16, shape2, {});
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
+        mlsdk_encoder_add_input_resource(encoder, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8,
+                                         shape1.data(), shape1.size(), nullptr, 0);
+    auto resource1 = mlsdk_encoder_add_constant_resource(encoder, VK_FORMAT_R4G4B4A4_UNORM_PACK16, shape2.data(),
+                                                         shape2.size(), nullptr, 0);
 
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
@@ -528,9 +534,7 @@ TEST(CModelResourceTable, UnknownDimensions) {
 }
 
 TEST(CModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
     std::vector<int64_t> shape{1, 2, 3, 4};
     std::vector<int64_t> strides{8, 12, 16, 20};
 
@@ -540,16 +544,16 @@ TEST(CModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
     constexpr uint32_t SAMPLER_ADDRESS_MODE_V = 3; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
     constexpr uint32_t SAMPLER_BORDER_COLOR = 4;   // VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE
 
-    auto sampledResource = encoder->AddInputResource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                                     VK_FORMAT_R4G4_UNORM_PACK8, shape, strides);
-    encoder->AddSamplerConfig(sampledResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER, SAMPLER_ADDRESS_MODE_U,
-                              SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
-    auto defaultResource =
-        encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape, strides);
+    const auto sampledResource =
+        mlsdk_encoder_add_input_resource(encoder, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8,
+                                         shape.data(), shape.size(), strides.data(), strides.size());
+    mlsdk_encoder_add_sampler_config(encoder, sampledResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER,
+                                     SAMPLER_ADDRESS_MODE_U, SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
+    const auto defaultResource =
+        mlsdk_encoder_add_output_resource(encoder, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8,
+                                          shape.data(), shape.size(), strides.data(), strides.size());
 
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
@@ -589,14 +593,11 @@ TEST(CModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
 }
 
 TEST(CModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
     std::vector<int64_t> inputShape{1, 2, 3, 4};
     std::vector<int64_t> inputStrides{8, 12, 16, 20};
     std::vector<int64_t> intermediateShape{4, 3, 2, 1};
     std::vector<int64_t> intermediateStrides{20, 16, 12, 8};
-    constexpr AliasGroupId SHARED_ALIAS_GROUP = 17;
+    constexpr mlsdk_encoder_alias_group_id SHARED_ALIAS_GROUP = 17;
 
     constexpr uint32_t SAMPLER_MIN_FILTER = 0;     // VK_FILTER_NEAREST
     constexpr uint32_t SAMPLER_MAG_FILTER = 1;     // VK_FILTER_LINEAR
@@ -604,20 +605,27 @@ TEST(CModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
     constexpr uint32_t SAMPLER_ADDRESS_MODE_V = 3; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
     constexpr uint32_t SAMPLER_BORDER_COLOR = 4;   // VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE
 
-    auto inputResource =
-        encoder->AddInputResource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, inputShape,
-                                  inputStrides, SHARED_ALIAS_GROUP);
-    auto intermediateResource = encoder->AddIntermediateResource(
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, intermediateShape, intermediateStrides);
-    encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
-    encoder->AddSamplerConfig(intermediateResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER, SAMPLER_ADDRESS_MODE_U,
-                              SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    auto inputResource = mlsdk_encoder_add_input_resource_with_alias_group(
+        encoder, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, inputShape.data(),
+        inputShape.size(), inputStrides.data(), inputStrides.size(), SHARED_ALIAS_GROUP);
+    auto intermediateResource = mlsdk_encoder_add_intermediate_resource_with_alias_group(
+        encoder, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, intermediateShape.data(),
+        intermediateShape.size(), intermediateStrides.data(), intermediateStrides.size(), SHARED_ALIAS_GROUP);
+    mlsdk_encoder_add_sampler_config(encoder, intermediateResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER,
+                                     SAMPLER_ADDRESS_MODE_U, SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
+    auto outputResource = mlsdk_encoder_add_output_resource_with_alias_group(
+        encoder, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4B4A4_UNORM_PACK16, inputShape.data(),
+        inputShape.size(), nullptr, 0, SHARED_ALIAS_GROUP);
+    auto lateAssignedResource = mlsdk_encoder_add_intermediate_resource(
+        encoder, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4B4A4_UNORM_PACK16, inputShape.data(),
+        inputShape.size(), nullptr, 0);
+    mlsdk_encoder_set_alias_group(encoder, lateAssignedResource, SHARED_ALIAS_GROUP);
     auto defaultResource =
-        encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4B4A4_UNORM_PACK16, inputShape, {});
+        mlsdk_encoder_add_output_resource(encoder, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4B4A4_UNORM_PACK16,
+                                          inputShape.data(), inputShape.size(), nullptr, 0);
 
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     std::vector<uint8_t> headerDecoderMemory;
     headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
@@ -646,6 +654,17 @@ TEST(CModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
     ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_alias_group_id(
         resourceTableDecoder, intermediateResource.reference, &intermediateAliasGroupId));
     ASSERT_EQ(intermediateAliasGroupId, SHARED_ALIAS_GROUP);
+
+    mlsdk_alias_group_id outputAliasGroupId = 0;
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_alias_group_id(resourceTableDecoder, outputResource.reference,
+                                                                      &outputAliasGroupId));
+    ASSERT_EQ(outputAliasGroupId, SHARED_ALIAS_GROUP);
+
+    mlsdk_alias_group_id lateAssignedAliasGroupId = 0;
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_alias_group_id(
+        resourceTableDecoder, lateAssignedResource.reference, &lateAssignedAliasGroupId));
+    ASSERT_EQ(lateAssignedAliasGroupId, SHARED_ALIAS_GROUP);
+
     ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_category(resourceTableDecoder, intermediateResource.reference) ==
                 mlsdk_decoder_mrt_category_intermediate);
     mlsdk_vk_descriptor_type intermediateDescriptorType = 0;

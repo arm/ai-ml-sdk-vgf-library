@@ -366,20 +366,16 @@ TEST(CppVerify, LegacyConstantMisalignedRejected) {
 }
 
 TEST(CEncodeDecode, AddConstant) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-
-    ResourceRef resourceRef = {42};
+    mlsdk_encoder_resource_ref resourceRef = {42};
     const std::vector<uint8_t> constant{'a', 'b'};
     int64_t sparsityDimension = 1;
 
-    ConstantRef constantRef = encoder->AddConstant(resourceRef, constant.data(), constant.size(), sparsityDimension);
+    mlsdk_encoder_constant_ref constantRef =
+        mlsdk_encoder_add_constant(encoder, resourceRef, constant.data(), constant.size(), sparsityDimension);
 
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
@@ -422,19 +418,15 @@ TEST(CEncodeDecode, AddConstant) {
 }
 
 TEST(CEncodeDecode, AddNonSparseConstant) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-
-    ResourceRef resourceRef = {42};
+    mlsdk_encoder_resource_ref resourceRef = {42};
     const std::vector<uint8_t> constant{1};
 
-    ConstantRef constantRef = encoder->AddConstant(resourceRef, constant.data(), constant.size());
+    mlsdk_encoder_constant_ref constantRef = mlsdk_encoder_add_constant(
+        encoder, resourceRef, constant.data(), constant.size(), MLSDK_ENCODER_CONSTANT_NOT_SPARSE_DIMENSION);
 
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
@@ -478,10 +470,8 @@ TEST(CEncodeDecode, AddNonSparseConstant) {
 TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
     TempFolder tempFolder("vgf_lib_model");
     const std::string filename = tempFolder.relative("Model.bin").string();
-    std::ofstream file(filename, std::ios::binary);
-    ASSERT_TRUE(file);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
 
     const size_t largeConstsSize = 25000000; // 25MB
     const std::vector<uint8_t> largeConst(largeConstsSize, 'l');
@@ -496,34 +486,40 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
     const std::vector<uint8_t> verySmallConst(verySmallConstsSize, 'S');
     const uint32_t numVerySmallConsts = 10000;
 
-    std::vector<ConstantRef> constants;
+    std::vector<mlsdk_encoder_constant_ref> constants;
     constants.reserve(numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts);
 
     uint32_t constantsIndex = 0;
     for (; constantsIndex < numLargeConsts; ++constantsIndex) {
-        ResourceRef resourceRef = {constantsIndex};
-        constants.push_back(encoder->AddConstant(resourceRef, largeConst.data(), largeConst.size()));
+        mlsdk_encoder_resource_ref resourceRef = {constantsIndex};
+        constants.push_back(mlsdk_encoder_add_constant(encoder, resourceRef, largeConst.data(), largeConst.size(),
+                                                       MLSDK_ENCODER_CONSTANT_NOT_SPARSE_DIMENSION));
     }
 
     for (; constantsIndex < numLargeConsts + numSmallConsts; ++constantsIndex) {
-        ResourceRef resourceRef = {constantsIndex};
-        constants.push_back(encoder->AddConstant(resourceRef, smallConst.data(), smallConst.size()));
+        mlsdk_encoder_resource_ref resourceRef = {constantsIndex};
+        constants.push_back(mlsdk_encoder_add_constant(encoder, resourceRef, smallConst.data(), smallConst.size(),
+                                                       MLSDK_ENCODER_CONSTANT_NOT_SPARSE_DIMENSION));
     }
 
     for (; constantsIndex < numLargeConsts + numSmallConsts + numVeryLargeConsts; ++constantsIndex) {
-        ResourceRef resourceRef = {constantsIndex};
-        constants.push_back(encoder->AddConstant(resourceRef, veryLargeConst.data(), veryLargeConst.size()));
+        mlsdk_encoder_resource_ref resourceRef = {constantsIndex};
+        constants.push_back(mlsdk_encoder_add_constant(encoder, resourceRef, veryLargeConst.data(),
+                                                       veryLargeConst.size(),
+                                                       MLSDK_ENCODER_CONSTANT_NOT_SPARSE_DIMENSION));
     }
 
     for (; constantsIndex < numLargeConsts + numSmallConsts + numVeryLargeConsts + numVerySmallConsts;
          ++constantsIndex) {
-        ResourceRef resourceRef = {constantsIndex};
-        constants.push_back(encoder->AddConstant(resourceRef, verySmallConst.data(), verySmallConst.size()));
+        mlsdk_encoder_resource_ref resourceRef = {constantsIndex};
+        constants.push_back(mlsdk_encoder_add_constant(encoder, resourceRef, verySmallConst.data(),
+                                                       verySmallConst.size(),
+                                                       MLSDK_ENCODER_CONSTANT_NOT_SPARSE_DIMENSION));
     }
 
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(file)) << "Filename: " << filename;
-    file.close();
+    mlsdk_encoder_finish(encoder);
+    ASSERT_TRUE(mlsdk_encoder_write_to_file(encoder, filename.c_str())) << "Filename: " << filename;
+    mlsdk_encoder_destroy(encoder);
 
     auto mmapped = MemoryMap(filename);
     ASSERT_TRUE(mmapped.size() >= mlsdk_decoder_header_size());
@@ -701,13 +697,8 @@ TEST(CVerify, BadSparsityDimensionRejected) {
 }
 
 TEST(CVerify, EmptyConstantSection) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 

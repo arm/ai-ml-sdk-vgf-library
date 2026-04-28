@@ -5,9 +5,15 @@
 
 #pragma once
 
+#include "vgf-utils/temp_folder.hpp"
+#include "vgf/encoder.h"
 #include "vgf/logging.hpp"
 
+#include <cassert>
+#include <filesystem>
+#include <fstream>
 #include <initializer_list>
+#include <iterator>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -43,3 +49,22 @@ class Logger {
 };
 
 } // namespace mlsdk::vgflib::logging::utils
+
+namespace mlsdk::vgflib::testutils {
+
+inline std::string ReadFile(const std::filesystem::path &path) {
+    std::ifstream input(path, std::ios::binary);
+    return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+}
+
+inline std::string FinishAndWriteCEncoder(mlsdk_encoder *encoder) {
+    assert(encoder != nullptr && "encoder is null");
+    TempFolder tempFolder("vgf_c_encoder_test");
+    const std::filesystem::path path = tempFolder.relative("model.vgf");
+    mlsdk_encoder_finish(encoder);
+    const bool ok = mlsdk_encoder_write_to_file(encoder, path.string().c_str());
+    mlsdk_encoder_destroy(encoder);
+    return ok ? ReadFile(path) : std::string{};
+}
+
+} // namespace mlsdk::vgflib::testutils
