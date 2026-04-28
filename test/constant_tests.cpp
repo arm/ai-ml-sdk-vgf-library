@@ -212,8 +212,8 @@ TEST(CppVerify, ConstantHeaderTooSmallRejected) {
     EXPECT_TRUE(logger.contains({"Constant section too small to contain version"}));
 }
 
-TEST(CppVerify, ConstantSizeCapRejected) {
 #if SIZE_MAX < UINT64_MAX
+TEST(CppVerify, ConstantSizeCapRejected) {
     Logger logger;
     const uint64_t constantSize = SIZE_MAX_VALUE;
     std::array<uint8_t, CONSTANT_SECTION_VERSION_SIZE> section{};
@@ -221,10 +221,8 @@ TEST(CppVerify, ConstantSizeCapRejected) {
 
     EXPECT_EQ(nullptr, CreateConstantDecoder(section.data(), constantSize));
     EXPECT_TRUE(logger.contains({"VerifyConstant", "Size out of bounds"}));
-#else
-    GTEST_SKIP() << "Size cap guard only compiled when size_t is narrower than uint64_t";
-#endif
 }
+#endif
 
 TEST(CppVerify, SectionTooSmallForMetadataRejected) {
     Logger logger;
@@ -605,8 +603,8 @@ TEST(CVerify, ConstantHeaderTooSmallRejected) {
     EXPECT_TRUE(logger.contains({"Constant section too small to contain version"}));
 }
 
-TEST(CVerify, ConstantSizeCapRejected) {
 #if SIZE_MAX < UINT64_MAX
+TEST(CVerify, ConstantSizeCapRejected) {
     Logger logger;
     const uint64_t constantSize = SIZE_MAX_VALUE;
     std::array<uint8_t, CONSTANT_SECTION_VERSION_SIZE> section{};
@@ -615,10 +613,8 @@ TEST(CVerify, ConstantSizeCapRejected) {
     std::vector<uint8_t> decoderMemory(mlsdk_decoder_constant_table_decoder_mem_reqs());
     EXPECT_EQ(nullptr, mlsdk_decoder_create_constant_table_decoder(section.data(), constantSize, decoderMemory.data()));
     EXPECT_TRUE(logger.contains({"VerifyConstant", "Size out of bounds"}));
-#else
-    GTEST_SKIP() << "Size cap guard only compiled when size_t is narrower than uint64_t";
-#endif
 }
+#endif
 
 TEST(CVerify, SectionTooSmallForMetadataRejected) {
     Logger logger;
