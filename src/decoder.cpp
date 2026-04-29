@@ -798,7 +798,8 @@ class ConstantDecoderV00Impl : public ConstantDecoder {
             return {};
         }
 
-        return DataView<uint8_t>(data_ + metaData->offset, static_cast<size_t>(metaData->size));
+        const ByteRange range = _constantDataRange(*metaData);
+        return DataView<uint8_t>(data_ + static_cast<size_t>(range.offset), static_cast<size_t>(range.size));
     }
 
     [[nodiscard]] uint32_t getConstantMrtIndex(uint32_t idx) const override {
@@ -849,23 +850,16 @@ class ConstantDecoderV00Impl : public ConstantDecoder {
             return std::nullopt;
         }
 
-        const auto metadataBytes = checkedMul(declaredCount, sizeof(ConstantMetaDataV00));
-        const auto dataOffset = metadataBytes.has_value() ? checkedAdd(CONSTANT_SECTION_METADATA_OFFSET, *metadataBytes)
-                                                          : std::optional<uint64_t>{};
-        if (!dataOffset.has_value()) {
+        const auto layout = splitFixedRecordTable(sectionSize, CONSTANT_SECTION_METADATA_OFFSET,
+                                                  sizeof(ConstantMetaDataV00), declaredCount);
+        if (!layout.has_value()) {
             logging::error("VerifyConstant: Constant data offset exceeds addressable size");
             return std::nullopt;
         }
-#if SIZE_MAX < UINT64_MAX
-        if (*dataOffset > SIZE_MAX_VALUE) {
-            logging::error("VerifyConstant: Constant data offset exceeds addressable size");
-            return std::nullopt;
-        }
-#endif
 
-        const auto *metaData = static_cast<const uint8_t *>(data) + CONSTANT_SECTION_METADATA_OFFSET;
-        const auto *dataStart = static_cast<const uint8_t *>(data) + static_cast<size_t>(*dataOffset);
-        const uint64_t dataSize = sectionSize - *dataOffset;
+        const auto *metaData = static_cast<const uint8_t *>(data) + static_cast<size_t>(layout->records.offset);
+        const auto *dataStart = static_cast<const uint8_t *>(data) + static_cast<size_t>(layout->payload.offset);
+        const uint64_t dataSize = layout->payload.size;
 
         for (uint64_t idx = 0; idx < declaredCount; ++idx) {
             const auto *entry =
@@ -892,20 +886,16 @@ class ConstantDecoderV00Impl : public ConstantDecoder {
         return reinterpret_cast<const ConstantMetaDataV00 *>(metaData_ + idx * sizeof(ConstantMetaDataV00));
     }
 
+    [[nodiscard]] static ByteRange _constantDataRange(const ConstantMetaDataV00 &metaData) {
+        return {metaData.offset, metaData.size};
+    }
+
     [[nodiscard]] static bool _constantDataWithinBounds(const ConstantMetaDataV00 *metaData, uint64_t dataSize) {
         if (metaData == nullptr) {
             return false;
         }
-        const uint64_t offset = metaData->offset;
-        const uint64_t entrySize = metaData->size;
-#if SIZE_MAX < UINT64_MAX
-        const uint64_t sizeMax = SIZE_MAX_VALUE;
-        if (offset > sizeMax || entrySize > sizeMax || entrySize > sizeMax - offset) {
-            return false;
-        }
-#endif
-
-        return byteRangeWithinBounds({offset, entrySize}, dataSize);
+        const ByteRange range = _constantDataRange(*metaData);
+        return byteRangeCanBeAddressed(range) && byteRangeWithinBounds(range, dataSize);
     }
 
     uint64_t count_ = 0;

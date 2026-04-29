@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -12,6 +12,7 @@ add_executable(VGFLibTests
   module_table_tests.cpp
   numpy_test.cpp
   section_index_table_tests.cpp
+  utils_tests.cpp
 )
 target_link_libraries(VGFLibTests PRIVATE
     GTest::gtest_main
