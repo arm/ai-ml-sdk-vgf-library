@@ -32,6 +32,7 @@ constexpr size_t HEADER_MAGIC_OFFSET = 0;
 constexpr size_t HEADER_VK_HEADER_VERSION_OFFSET = 4;
 constexpr size_t HEADER_VERSION_OFFSET = 8;
 constexpr size_t HEADER_HEADER_SIZE_VALUE = 128;
+constexpr uint64_t VGF_SECTION_ALIGNMENT_VALUE = 8;
 
 constexpr size_t HEADER_FIRST_SECTION_OFFSET = 16;
 constexpr size_t HEADER_SECOND_SECTION_OFFSET = HEADER_FIRST_SECTION_OFFSET + sizeof(SectionEntry);
@@ -61,7 +62,7 @@ constexpr size_t HEADER_CONSTANT_SECTION_SIZE_OFFSET = HEADER_CONSTANT_SECTION_O
 
 constexpr uint8_t HEADER_MAJOR_VERSION_VALUE = 0;
 constexpr uint8_t HEADER_MINOR_VERSION_VALUE = 4;
-constexpr uint8_t HEADER_PATCH_VERSION_VALUE = 2;
+constexpr uint8_t HEADER_PATCH_VERSION_VALUE = 3;
 
 // This is a reminder to trigger removal of deprecated features on major version bump
 // * HEADER_MAGIC_VALUE_OLD

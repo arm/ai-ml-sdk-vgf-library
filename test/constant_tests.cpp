@@ -396,8 +396,9 @@ TEST(CEncodeDecode, AddConstant) {
     mlsdk_decoder_vgf_section_info modelConstantsSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_constants, &modelConstantsSection);
     ASSERT_TRUE(modelConstantsSection.size > 0);
-    ASSERT_TRUE(modelConstantsSection.offset ==
-                HEADER_HEADER_SIZE_VALUE + moduleSection.size + modelSequenceSection.size + modelResourceSection.size);
+    ASSERT_TRUE(
+        modelConstantsSection.offset ==
+        testutils::AlignUp(modelResourceSection.offset + modelResourceSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
@@ -447,8 +448,9 @@ TEST(CEncodeDecode, AddNonSparseConstant) {
     mlsdk_decoder_vgf_section_info modelConstantsSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_constants, &modelConstantsSection);
     ASSERT_TRUE(modelConstantsSection.size > 0);
-    ASSERT_TRUE(modelConstantsSection.offset ==
-                HEADER_HEADER_SIZE_VALUE + moduleSection.size + modelSequenceSection.size + modelResourceSection.size);
+    ASSERT_TRUE(
+        modelConstantsSection.offset ==
+        testutils::AlignUp(modelResourceSection.offset + modelResourceSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
@@ -542,8 +544,9 @@ TEST(CEncodeDecode, AddManyLargeNonSparseConstant) {
     mlsdk_decoder_vgf_section_info modelConstantsSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_constants, &modelConstantsSection);
     ASSERT_TRUE(modelConstantsSection.size > 0);
-    ASSERT_TRUE(modelConstantsSection.offset ==
-                HEADER_HEADER_SIZE_VALUE + moduleSection.size + modelSequenceSection.size + modelResourceSection.size);
+    ASSERT_TRUE(
+        modelConstantsSection.offset ==
+        testutils::AlignUp(modelResourceSection.offset + modelResourceSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());
@@ -719,8 +722,9 @@ TEST(CVerify, EmptyConstantSection) {
     mlsdk_decoder_vgf_section_info modelConstantsSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_constants, &modelConstantsSection);
     ASSERT_TRUE(modelConstantsSection.size > 0);
-    ASSERT_TRUE(modelConstantsSection.offset ==
-                HEADER_HEADER_SIZE_VALUE + moduleSection.size + modelSequenceSection.size + modelResourceSection.size);
+    ASSERT_TRUE(
+        modelConstantsSection.offset ==
+        testutils::AlignUp(modelResourceSection.offset + modelResourceSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     std::vector<uint8_t> constantDecoderMemory;
     constantDecoderMemory.resize(mlsdk_decoder_constant_table_decoder_mem_reqs());

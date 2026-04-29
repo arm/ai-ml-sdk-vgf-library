@@ -10,6 +10,7 @@
 #include "vgf/logging.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <initializer_list>
@@ -51,6 +52,10 @@ class Logger {
 } // namespace mlsdk::vgflib::logging::utils
 
 namespace mlsdk::vgflib::testutils {
+
+inline uint64_t AlignUp(uint64_t value, uint64_t alignment) {
+    return ((value + alignment - 1) / alignment) * alignment;
+}
 
 inline std::string ReadFile(const std::filesystem::path &path) {
     std::ifstream input(path, std::ios::binary);

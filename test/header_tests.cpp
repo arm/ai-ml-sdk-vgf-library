@@ -53,15 +53,19 @@ TEST(CppEncodeDecode, HeaderTest) {
     ASSERT_TRUE(decoder->GetModuleTableOffset() == HEADER_HEADER_SIZE_VALUE);
 
     ASSERT_TRUE(decoder->GetModelSequenceTableSize() > 0);
-    ASSERT_TRUE(decoder->GetModelSequenceTableOffset() == HEADER_HEADER_SIZE_VALUE + decoder->GetModuleTableSize());
+    ASSERT_TRUE(
+        decoder->GetModelSequenceTableOffset() ==
+        testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + decoder->GetModuleTableSize(), VGF_SECTION_ALIGNMENT_VALUE));
 
     ASSERT_TRUE(decoder->GetModelResourceTableSize() > 0);
     ASSERT_TRUE(decoder->GetModelResourceTableOffset() ==
-                decoder->GetModelSequenceTableOffset() + decoder->GetModelSequenceTableSize());
+                testutils::AlignUp(decoder->GetModelSequenceTableOffset() + decoder->GetModelSequenceTableSize(),
+                                   VGF_SECTION_ALIGNMENT_VALUE));
 
     ASSERT_TRUE(decoder->GetConstantsSize() > 0);
     ASSERT_TRUE(decoder->GetConstantsOffset() ==
-                decoder->GetModelResourceTableOffset() + decoder->GetModelResourceTableSize());
+                testutils::AlignUp(decoder->GetModelResourceTableOffset() + decoder->GetModelResourceTableSize(),
+                                   VGF_SECTION_ALIGNMENT_VALUE));
 }
 
 TEST(CppDecode, WrongMagic) {
@@ -125,17 +129,22 @@ TEST(CDecode, HeaderTest) {
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(decoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
     ASSERT_TRUE(modelSequenceSection.size > 0);
-    ASSERT_TRUE(modelSequenceSection.offset == HEADER_HEADER_SIZE_VALUE + moduleSection.size);
+    ASSERT_TRUE(modelSequenceSection.offset ==
+                testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + moduleSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     mlsdk_decoder_vgf_section_info modelResourceSection;
     mlsdk_decoder_get_header_section_info(decoder, mlsdk_decoder_section_resources, &modelResourceSection);
     ASSERT_TRUE(modelResourceSection.size > 0);
-    ASSERT_TRUE(modelResourceSection.offset == modelSequenceSection.offset + modelSequenceSection.size);
+    ASSERT_TRUE(
+        modelResourceSection.offset ==
+        testutils::AlignUp(modelSequenceSection.offset + modelSequenceSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     mlsdk_decoder_vgf_section_info modelConstantsSection;
     mlsdk_decoder_get_header_section_info(decoder, mlsdk_decoder_section_constants, &modelConstantsSection);
     ASSERT_TRUE(modelConstantsSection.size > 0);
-    ASSERT_TRUE(modelConstantsSection.offset == modelResourceSection.offset + modelResourceSection.size);
+    ASSERT_TRUE(
+        modelConstantsSection.offset ==
+        testutils::AlignUp(modelResourceSection.offset + modelResourceSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 }
 
 TEST(CDecode, WrongMagic) {
