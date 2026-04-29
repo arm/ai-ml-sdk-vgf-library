@@ -10,9 +10,11 @@
 #include "internal_logging.hpp"
 #include "internal_types.hpp"
 #include "section_index_table.hpp"
+#include "utils.hpp"
 #include "vgf_generated.h"
 
 #include <algorithm>
+#include <cstring>
 #include <fstream>
 #include <limits>
 
@@ -59,8 +61,6 @@ VGF::ResourceCategory toVGF(ResourceCategory category) {
         return VGF::ResourceCategory::ResourceCategory_MAX;
     }
 }
-
-template <typename T> size_t getAlignedSize(size_t size) { return (size + sizeof(T) - 1) / sizeof(T) * sizeof(T); }
 
 } // namespace
 
@@ -299,6 +299,24 @@ class EncoderImpl : public Encoder {
             sparsityDim32 = static_cast<int32_t>(sparsityDimension);
         }
 
+        const auto sizeInBytesAligned = checkedAlignUp(static_cast<uint64_t>(sizeInBytes), sizeof(uint64_t));
+        if (!sizeInBytesAligned.has_value()) {
+            logging::error("Constant size exceeds addressable on-disk metadata size");
+            encodingFailed_ = true;
+            return {UINT32_MAX_VALUE};
+        }
+        if (*sizeInBytesAligned > SIZE_MAX_VALUE) {
+            logging::error("Constant size exceeds addressable host allocation size");
+            encodingFailed_ = true;
+            return {UINT32_MAX_VALUE};
+        }
+        const auto nextDataOffset = checkedAdd(constDataOffset_, *sizeInBytesAligned);
+        if (!nextDataOffset.has_value()) {
+            logging::error("Constant data section size exceeds addressable on-disk metadata size");
+            encodingFailed_ = true;
+            return {UINT32_MAX_VALUE};
+        }
+
         constsMetaData_.emplace_back(ConstantMetaDataV00{
             resourceRef.reference,
             sparsityDim32,
@@ -306,10 +324,9 @@ class EncoderImpl : public Encoder {
             constDataOffset_,
         });
 
-        uint64_t sizeInBytesAligned = getAlignedSize<uint64_t>(sizeInBytes);
-        auto &constantData = constsData_.emplace_back(sizeInBytesAligned, 0);
+        auto &constantData = constsData_.emplace_back(static_cast<size_t>(*sizeInBytesAligned), 0);
         std::memcpy(constantData.data(), data, sizeInBytes);
-        constDataOffset_ += sizeInBytesAligned;
+        constDataOffset_ = *nextDataOffset;
 
         return {static_cast<uint32_t>(constsMetaData_.size() - 1)};
     }
@@ -371,6 +388,10 @@ class EncoderImpl : public Encoder {
     bool WriteTo(std::ostream &output) override {
         assert(finished_ && "cannot write if encoding is not marked finished");
         logging::debug("Writing VGF model to output stream");
+        if (encodingFailed_) {
+            logging::error("Cannot write VGF model after encoder failed");
+            return false;
+        }
 
         SectionIndexTable table;
         const auto &headerSection = table.AddSection(sizeof(Header));
@@ -379,9 +400,18 @@ class EncoderImpl : public Encoder {
         const auto &modelResourceSection = table.AddSection(modelResourceBuilder_.GetSize());
 
         auto numConsts = static_cast<uint64_t>(constsMetaData_.size());
-        const auto constantSectionSize =
-            CONSTANT_SECTION_METADATA_OFFSET + numConsts * sizeof(ConstantMetaDataV00) + constDataOffset_;
-        const auto &constantSection = table.AddSection(constantSectionSize);
+        const auto constantMetadataSize = checkedMul(numConsts, sizeof(ConstantMetaDataV00));
+        const auto constantHeaderAndMetadataSize =
+            constantMetadataSize.has_value() ? checkedAdd(CONSTANT_SECTION_METADATA_OFFSET, *constantMetadataSize)
+                                             : std::optional<uint64_t>{};
+        const auto constantSectionSize = constantHeaderAndMetadataSize.has_value()
+                                             ? checkedAdd(*constantHeaderAndMetadataSize, constDataOffset_)
+                                             : std::optional<uint64_t>{};
+        if (!constantSectionSize.has_value()) {
+            logging::error("Constant section size exceeds addressable on-disk metadata size");
+            return false;
+        }
+        const auto &constantSection = table.AddSection(*constantSectionSize);
 
         // calculate alignments and offsets
         table.Update();
@@ -445,6 +475,7 @@ class EncoderImpl : public Encoder {
     };
 
     bool finished_ = false;
+    bool encodingFailed_ = false;
     flatbuffers::FlatBufferBuilder moduleBuilder_;
     flatbuffers::FlatBufferBuilder modelSequenceBuilder_;
     flatbuffers::FlatBufferBuilder modelResourceBuilder_;
