@@ -44,7 +44,8 @@ class Builder:
         self.run_tests = args.test
         self.lint = args.lint
         self.build_type = args.build_type
-        self.doc = args.doc
+        self.doc_only = args.doc_only
+        self.doc = args.doc or self.doc_only
         self.target_platform = args.target_platform
         self.cmake_toolchain_for_android = args.cmake_toolchain_for_android
         self.argparse_path = args.argparse_path
@@ -257,6 +258,8 @@ class Builder:
             "--config",
             self.build_type,
         ]
+        if self.doc_only:
+            cmake_build_cmd.extend(["--target", "vgf_doc"])
 
         try:
             subprocess.run(cmake_setup_cmd, check=True)
@@ -444,9 +447,16 @@ def parse_arguments():
         help="Type of build to perform. Default: %(default)s",
         default="Release",
     )
-    parser.add_argument(
+    doc_group = parser.add_mutually_exclusive_group()
+    doc_group.add_argument(
         "--doc",
         help="Build documentation. Default: %(default)s",
+        action="store_true",
+        default=False,
+    )
+    doc_group.add_argument(
+        "--doc-only",
+        help="Only build documentation. Default: %(default)s",
         action="store_true",
         default=False,
     )

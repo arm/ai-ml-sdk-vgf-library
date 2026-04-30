@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -17,50 +17,27 @@ endif()
 
 file(MAKE_DIRECTORY ${SPHINX_GEN_DIR})
 
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/docs/help/vgf_dump_help.rst
+    ${SPHINX_GEN_DIR}/vgf_dump_help.txt
+    COPYONLY)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/docs/help/vgf_updater_help.rst
+    ${SPHINX_GEN_DIR}/vgf_updater_help.txt
+    COPYONLY)
+
 # copy MD files for inclusion into the published docs
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CONTRIBUTING.md ${SPHINX_GEN_DIR}/CONTRIBUTING.md COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.md ${SPHINX_GEN_DIR}/README.md COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SECURITY.md ${SPHINX_GEN_DIR}/SECURITY.md COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LICENSES/Apache-2.0.txt ${SPHINX_GEN_DIR}/LICENSES/Apache-2.0.txt COPYONLY)
 
-# Generate a text file with the VGF_DUMP tool help text
-set(VGF_DUMP_ARG_HELP_TXT ${SPHINX_GEN_DIR}/vgf_dump_help.txt)
-add_custom_command(
-  OUTPUT "${VGF_DUMP_ARG_HELP_TXT}"
-  COMMAND ${CMAKE_COMMAND}
-          -Dcmd=$<IF:$<PLATFORM_ID:Windows>,.\\,./>$<TARGET_FILE_NAME:${VGF_NAMESPACE}::vgf_dump>
-          -Dargs=--help
-          -Dwd=$<TARGET_FILE_DIR:${VGF_NAMESPACE}::vgf_dump>
-          -Dout=${VGF_DUMP_ARG_HELP_TXT}
-          -P ${CMAKE_CURRENT_LIST_DIR}/redirect-output.cmake
-  COMMAND_EXPAND_LISTS
-  DEPENDS ${VGF_NAMESPACE}::vgf_dump
-  VERBATIM
-  COMMENT "Generating vgf_dump --help text"
-)
-
-# Generate a text file with the VGF_UPDATER tool help text
-set(VGF_UPDATER_ARG_HELP_TXT ${SPHINX_GEN_DIR}/vgf_updater_help.txt)
-add_custom_command(
-    OUTPUT "${VGF_UPDATER_ARG_HELP_TXT}"
-  COMMAND ${CMAKE_COMMAND}
-          -Dcmd=$<IF:$<PLATFORM_ID:Windows>,.\\,./>$<TARGET_FILE_NAME:${VGF_NAMESPACE}::vgf_updater>
-          -Dargs=--help
-          -Dwd=$<TARGET_FILE_DIR:${VGF_NAMESPACE}::vgf_updater>
-          -Dout=${VGF_UPDATER_ARG_HELP_TXT}
-          -P ${CMAKE_CURRENT_LIST_DIR}/redirect-output.cmake
-  COMMAND_EXPAND_LISTS
-  DEPENDS ${VGF_NAMESPACE}::vgf_updater
-  VERBATIM
-  COMMENT "Generating vgf_updater --help text"
-)
-
 set(DOC_SRC_FILES_FULL_PATHS
         ${SPHINX_GEN_DIR}/CONTRIBUTING.md
         ${SPHINX_GEN_DIR}/README.md
         ${SPHINX_GEN_DIR}/SECURITY.md
-        ${VGF_DUMP_ARG_HELP_TXT}
-        ${VGF_UPDATER_ARG_HELP_TXT})
+        ${SPHINX_GEN_DIR}/vgf_dump_help.txt
+        ${SPHINX_GEN_DIR}/vgf_updater_help.txt)
 
 # set source inputs list
 file(GLOB_RECURSE  DOC_SRC_FILES CONFIGURE_DEPENDS RELATIVE ${SPHINX_SRC_DIR_IN} ${SPHINX_SRC_DIR_IN}/*)
