@@ -17,6 +17,13 @@
 - Added a CMake option to build the VGF shared library.
 - Updated fuzzer build integration and disabled `vgf_fuzzer` by default.
 
+### Bug Fixes
+
+- Fixed `vgf_dump` scenario output to stop emitting the obsolete `frame_id`
+  field.
+- Fixed decoder API size handling mismatches across the C and C++ entry points.
+- Fixed README `tooling-requirements` path references.
+
 ## Version 0.8.0 – *Updater & Tooling Update*
 
 ### Highlights
@@ -43,6 +50,14 @@
 
 - Added Darwin targets for AArch64 to the pip packaging matrix.
 - Refreshed SBOM data and adopted usage of `REUSE.toml`.
+
+### Bug Fixes
+
+- Fixed missing package version initialization, bad package names, and
+  SDK-root `--install` packaging failures.
+- Fixed non-zero exit handling in the pip package flow.
+- Fixed constant-memory release after writing decoder output files.
+- Fixed incorrect dependency versions in the SBOM data.
 
 ### Supported Platforms
 
