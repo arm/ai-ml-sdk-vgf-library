@@ -123,6 +123,18 @@ class Encoder {
     virtual ResourceRef AddConstantResource(FormatType vkFormat, const std::vector<int64_t> &shape,
                                             const std::vector<int64_t> &strides) = 0;
 
+    /// \brief Set sampler metadata for an existing model resource table entry
+    ///
+    /// \param resource Resource reference used in model resource table
+    /// \param samplerMinFilter VkFilter value for sampled images
+    /// \param samplerMagFilter VkFilter value for sampled images
+    /// \param samplerAddressModeU VkSamplerAddressMode for U axis
+    /// \param samplerAddressModeV VkSamplerAddressMode for V axis
+    /// \param samplerBorderColor VkBorderColor value
+    virtual void AddSamplerConfig(ResourceRef resource, uint32_t samplerMinFilter, uint32_t samplerMagFilter,
+                                  uint32_t samplerAddressModeU, uint32_t samplerAddressModeV,
+                                  uint32_t samplerBorderColor) = 0;
+
     /// \brief Add constant values to a constant resource type in the model resource table
     ///
     /// \param resource Resource reference used in model resource table

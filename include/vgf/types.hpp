@@ -78,6 +78,28 @@ using DescriptorType = int32_t;
  */
 using FormatType = int32_t;
 
+/**
+ * \brief VGF type that corresponds to a VkFilter enum of the Vulkan API
+ *
+ * See ToFilterType and ToVkFilter in vulkan_helpers.generated.hpp
+ */
+using FilterType = int32_t;
+
+/**
+ * \brief VGF type that corresponds to a VkSamplerAddressMode enum of the Vulkan API
+ *
+ * See ToSamplerAddressModeType and ToVkSamplerAddressMode in
+ * vulkan_helpers.generated.hpp
+ */
+using SamplerAddressModeType = int32_t;
+
+/**
+ * \brief VGF type that corresponds to a VkBorderColor enum of the Vulkan API
+ *
+ * See ToBorderColorType and ToVkBorderColor in vulkan_helpers.generated.hpp
+ */
+using BorderColorType = int32_t;
+
 /// \brief Value that corresponds to an Undefined VkFormat.
 constexpr FormatType UndefinedFormat() { return 0; }
 

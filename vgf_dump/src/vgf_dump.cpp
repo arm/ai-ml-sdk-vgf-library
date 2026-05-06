@@ -389,6 +389,35 @@ void to_json(nlohmann::json &j, const Constant &constant) {
                        {"sparsity_dimension", constant.mSparsityDimension}};
 }
 
+std::string samplerFilterToString(uint32_t value) {
+    if (value > static_cast<uint32_t>(INT32_MAX_VALUE)) {
+        return "Unknown(" + std::to_string(value) + ")";
+    }
+    return FilterTypeToName(static_cast<FilterType>(value));
+}
+
+std::string samplerAddressModeToString(uint32_t value) {
+    if (value > static_cast<uint32_t>(INT32_MAX_VALUE)) {
+        return "Unknown(" + std::to_string(value) + ")";
+    }
+    return SamplerAddressModeTypeToName(static_cast<SamplerAddressModeType>(value));
+}
+
+std::string samplerBorderColorToString(uint32_t value) {
+    if (value > static_cast<uint32_t>(INT32_MAX_VALUE)) {
+        return "Unknown(" + std::to_string(value) + ")";
+    }
+    return BorderColorTypeToName(static_cast<BorderColorType>(value));
+}
+
+void to_json(nlohmann::json &j, const ResourceSamplerConfig &samplerConfig) {
+    j = nlohmann::json{{"min_filter", samplerFilterToString(samplerConfig.mMinFilter)},
+                       {"mag_filter", samplerFilterToString(samplerConfig.mMagFilter)},
+                       {"address_mode_u", samplerAddressModeToString(samplerConfig.mAddressModeU)},
+                       {"address_mode_v", samplerAddressModeToString(samplerConfig.mAddressModeV)},
+                       {"border_color", samplerBorderColorToString(samplerConfig.mBorderColor)}};
+}
+
 void to_json(nlohmann::json &j, const Resource &resource) {
     j = json{
         {"index", resource.mIndex},
@@ -398,6 +427,10 @@ void to_json(nlohmann::json &j, const Resource &resource) {
         {"shape", resource.mShape},
         {"stride", resource.mStride},
     };
+
+    if (resource.mSamplerConfig.has_value()) {
+        j["sampler_config"] = *resource.mSamplerConfig;
+    }
 }
 
 } // namespace vgfutils

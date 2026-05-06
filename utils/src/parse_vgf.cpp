@@ -50,6 +50,25 @@ std::vector<uint32_t> dataViewToVector(DataView<uint32_t> dataView) { return {da
 
 } // namespace
 
+Resource::Resource(uint32_t index, const ModelResourceTableDecoder &decoder)
+    : mIndex(index), mCategory(decoder.getCategory(index)), mDescriptorType(decoder.getDescriptorType(index)),
+      mVkFormat(decoder.getVkFormat(index)) {
+    const SamplerConfigHandle samplerConfigHandle = decoder.getSamplerConfigHandle(index);
+    if (samplerConfigHandle != nullptr) {
+        mSamplerConfig.emplace(decoder.getSamplerConfigMinFilter(samplerConfigHandle),
+                               decoder.getSamplerConfigMagFilter(samplerConfigHandle),
+                               decoder.getSamplerConfigAddressModeU(samplerConfigHandle),
+                               decoder.getSamplerConfigAddressModeV(samplerConfigHandle),
+                               decoder.getSamplerConfigBorderColor(samplerConfigHandle));
+    }
+
+    const auto shape = decoder.getTensorShape(index);
+    mShape.assign(shape.begin(), shape.end());
+
+    const auto stride = decoder.getTensorStride(index);
+    mStride.assign(stride.begin(), stride.end());
+}
+
 std::vector<Resource> parseModelResourceTable(const void *const data, uint64_t size) {
     const auto decoder = CreateModelResourceTableDecoder(data, size);
     if (decoder == nullptr) {
@@ -59,8 +78,7 @@ std::vector<Resource> parseModelResourceTable(const void *const data, uint64_t s
     std::vector<Resource> resources;
     resources.reserve(decoder->size());
     for (uint32_t i = 0; i < decoder->size(); i++) {
-        resources.emplace_back(i, decoder->getCategory(i), decoder->getDescriptorType(i), decoder->getVkFormat(i),
-                               decoder->getTensorShape(i), decoder->getTensorStride(i));
+        resources.emplace_back(i, *decoder);
     }
     return resources;
 }

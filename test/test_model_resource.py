@@ -155,3 +155,52 @@ def test_encode_decode_model_resource_table_with_unknown_dimensions():
         mrtDecoder.getVkFormat(resource1.reference) == VK_FORMAT_R4G4B4A4_UNORM_PACK16
     )
     assert mrtDecoder.getTensorStride(resource1.reference) is None
+
+
+def test_encode_decode_model_resource_table_sampler_fields():
+
+    encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
+
+    shape = np.array([1, 2, 3, 4], dtype=np.int64)
+    strides = np.array([8, 12, 16, 20], dtype=np.int64)
+
+    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1
+    VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3
+    VK_FORMAT_R4G4_UNORM_PACK8 = 1
+
+    sampled_resource = encoder.AddInputResource(
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        VK_FORMAT_R4G4_UNORM_PACK8,
+        shape,
+        strides,
+    )
+    encoder.AddSamplerConfig(sampled_resource, 0, 1, 2, 3, 4)
+    default_resource = encoder.AddOutputResource(
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4_UNORM_PACK8, shape, strides
+    )
+
+    encoder.Finish()
+
+    stream = io.BytesIO()
+    assert encoder.WriteTo(stream)
+    buffer = stream.getbuffer()
+
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
+    assert headerDecoder is not None
+
+    mrtDecoder = vgf.CreateModelResourceTableDecoder(
+        buffer[headerDecoder.GetModelResourceTableOffset() :],
+        headerDecoder.GetModelResourceTableSize(),
+    )
+    assert mrtDecoder is not None
+
+    sampled_handle = mrtDecoder.getSamplerConfigHandle(sampled_resource.reference)
+    assert sampled_handle is not None
+    assert mrtDecoder.getSamplerConfigMinFilter(sampled_handle) == 0
+    assert mrtDecoder.getSamplerConfigMagFilter(sampled_handle) == 1
+    assert mrtDecoder.getSamplerConfigAddressModeU(sampled_handle) == 2
+    assert mrtDecoder.getSamplerConfigAddressModeV(sampled_handle) == 3
+    assert mrtDecoder.getSamplerConfigBorderColor(sampled_handle) == 4
+
+    default_handle = mrtDecoder.getSamplerConfigHandle(default_resource.reference)
+    assert default_handle is None

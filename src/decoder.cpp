@@ -410,6 +410,12 @@ PushConstantRangeHandle ToHandle(const flatbuffers::Vector<flatbuffers::Offset<V
     return reinterpret_cast<PushConstantRangeHandle>(ptr);
 }
 
+const VGF::SamplerConfig *FromHandle(SamplerConfigHandle handle) {
+    return reinterpret_cast<const VGF::SamplerConfig *>(handle);
+}
+
+SamplerConfigHandle ToHandle(const VGF::SamplerConfig *ptr) { return reinterpret_cast<SamplerConfigHandle>(ptr); }
+
 } // namespace
 
 // Model Sequence Table Decoder
@@ -632,7 +638,44 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
         return {strides->data(), strides->size()};
     }
 
+    [[nodiscard]] SamplerConfigHandle getSamplerConfigHandle(uint32_t id) const override {
+        return ToHandle(getSamplerConfigAt(id));
+    }
+
+    [[nodiscard]] uint32_t getSamplerConfigMinFilter(SamplerConfigHandle handle) const override {
+        assert(handle != nullptr && "sampler config handle is null");
+        return FromHandle(handle)->min_filter();
+    }
+
+    [[nodiscard]] uint32_t getSamplerConfigMagFilter(SamplerConfigHandle handle) const override {
+        assert(handle != nullptr && "sampler config handle is null");
+        return FromHandle(handle)->mag_filter();
+    }
+
+    [[nodiscard]] uint32_t getSamplerConfigAddressModeU(SamplerConfigHandle handle) const override {
+        assert(handle != nullptr && "sampler config handle is null");
+        return FromHandle(handle)->address_mode_u();
+    }
+
+    [[nodiscard]] uint32_t getSamplerConfigAddressModeV(SamplerConfigHandle handle) const override {
+        assert(handle != nullptr && "sampler config handle is null");
+        return FromHandle(handle)->address_mode_v();
+    }
+
+    [[nodiscard]] uint32_t getSamplerConfigBorderColor(SamplerConfigHandle handle) const override {
+        assert(handle != nullptr && "sampler config handle is null");
+        return FromHandle(handle)->border_color();
+    }
+
   private:
+    [[nodiscard]] const VGF::SamplerConfig *getSamplerConfigAt(uint32_t index) const {
+        const auto *entry = getEntryAt(index);
+        if (entry->extra_config_type() != VGF::ExtraConfig_SamplerConfig) {
+            return nullptr;
+        }
+        return entry->extra_config_as_SamplerConfig();
+    }
+
     [[nodiscard]] const VGF::ModelResourceTableEntry *getEntryAt(uint32_t index) const {
         const auto *entryTable = modelRecTable_->mrt_entry();
         assert(entryTable && "no entryTable found");

@@ -51,6 +51,7 @@ typedef struct mlsdk_decoder_model_sequence_decoder_s *mlsdk_decoder_model_seque
 typedef struct mlsdk_decoder_model_resource_table_decoder_s *mlsdk_decoder_model_resource_table_decoder;
 typedef struct mlsdk_decoder_constant_table_decoder_s *mlsdk_decoder_constant_table_decoder;
 typedef struct mlsdk_decoder_names_handle_s const *mlsdk_decoder_names_handle;
+typedef struct mlsdk_decoder_sampler_config_handle_s const *mlsdk_decoder_sampler_config_handle;
 
 /**
  * \defgroup VGFCAPI Decoder C API
@@ -832,6 +833,71 @@ MLSDKAPI void mlsdk_decoder_model_resource_table_get_tensor_shape(
 MLSDKAPI void mlsdk_decoder_model_resource_table_get_tensor_strides(
     const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder, uint32_t mrtIdx,
     mlsdk_decoder_tensor_dimensions *dimensions);
+
+/**
+ * @brief Returns a sampler-config handle for sampled-image resources
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param mrtIdx The index for the entry in the model resource table
+ * @return Handle to sampler config, or nullptr when absent
+ */
+MLSDKAPI mlsdk_decoder_sampler_config_handle mlsdk_decoder_model_resource_table_get_sampler_config_handle(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder, uint32_t mrtIdx);
+
+/**
+ * @brief Returns VkFilter min filter value from sampler config handle
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param handle Handle to sampler config. Must not be nullptr.
+ * @return VkFilter min filter value
+ */
+MLSDKAPI uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_min_filter(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle);
+
+/**
+ * @brief Returns VkFilter mag filter value from sampler config handle
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param handle Handle to sampler config. Must not be nullptr.
+ * @return VkFilter mag filter value
+ */
+MLSDKAPI uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_mag_filter(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle);
+
+/**
+ * @brief Returns VkSamplerAddressMode U value from sampler config handle
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param handle Handle to sampler config. Must not be nullptr.
+ * @return VkSamplerAddressMode U value
+ */
+MLSDKAPI uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_u(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle);
+
+/**
+ * @brief Returns VkSamplerAddressMode V value from sampler config handle
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param handle Handle to sampler config. Must not be nullptr.
+ * @return VkSamplerAddressMode V value
+ */
+MLSDKAPI uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_v(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle);
+
+/**
+ * @brief Returns VkBorderColor value from sampler config handle
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param handle Handle to sampler config. Must not be nullptr.
+ * @return VkBorderColor value
+ */
+MLSDKAPI uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_border_color(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle);
 
 /**********************************************************************************************************************/
 

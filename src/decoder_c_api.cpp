@@ -150,6 +150,14 @@ mlsdk_vk_format convert_vk_format(FormatType format) {
 
     return static_cast<mlsdk_vk_format>(format);
 }
+
+mlsdk_decoder_sampler_config_handle to_c_handle(SamplerConfigHandle handleIn) {
+    return reinterpret_cast<mlsdk_decoder_sampler_config_handle>(handleIn);
+}
+
+SamplerConfigHandle from_c_handle(mlsdk_decoder_sampler_config_handle handleIn) {
+    return reinterpret_cast<SamplerConfigHandle>(handleIn);
+}
 } // namespace
 
 mlsdk_decoder_module_type mlsdk_decoder_get_module_type(const mlsdk_decoder_module_table_decoder *const decoder,
@@ -589,4 +597,56 @@ void mlsdk_decoder_model_resource_table_get_tensor_strides(
         reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)->getTensorStride(mrtIdx);
     dimensions->data = tensorStrides.begin();
     dimensions->size = tensorStrides.size();
+}
+
+mlsdk_decoder_sampler_config_handle mlsdk_decoder_model_resource_table_get_sampler_config_handle(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder, uint32_t mrtIdx) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    return to_c_handle(
+        reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)->getSamplerConfigHandle(mrtIdx));
+}
+
+uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_min_filter(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    assert(handle != nullptr && "sampler config handle is null");
+    return reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)
+        ->getSamplerConfigMinFilter(from_c_handle(handle));
+}
+
+uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_mag_filter(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    assert(handle != nullptr && "sampler config handle is null");
+    return reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)
+        ->getSamplerConfigMagFilter(from_c_handle(handle));
+}
+
+uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_u(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    assert(handle != nullptr && "sampler config handle is null");
+    return reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)
+        ->getSamplerConfigAddressModeU(from_c_handle(handle));
+}
+
+uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_v(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    assert(handle != nullptr && "sampler config handle is null");
+    return reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)
+        ->getSamplerConfigAddressModeV(from_c_handle(handle));
+}
+
+uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_border_color(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_sampler_config_handle handle) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    assert(handle != nullptr && "sampler config handle is null");
+    return reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)
+        ->getSamplerConfigBorderColor(from_c_handle(handle));
 }

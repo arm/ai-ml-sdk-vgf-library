@@ -33,6 +33,9 @@ struct ModuleTableBuilder;
 struct Description;
 struct DescriptionBuilder;
 
+struct SamplerConfig;
+struct SamplerConfigBuilder;
+
 struct ModelResourceTableEntry;
 struct ModelResourceTableEntryBuilder;
 
@@ -144,6 +147,47 @@ inline const char *EnumNameModuleType(ModuleType e) {
   const size_t index = static_cast<size_t>(e);
   return EnumNamesModuleType()[index];
 }
+
+enum ExtraConfig : uint8_t {
+  ExtraConfig_NONE = 0,
+  ExtraConfig_SamplerConfig = 1,
+  ExtraConfig_MIN = ExtraConfig_NONE,
+  ExtraConfig_MAX = ExtraConfig_SamplerConfig
+};
+
+inline const ExtraConfig (&EnumValuesExtraConfig())[2] {
+  static const ExtraConfig values[] = {
+    ExtraConfig_NONE,
+    ExtraConfig_SamplerConfig
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesExtraConfig() {
+  static const char * const names[3] = {
+    "NONE",
+    "SamplerConfig",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameExtraConfig(ExtraConfig e) {
+  if (::flatbuffers::IsOutRange(e, ExtraConfig_NONE, ExtraConfig_SamplerConfig)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesExtraConfig()[index];
+}
+
+template<typename T> struct ExtraConfigTraits {
+  static const ExtraConfig enum_value = ExtraConfig_NONE;
+};
+
+template<> struct ExtraConfigTraits<VGF::SamplerConfig> {
+  static const ExtraConfig enum_value = ExtraConfig_SamplerConfig;
+};
+
+bool VerifyExtraConfig(::flatbuffers::Verifier &verifier, const void *obj, ExtraConfig type);
+bool VerifyExtraConfigVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
 
 enum ResourceCategory : uint8_t {
   ResourceCategory_INPUT = 0,
@@ -575,13 +619,96 @@ inline ::flatbuffers::Offset<Description> CreateDescriptionDirect(
       strides__);
 }
 
+struct SamplerConfig FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SamplerConfigBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_MIN_FILTER = 4,
+    VT_MAG_FILTER = 6,
+    VT_ADDRESS_MODE_U = 8,
+    VT_ADDRESS_MODE_V = 10,
+    VT_BORDER_COLOR = 12
+  };
+  uint32_t min_filter() const {
+    return GetField<uint32_t>(VT_MIN_FILTER, 0);
+  }
+  uint32_t mag_filter() const {
+    return GetField<uint32_t>(VT_MAG_FILTER, 0);
+  }
+  uint32_t address_mode_u() const {
+    return GetField<uint32_t>(VT_ADDRESS_MODE_U, 0);
+  }
+  uint32_t address_mode_v() const {
+    return GetField<uint32_t>(VT_ADDRESS_MODE_V, 0);
+  }
+  uint32_t border_color() const {
+    return GetField<uint32_t>(VT_BORDER_COLOR, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_MIN_FILTER, 4) &&
+           VerifyField<uint32_t>(verifier, VT_MAG_FILTER, 4) &&
+           VerifyField<uint32_t>(verifier, VT_ADDRESS_MODE_U, 4) &&
+           VerifyField<uint32_t>(verifier, VT_ADDRESS_MODE_V, 4) &&
+           VerifyField<uint32_t>(verifier, VT_BORDER_COLOR, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SamplerConfigBuilder {
+  typedef SamplerConfig Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_min_filter(uint32_t min_filter) {
+    fbb_.AddElement<uint32_t>(SamplerConfig::VT_MIN_FILTER, min_filter, 0);
+  }
+  void add_mag_filter(uint32_t mag_filter) {
+    fbb_.AddElement<uint32_t>(SamplerConfig::VT_MAG_FILTER, mag_filter, 0);
+  }
+  void add_address_mode_u(uint32_t address_mode_u) {
+    fbb_.AddElement<uint32_t>(SamplerConfig::VT_ADDRESS_MODE_U, address_mode_u, 0);
+  }
+  void add_address_mode_v(uint32_t address_mode_v) {
+    fbb_.AddElement<uint32_t>(SamplerConfig::VT_ADDRESS_MODE_V, address_mode_v, 0);
+  }
+  void add_border_color(uint32_t border_color) {
+    fbb_.AddElement<uint32_t>(SamplerConfig::VT_BORDER_COLOR, border_color, 0);
+  }
+  explicit SamplerConfigBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SamplerConfig> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SamplerConfig>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SamplerConfig> CreateSamplerConfig(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t min_filter = 0,
+    uint32_t mag_filter = 0,
+    uint32_t address_mode_u = 0,
+    uint32_t address_mode_v = 0,
+    uint32_t border_color = 0) {
+  SamplerConfigBuilder builder_(_fbb);
+  builder_.add_border_color(border_color);
+  builder_.add_address_mode_v(address_mode_v);
+  builder_.add_address_mode_u(address_mode_u);
+  builder_.add_mag_filter(mag_filter);
+  builder_.add_min_filter(min_filter);
+  return builder_.Finish();
+}
+
 struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ModelResourceTableEntryBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VK_DESCRIPTOR_TYPE = 4,
     VT_VK_FORMAT = 6,
     VT_CATEGORY = 8,
-    VT_DESCRIPTION = 10
+    VT_DESCRIPTION = 10,
+    VT_EXTRA_CONFIG_TYPE = 12,
+    VT_EXTRA_CONFIG = 14
   };
   uint32_t vk_descriptor_type() const {
     return GetField<uint32_t>(VT_VK_DESCRIPTOR_TYPE, 0);
@@ -595,6 +722,16 @@ struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
   const VGF::Description *description() const {
     return GetPointer<const VGF::Description *>(VT_DESCRIPTION);
   }
+  VGF::ExtraConfig extra_config_type() const {
+    return static_cast<VGF::ExtraConfig>(GetField<uint8_t>(VT_EXTRA_CONFIG_TYPE, 0));
+  }
+  const void *extra_config() const {
+    return GetPointer<const void *>(VT_EXTRA_CONFIG);
+  }
+  template<typename T> const T *extra_config_as() const;
+  const VGF::SamplerConfig *extra_config_as_SamplerConfig() const {
+    return extra_config_type() == VGF::ExtraConfig_SamplerConfig ? static_cast<const VGF::SamplerConfig *>(extra_config()) : nullptr;
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VK_DESCRIPTOR_TYPE, 4) &&
@@ -602,9 +739,16 @@ struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
            VerifyField<uint8_t>(verifier, VT_CATEGORY, 1) &&
            VerifyOffset(verifier, VT_DESCRIPTION) &&
            verifier.VerifyTable(description()) &&
+           VerifyField<uint8_t>(verifier, VT_EXTRA_CONFIG_TYPE, 1) &&
+           VerifyOffset(verifier, VT_EXTRA_CONFIG) &&
+           VerifyExtraConfig(verifier, extra_config(), extra_config_type()) &&
            verifier.EndTable();
   }
 };
+
+template<> inline const VGF::SamplerConfig *ModelResourceTableEntry::extra_config_as<VGF::SamplerConfig>() const {
+  return extra_config_as_SamplerConfig();
+}
 
 struct ModelResourceTableEntryBuilder {
   typedef ModelResourceTableEntry Table;
@@ -622,6 +766,12 @@ struct ModelResourceTableEntryBuilder {
   void add_description(::flatbuffers::Offset<VGF::Description> description) {
     fbb_.AddOffset(ModelResourceTableEntry::VT_DESCRIPTION, description);
   }
+  void add_extra_config_type(VGF::ExtraConfig extra_config_type) {
+    fbb_.AddElement<uint8_t>(ModelResourceTableEntry::VT_EXTRA_CONFIG_TYPE, static_cast<uint8_t>(extra_config_type), 0);
+  }
+  void add_extra_config(::flatbuffers::Offset<void> extra_config) {
+    fbb_.AddOffset(ModelResourceTableEntry::VT_EXTRA_CONFIG, extra_config);
+  }
   explicit ModelResourceTableEntryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -638,11 +788,15 @@ inline ::flatbuffers::Offset<ModelResourceTableEntry> CreateModelResourceTableEn
     uint32_t vk_descriptor_type = 0,
     uint32_t vk_format = 0,
     VGF::ResourceCategory category = VGF::ResourceCategory_INPUT,
-    ::flatbuffers::Offset<VGF::Description> description = 0) {
+    ::flatbuffers::Offset<VGF::Description> description = 0,
+    VGF::ExtraConfig extra_config_type = VGF::ExtraConfig_NONE,
+    ::flatbuffers::Offset<void> extra_config = 0) {
   ModelResourceTableEntryBuilder builder_(_fbb);
+  builder_.add_extra_config(extra_config);
   builder_.add_description(description);
   builder_.add_vk_format(vk_format);
   builder_.add_vk_descriptor_type(vk_descriptor_type);
+  builder_.add_extra_config_type(extra_config_type);
   builder_.add_category(category);
   return builder_.Finish();
 }
@@ -1305,6 +1459,31 @@ inline bool VerifyModuleCodeVector(::flatbuffers::Verifier &verifier, const ::fl
   for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
     if (!VerifyModuleCode(
         verifier,  values->Get(i), types->GetEnum<ModuleCode>(i))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+inline bool VerifyExtraConfig(::flatbuffers::Verifier &verifier, const void *obj, ExtraConfig type) {
+  switch (type) {
+    case ExtraConfig_NONE: {
+      return true;
+    }
+    case ExtraConfig_SamplerConfig: {
+      auto ptr = reinterpret_cast<const VGF::SamplerConfig *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    default: return true;
+  }
+}
+
+inline bool VerifyExtraConfigVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
+  if (!values || !types) return !values && !types;
+  if (values->size() != types->size()) return false;
+  for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
+    if (!VerifyExtraConfig(
+        verifier,  values->Get(i), types->GetEnum<ExtraConfig>(i))) {
       return false;
     }
   }

@@ -26,7 +26,7 @@
 namespace mlsdk::vgflib {
 
 // Record the VK_HEADER_VERSION from the vulkan_core.h used to generate this file
-const int32_t HEADER_VERSION_USED_FOR_HELPER_GENERATION = 338;
+const int32_t HEADER_VERSION_USED_FOR_HELPER_GENERATION = 345;
 
 #if defined(VGFLIB_VK_HELPERS)
 using VkDescriptorType = int32_t;
@@ -2067,6 +2067,256 @@ inline bool ValidateDecodedFormatType(FormatType e) {
     case 1000609013: // VK_FORMAT_G14X2_B14X2R14X2_2PLANE_422_UNORM_3PACK16_ARM
     case 1000658000: // VK_FORMAT_SBS80_ARM
     case 0x7FFFFFFF: // VK_FORMAT_MAX_ENUM
+        return true;
+    default:
+        return false;
+    }
+}
+
+#if defined(VGFLIB_VK_HELPERS)
+using VkFilter = int32_t;
+#endif
+
+// Cast a VkFilter type to a FilterType type
+inline FilterType ToFilterType(VkFilter e) { return static_cast<FilterType>(e); }
+
+// Cast a FilterType type to a VkFilter type
+inline VkFilter ToVkFilter(FilterType e) { return static_cast<VkFilter>(e); }
+
+// Ensure validity of casted types
+static_assert(sizeof(VkFilter) == sizeof(FilterType));
+
+// Convert a FilterType enum value to cstring name
+inline std::string FilterTypeToName(FilterType e) {
+    switch (static_cast<int>(e)) {
+    case 0:
+        return "VK_FILTER_NEAREST";
+    case 1:
+        return "VK_FILTER_LINEAR";
+    case 1000015000:
+        return "VK_FILTER_CUBIC_EXT / VK_FILTER_CUBIC_IMG";
+    case 0x7FFFFFFF:
+        return "VK_FILTER_MAX_ENUM";
+    default: {
+        std::stringstream ss;
+        ss << "Unknown(" << e << ")";
+        return ss.str();
+    }
+    }
+}
+
+// Convert a string name to FilterTypeenum value
+inline FilterType NameToFilterType(const std::string &str) {
+    if (str == "VK_FILTER_NEAREST") {
+        return 0;
+    }
+    if (str == "VK_FILTER_LINEAR") {
+        return 1;
+    }
+    if (str == "VK_FILTER_CUBIC_EXT") {
+        return 1000015000;
+    }
+    if (str == "VK_FILTER_CUBIC_IMG") {
+        return 1000015000;
+    }
+    if (str == "VK_FILTER_MAX_ENUM") {
+        return 0x7FFFFFFF;
+    }
+    // Unknown name
+    return -1;
+}
+
+// Validate that the decoded enum is valid given the Vulkan headers version in use. If this call
+// fails, it indicates that either a newer vulkan_core.h was used by the VGF generator OR that the
+// VGF is corrupted in some other way. Regenerating this header file with a newer Vulkan headers
+// version may resolve the issue.
+inline bool ValidateDecodedFilterType(FilterType e) {
+    switch (static_cast<int>(e)) {
+    case 0:          // VK_FILTER_NEAREST
+    case 1:          // VK_FILTER_LINEAR
+    case 1000015000: // VK_FILTER_CUBIC_EXT / VK_FILTER_CUBIC_IMG
+    case 0x7FFFFFFF: // VK_FILTER_MAX_ENUM
+        return true;
+    default:
+        return false;
+    }
+}
+
+#if defined(VGFLIB_VK_HELPERS)
+using VkSamplerAddressMode = int32_t;
+#endif
+
+// Cast a VkSamplerAddressMode type to a SamplerAddressModeType type
+inline SamplerAddressModeType ToSamplerAddressModeType(VkSamplerAddressMode e) {
+    return static_cast<SamplerAddressModeType>(e);
+}
+
+// Cast a SamplerAddressModeType type to a VkSamplerAddressMode type
+inline VkSamplerAddressMode ToVkSamplerAddressMode(SamplerAddressModeType e) {
+    return static_cast<VkSamplerAddressMode>(e);
+}
+
+// Ensure validity of casted types
+static_assert(sizeof(VkSamplerAddressMode) == sizeof(SamplerAddressModeType));
+
+// Convert a SamplerAddressModeType enum value to cstring name
+inline std::string SamplerAddressModeTypeToName(SamplerAddressModeType e) {
+    switch (static_cast<int>(e)) {
+    case 0:
+        return "VK_SAMPLER_ADDRESS_MODE_REPEAT";
+    case 1:
+        return "VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT";
+    case 2:
+        return "VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE";
+    case 3:
+        return "VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER";
+    case 4:
+        return "VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE / VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE_KHR";
+    case 0x7FFFFFFF:
+        return "VK_SAMPLER_ADDRESS_MODE_MAX_ENUM";
+    default: {
+        std::stringstream ss;
+        ss << "Unknown(" << e << ")";
+        return ss.str();
+    }
+    }
+}
+
+// Convert a string name to SamplerAddressModeTypeenum value
+inline SamplerAddressModeType NameToSamplerAddressModeType(const std::string &str) {
+    if (str == "VK_SAMPLER_ADDRESS_MODE_REPEAT") {
+        return 0;
+    }
+    if (str == "VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT") {
+        return 1;
+    }
+    if (str == "VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE") {
+        return 2;
+    }
+    if (str == "VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER") {
+        return 3;
+    }
+    if (str == "VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE") {
+        return 4;
+    }
+    if (str == "VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE_KHR") {
+        return 4;
+    }
+    if (str == "VK_SAMPLER_ADDRESS_MODE_MAX_ENUM") {
+        return 0x7FFFFFFF;
+    }
+    // Unknown name
+    return -1;
+}
+
+// Validate that the decoded enum is valid given the Vulkan headers version in use. If this call
+// fails, it indicates that either a newer vulkan_core.h was used by the VGF generator OR that the
+// VGF is corrupted in some other way. Regenerating this header file with a newer Vulkan headers
+// version may resolve the issue.
+inline bool ValidateDecodedSamplerAddressModeType(SamplerAddressModeType e) {
+    switch (static_cast<int>(e)) {
+    case 0:          // VK_SAMPLER_ADDRESS_MODE_REPEAT
+    case 1:          // VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT
+    case 2:          // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+    case 3:          // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
+    case 4:          // VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE / VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE_KHR
+    case 0x7FFFFFFF: // VK_SAMPLER_ADDRESS_MODE_MAX_ENUM
+        return true;
+    default:
+        return false;
+    }
+}
+
+#if defined(VGFLIB_VK_HELPERS)
+using VkBorderColor = int32_t;
+#endif
+
+// Cast a VkBorderColor type to a BorderColorType type
+inline BorderColorType ToBorderColorType(VkBorderColor e) { return static_cast<BorderColorType>(e); }
+
+// Cast a BorderColorType type to a VkBorderColor type
+inline VkBorderColor ToVkBorderColor(BorderColorType e) { return static_cast<VkBorderColor>(e); }
+
+// Ensure validity of casted types
+static_assert(sizeof(VkBorderColor) == sizeof(BorderColorType));
+
+// Convert a BorderColorType enum value to cstring name
+inline std::string BorderColorTypeToName(BorderColorType e) {
+    switch (static_cast<int>(e)) {
+    case 0:
+        return "VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK";
+    case 1:
+        return "VK_BORDER_COLOR_INT_TRANSPARENT_BLACK";
+    case 2:
+        return "VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK";
+    case 3:
+        return "VK_BORDER_COLOR_INT_OPAQUE_BLACK";
+    case 4:
+        return "VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE";
+    case 5:
+        return "VK_BORDER_COLOR_INT_OPAQUE_WHITE";
+    case 1000287003:
+        return "VK_BORDER_COLOR_FLOAT_CUSTOM_EXT";
+    case 1000287004:
+        return "VK_BORDER_COLOR_INT_CUSTOM_EXT";
+    case 0x7FFFFFFF:
+        return "VK_BORDER_COLOR_MAX_ENUM";
+    default: {
+        std::stringstream ss;
+        ss << "Unknown(" << e << ")";
+        return ss.str();
+    }
+    }
+}
+
+// Convert a string name to BorderColorTypeenum value
+inline BorderColorType NameToBorderColorType(const std::string &str) {
+    if (str == "VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK") {
+        return 0;
+    }
+    if (str == "VK_BORDER_COLOR_INT_TRANSPARENT_BLACK") {
+        return 1;
+    }
+    if (str == "VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK") {
+        return 2;
+    }
+    if (str == "VK_BORDER_COLOR_INT_OPAQUE_BLACK") {
+        return 3;
+    }
+    if (str == "VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE") {
+        return 4;
+    }
+    if (str == "VK_BORDER_COLOR_INT_OPAQUE_WHITE") {
+        return 5;
+    }
+    if (str == "VK_BORDER_COLOR_FLOAT_CUSTOM_EXT") {
+        return 1000287003;
+    }
+    if (str == "VK_BORDER_COLOR_INT_CUSTOM_EXT") {
+        return 1000287004;
+    }
+    if (str == "VK_BORDER_COLOR_MAX_ENUM") {
+        return 0x7FFFFFFF;
+    }
+    // Unknown name
+    return -1;
+}
+
+// Validate that the decoded enum is valid given the Vulkan headers version in use. If this call
+// fails, it indicates that either a newer vulkan_core.h was used by the VGF generator OR that the
+// VGF is corrupted in some other way. Regenerating this header file with a newer Vulkan headers
+// version may resolve the issue.
+inline bool ValidateDecodedBorderColorType(BorderColorType e) {
+    switch (static_cast<int>(e)) {
+    case 0:          // VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK
+    case 1:          // VK_BORDER_COLOR_INT_TRANSPARENT_BLACK
+    case 2:          // VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK
+    case 3:          // VK_BORDER_COLOR_INT_OPAQUE_BLACK
+    case 4:          // VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE
+    case 5:          // VK_BORDER_COLOR_INT_OPAQUE_WHITE
+    case 1000287003: // VK_BORDER_COLOR_FLOAT_CUSTOM_EXT
+    case 1000287004: // VK_BORDER_COLOR_INT_CUSTOM_EXT
+    case 0x7FFFFFFF: // VK_BORDER_COLOR_MAX_ENUM
         return true;
     default:
         return false;
