@@ -253,7 +253,6 @@ TEST(CppModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
     ResourceRef intermediateResource = encoder->AddIntermediateResource(
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, intermediateShape, intermediateStrides);
     encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
-    encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
     encoder->AddSamplerConfig(intermediateResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER, SAMPLER_ADDRESS_MODE_U,
                               SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
     ResourceRef defaultResource =
@@ -610,7 +609,6 @@ TEST(CModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
                                   inputStrides, SHARED_ALIAS_GROUP);
     auto intermediateResource = encoder->AddIntermediateResource(
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, intermediateShape, intermediateStrides);
-    encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
     encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
     encoder->AddSamplerConfig(intermediateResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER, SAMPLER_ADDRESS_MODE_U,
                               SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
