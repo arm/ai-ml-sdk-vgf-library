@@ -204,3 +204,95 @@ def test_encode_decode_model_resource_table_sampler_fields():
 
     default_handle = mrtDecoder.getSamplerConfigHandle(default_resource.reference)
     assert default_handle is None
+
+
+def test_encode_decode_model_resource_table_alias_group_fields():
+
+    encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
+
+    input_shape = np.array([1, 2, 3, 4], dtype=np.int64)
+    input_strides = np.array([8, 12, 16, 20], dtype=np.int64)
+    intermediate_shape = np.array([4, 3, 2, 1], dtype=np.int64)
+    intermediate_strides = np.array([20, 16, 12, 8], dtype=np.int64)
+    SHARED_ALIAS_GROUP = 17
+
+    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1
+    VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3
+    VK_FORMAT_R4G4_UNORM_PACK8 = 1
+    VK_FORMAT_R4G4B4A4_UNORM_PACK16 = 12
+
+    input_resource = encoder.AddInputResource(
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        VK_FORMAT_R4G4_UNORM_PACK8,
+        input_shape,
+        input_strides,
+        SHARED_ALIAS_GROUP,
+    )
+    intermediate_resource = encoder.AddIntermediateResource(
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        VK_FORMAT_R4G4_UNORM_PACK8,
+        intermediate_shape,
+        intermediate_strides,
+    )
+    encoder.SetAliasGroup(intermediate_resource, SHARED_ALIAS_GROUP)
+    encoder.SetAliasGroup(intermediate_resource, SHARED_ALIAS_GROUP)
+    encoder.AddSamplerConfig(intermediate_resource, 0, 1, 2, 3, 4)
+    default_resource = encoder.AddOutputResource(
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        VK_FORMAT_R4G4B4A4_UNORM_PACK16,
+        input_shape,
+        [],
+    )
+
+    encoder.Finish()
+
+    stream = io.BytesIO()
+    assert encoder.WriteTo(stream)
+    buffer = stream.getbuffer()
+
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
+    assert headerDecoder is not None
+
+    mrtDecoder = vgf.CreateModelResourceTableDecoder(
+        buffer[headerDecoder.GetModelResourceTableOffset() :],
+        headerDecoder.GetModelResourceTableSize(),
+    )
+    assert mrtDecoder is not None
+
+    assert mrtDecoder.getAliasGroupId(input_resource.reference) == SHARED_ALIAS_GROUP
+    assert (
+        mrtDecoder.getAliasGroupId(intermediate_resource.reference)
+        == SHARED_ALIAS_GROUP
+    )
+    assert (
+        mrtDecoder.getCategory(intermediate_resource.reference)
+        == vgf.ResourceCategory.Intermediate
+    )
+    assert (
+        mrtDecoder.getDescriptorType(intermediate_resource.reference)
+        == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+    )
+    assert (
+        mrtDecoder.getVkFormat(intermediate_resource.reference)
+        == VK_FORMAT_R4G4_UNORM_PACK8
+    )
+    assert mrtDecoder.getTensorShape(intermediate_resource.reference) == memoryview(
+        intermediate_shape
+    )
+    assert mrtDecoder.getTensorStride(intermediate_resource.reference) == memoryview(
+        intermediate_strides
+    )
+
+    intermediate_handle = mrtDecoder.getSamplerConfigHandle(
+        intermediate_resource.reference
+    )
+    assert intermediate_handle is not None
+    assert mrtDecoder.getSamplerConfigMinFilter(intermediate_handle) == 0
+    assert mrtDecoder.getSamplerConfigMagFilter(intermediate_handle) == 1
+    assert mrtDecoder.getSamplerConfigAddressModeU(intermediate_handle) == 2
+    assert mrtDecoder.getSamplerConfigAddressModeV(intermediate_handle) == 3
+    assert mrtDecoder.getSamplerConfigBorderColor(intermediate_handle) == 4
+
+    assert mrtDecoder.getAliasGroupId(default_resource.reference) is None
+    default_handle = mrtDecoder.getSamplerConfigHandle(default_resource.reference)
+    assert default_handle is None

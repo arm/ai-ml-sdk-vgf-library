@@ -44,8 +44,9 @@ ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
             throw std::runtime_error("Input resource missing descriptor type");
         }
         {
-            const auto resourceRef = encoder.AddInputResource(resource.mDescriptorType.value(), resource.mVkFormat,
-                                                              resource.mShape, resource.mStride);
+            const auto resourceRef =
+                encoder.AddInputResource(resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape,
+                                         resource.mStride, resource.mAliasGroupId);
             maybeAddSamplerConfig(resourceRef);
             return resourceRef;
         }
@@ -54,8 +55,9 @@ ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
             throw std::runtime_error("Output resource missing descriptor type");
         }
         {
-            const auto resourceRef = encoder.AddOutputResource(resource.mDescriptorType.value(), resource.mVkFormat,
-                                                               resource.mShape, resource.mStride);
+            const auto resourceRef =
+                encoder.AddOutputResource(resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape,
+                                          resource.mStride, resource.mAliasGroupId);
             maybeAddSamplerConfig(resourceRef);
             return resourceRef;
         }
@@ -64,8 +66,9 @@ ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
             throw std::runtime_error("Intermediate resource missing descriptor type");
         }
         {
-            const auto resourceRef = encoder.AddIntermediateResource(
-                resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape, resource.mStride);
+            const auto resourceRef =
+                encoder.AddIntermediateResource(resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape,
+                                                resource.mStride, resource.mAliasGroupId);
             maybeAddSamplerConfig(resourceRef);
             return resourceRef;
         }

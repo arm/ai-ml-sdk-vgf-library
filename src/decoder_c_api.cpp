@@ -134,17 +134,6 @@ mlsdk_decoder_module_type convert_module_type(ModuleType type) {
     }
 }
 
-mlsdk_vk_descriptor_type_optional convert_descriptor_type(std::optional<DescriptorType> type) {
-    mlsdk_vk_descriptor_type_optional descTypeOptional;
-    memset(&descTypeOptional, 0, sizeof(mlsdk_vk_descriptor_type_optional));
-    if (type.has_value()) {
-        descTypeOptional.value = static_cast<mlsdk_vk_descriptor_type>(*type);
-        descTypeOptional.has_value = true;
-    }
-
-    return descTypeOptional;
-}
-
 mlsdk_vk_format convert_vk_format(FormatType format) {
     assert(UndefinedFormat() == mlsdk_vk_format_undefined() && "API vk_format_undefined mismatch");
 
@@ -489,12 +478,36 @@ size_t mlsdk_decoder_get_model_resource_table_num_entries(
     return reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)->size();
 }
 
-mlsdk_vk_descriptor_type_optional
-mlsdk_decoder_get_vk_descriptor_type(const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
-                                     uint32_t idx) {
+bool mlsdk_decoder_get_vk_descriptor_type(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder, uint32_t idx,
+    mlsdk_vk_descriptor_type *descriptorType) {
     assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
-    return convert_descriptor_type(
-        reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)->getDescriptorType(idx));
+    assert(descriptorType != nullptr && "descriptorType is null");
+
+    const std::optional<DescriptorType> type =
+        reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)->getDescriptorType(idx);
+    if (!type.has_value()) {
+        return false;
+    }
+
+    *descriptorType = static_cast<mlsdk_vk_descriptor_type>(*type);
+    return true;
+}
+
+bool mlsdk_decoder_model_resource_table_get_alias_group_id(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder, uint32_t idx,
+    mlsdk_alias_group_id *aliasGroupId) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    assert(aliasGroupId != nullptr && "aliasGroupId is null");
+
+    const std::optional<AliasGroupId> value =
+        reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)->getAliasGroupId(idx);
+    if (!value.has_value()) {
+        return false;
+    }
+
+    *aliasGroupId = *value;
+    return true;
 }
 
 mlsdk_vk_format mlsdk_vk_format_undefined() { return UndefinedFormat(); }

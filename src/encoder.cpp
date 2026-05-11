@@ -212,33 +212,42 @@ class EncoderImpl : public Encoder {
 
     ResourceRef AddModelResourceTableEntry(ResourceCategory category, std::optional<DescriptorType> vkDescriptorType,
                                            FormatType vkFormat, const std::vector<int64_t> &shape,
-                                           const std::vector<int64_t> &strides) {
+                                           const std::vector<int64_t> &strides,
+                                           std::optional<AliasGroupId> aliasGroupId = std::nullopt) {
         assert(!finished_ && "cannot add resource when marked as finished");
+        assert((!aliasGroupId.has_value() || *aliasGroupId != INVALID_ALIAS_GROUP_ID) &&
+               "aliasGroupId must not use the reserved invalid value");
         resourceRecords_.emplace_back(ResourceRecord{
             category,
             vkDescriptorType,
             vkFormat,
             shape,
             strides,
+            aliasGroupId,
             std::nullopt,
         });
         return {static_cast<uint32_t>(resourceRecords_.size() - 1)};
     }
 
     ResourceRef AddInputResource(DescriptorType vkDescriptorType, FormatType vkFormat,
-                                 const std::vector<int64_t> &shape, const std::vector<int64_t> &strides) override {
-        return AddModelResourceTableEntry(ResourceCategory::INPUT, vkDescriptorType, vkFormat, shape, strides);
+                                 const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
+                                 std::optional<AliasGroupId> aliasGroupId) override {
+        return AddModelResourceTableEntry(ResourceCategory::INPUT, vkDescriptorType, vkFormat, shape, strides,
+                                          aliasGroupId);
     }
 
     ResourceRef AddOutputResource(DescriptorType vkDescriptorType, FormatType vkFormat,
-                                  const std::vector<int64_t> &shape, const std::vector<int64_t> &strides) override {
-        return AddModelResourceTableEntry(ResourceCategory::OUTPUT, vkDescriptorType, vkFormat, shape, strides);
+                                  const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
+                                  std::optional<AliasGroupId> aliasGroupId) override {
+        return AddModelResourceTableEntry(ResourceCategory::OUTPUT, vkDescriptorType, vkFormat, shape, strides,
+                                          aliasGroupId);
     }
 
     ResourceRef AddIntermediateResource(DescriptorType vkDescriptorType, FormatType vkFormat,
-                                        const std::vector<int64_t> &shape,
-                                        const std::vector<int64_t> &strides) override {
-        return AddModelResourceTableEntry(ResourceCategory::INTERMEDIATE, vkDescriptorType, vkFormat, shape, strides);
+                                        const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
+                                        std::optional<AliasGroupId> aliasGroupId) override {
+        return AddModelResourceTableEntry(ResourceCategory::INTERMEDIATE, vkDescriptorType, vkFormat, shape, strides,
+                                          aliasGroupId);
     }
 
     ResourceRef AddConstantResource(FormatType vkFormat, const std::vector<int64_t> &shape,
@@ -254,6 +263,23 @@ class EncoderImpl : public Encoder {
         resourceRecords_[resource.reference].samplerConfig = SamplerConfigRecord{
             samplerMinFilter, samplerMagFilter, samplerAddressModeU, samplerAddressModeV, samplerBorderColor,
         };
+    }
+
+    void SetAliasGroup(ResourceRef resource, AliasGroupId aliasGroupId) override {
+        assert(!finished_ && "cannot set alias group when marked as finished");
+        assert(resource.reference < resourceRecords_.size() && "resource reference out of range");
+        assert(aliasGroupId != INVALID_ALIAS_GROUP_ID && "aliasGroupId must not use the reserved invalid value");
+
+        auto &resourceRecord = resourceRecords_[resource.reference];
+        assert(resourceRecord.category != ResourceCategory::CONSTANT &&
+               "constant resources do not support alias groups");
+        if (resourceRecord.aliasGroupId.has_value()) {
+            assert(*resourceRecord.aliasGroupId == aliasGroupId &&
+                   "resource already belongs to a different alias group");
+            return;
+        }
+
+        resourceRecord.aliasGroupId = aliasGroupId;
     }
 
     ConstantRef AddConstant(ResourceRef resourceRef, const void *data, size_t sizeInBytes,
@@ -301,10 +327,11 @@ class EncoderImpl : public Encoder {
                     EncodedDescriptorType encodedDescType =
                         resource.vkDescriptorType ? static_cast<EncodedDescriptorType>(*resource.vkDescriptorType)
                                                   : NullOptDescriptorType();
+                    const uint32_t encodedAliasGroupId = resource.aliasGroupId.value_or(INVALID_ALIAS_GROUP_ID);
                     auto description =
                         VGF::CreateDescriptionDirect(modelResourceBuilder_, &resource.shape, &resource.strides);
                     VGF::ExtraConfig extraConfigType = VGF::ExtraConfig_NONE;
-                    flatbuffers::Offset<void> extraConfig;
+                    flatbuffers::Offset<void> extraConfig{};
                     if (resource.samplerConfig.has_value()) {
                         const SamplerConfigRecord &config = *resource.samplerConfig;
                         auto samplerConfig =
@@ -315,7 +342,7 @@ class EncoderImpl : public Encoder {
                     }
                     return VGF::CreateModelResourceTableEntry(
                         modelResourceBuilder_, encodedDescType, static_cast<uint32_t>(resource.vkFormat),
-                        toVGF(resource.category), description, extraConfigType, extraConfig);
+                        toVGF(resource.category), description, extraConfigType, extraConfig, encodedAliasGroupId);
                 });
         auto modelResourceTable = VGF::CreateModelResourceTable(modelResourceBuilder_, modelResourceTableEntries);
         modelResourceBuilder_.Finish(modelResourceTable);
@@ -413,6 +440,7 @@ class EncoderImpl : public Encoder {
         FormatType vkFormat;
         std::vector<int64_t> shape;
         std::vector<int64_t> strides;
+        std::optional<AliasGroupId> aliasGroupId;
         std::optional<SamplerConfigRecord> samplerConfig;
     };
 

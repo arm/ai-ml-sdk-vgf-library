@@ -708,7 +708,8 @@ struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
     VT_CATEGORY = 8,
     VT_DESCRIPTION = 10,
     VT_EXTRA_CONFIG_TYPE = 12,
-    VT_EXTRA_CONFIG = 14
+    VT_EXTRA_CONFIG = 14,
+    VT_ALIAS_GROUP_ID = 16
   };
   uint32_t vk_descriptor_type() const {
     return GetField<uint32_t>(VT_VK_DESCRIPTOR_TYPE, 0);
@@ -732,6 +733,9 @@ struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
   const VGF::SamplerConfig *extra_config_as_SamplerConfig() const {
     return extra_config_type() == VGF::ExtraConfig_SamplerConfig ? static_cast<const VGF::SamplerConfig *>(extra_config()) : nullptr;
   }
+  uint32_t alias_group_id() const {
+    return GetField<uint32_t>(VT_ALIAS_GROUP_ID, 4294967295);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VK_DESCRIPTOR_TYPE, 4) &&
@@ -742,6 +746,7 @@ struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
            VerifyField<uint8_t>(verifier, VT_EXTRA_CONFIG_TYPE, 1) &&
            VerifyOffset(verifier, VT_EXTRA_CONFIG) &&
            VerifyExtraConfig(verifier, extra_config(), extra_config_type()) &&
+           VerifyField<uint32_t>(verifier, VT_ALIAS_GROUP_ID, 4) &&
            verifier.EndTable();
   }
 };
@@ -772,6 +777,9 @@ struct ModelResourceTableEntryBuilder {
   void add_extra_config(::flatbuffers::Offset<void> extra_config) {
     fbb_.AddOffset(ModelResourceTableEntry::VT_EXTRA_CONFIG, extra_config);
   }
+  void add_alias_group_id(uint32_t alias_group_id) {
+    fbb_.AddElement<uint32_t>(ModelResourceTableEntry::VT_ALIAS_GROUP_ID, alias_group_id, 4294967295);
+  }
   explicit ModelResourceTableEntryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -790,8 +798,10 @@ inline ::flatbuffers::Offset<ModelResourceTableEntry> CreateModelResourceTableEn
     VGF::ResourceCategory category = VGF::ResourceCategory_INPUT,
     ::flatbuffers::Offset<VGF::Description> description = 0,
     VGF::ExtraConfig extra_config_type = VGF::ExtraConfig_NONE,
-    ::flatbuffers::Offset<void> extra_config = 0) {
+    ::flatbuffers::Offset<void> extra_config = 0,
+    uint32_t alias_group_id = 4294967295) {
   ModelResourceTableEntryBuilder builder_(_fbb);
+  builder_.add_alias_group_id(alias_group_id);
   builder_.add_extra_config(extra_config);
   builder_.add_description(description);
   builder_.add_vk_format(vk_format);

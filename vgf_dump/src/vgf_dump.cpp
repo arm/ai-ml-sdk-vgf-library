@@ -427,9 +427,11 @@ void to_json(nlohmann::json &j, const Resource &resource) {
         {"shape", resource.mShape},
         {"stride", resource.mStride},
     };
-
     if (resource.mSamplerConfig.has_value()) {
         j["sampler_config"] = *resource.mSamplerConfig;
+    }
+    if (resource.mAliasGroupId.has_value()) {
+        j["alias_group_id"] = *resource.mAliasGroupId;
     }
 }
 

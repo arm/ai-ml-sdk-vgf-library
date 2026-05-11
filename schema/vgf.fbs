@@ -71,6 +71,9 @@ table ModelResourceTableEntry {
     // Optional config extension point for resource-specific metadata.
     // NONE indicates no extra config is present.
     extra_config: ExtraConfig;
+    // Optional symmetric alias group identifier shared by MRT entries that use
+    // the same storage. When omitted, the MRT entry does not alias peers.
+    alias_group_id: uint = 4294967295;
 }
 
 table ModelResourceTable {

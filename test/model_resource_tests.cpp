@@ -231,6 +231,76 @@ TEST(CppModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
     EXPECT_EQ(defaultHandle, nullptr);
 }
 
+TEST(CppModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
+    std::stringstream buffer;
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    std::vector<int64_t> inputShape{1, 2, 3, 4};
+    std::vector<int64_t> inputStrides{8, 12, 16, 20};
+    std::vector<int64_t> intermediateShape{4, 3, 2, 1};
+    std::vector<int64_t> intermediateStrides{20, 16, 12, 8};
+    constexpr AliasGroupId SHARED_ALIAS_GROUP = 17;
+
+    constexpr uint32_t SAMPLER_MIN_FILTER = 0;     // VK_FILTER_NEAREST
+    constexpr uint32_t SAMPLER_MAG_FILTER = 1;     // VK_FILTER_LINEAR
+    constexpr uint32_t SAMPLER_ADDRESS_MODE_U = 2; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+    constexpr uint32_t SAMPLER_ADDRESS_MODE_V = 3; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
+    constexpr uint32_t SAMPLER_BORDER_COLOR = 4;   // VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE
+
+    ResourceRef inputResource =
+        encoder->AddInputResource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, inputShape,
+                                  inputStrides, SHARED_ALIAS_GROUP);
+    ResourceRef intermediateResource = encoder->AddIntermediateResource(
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, intermediateShape, intermediateStrides);
+    encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
+    encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
+    encoder->AddSamplerConfig(intermediateResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER, SAMPLER_ADDRESS_MODE_U,
+                              SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
+    ResourceRef defaultResource =
+        encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4B4A4_UNORM_PACK16, inputShape, {});
+
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    std::string vgfData = buffer.str();
+    std::unique_ptr<HeaderDecoder> headerDecoder = CreateHeaderDecoder(
+        vgfData.c_str(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(vgfData.size()));
+    ASSERT_NE(headerDecoder, nullptr);
+
+    std::unique_ptr<ModelResourceTableDecoder> mrtDecoder = CreateModelResourceTableDecoder(
+        vgfData.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
+    ASSERT_NE(mrtDecoder, nullptr);
+
+    const std::optional<AliasGroupId> inputAliasGroupId = mrtDecoder->getAliasGroupId(inputResource.reference);
+    ASSERT_TRUE(inputAliasGroupId.has_value());
+    EXPECT_EQ(inputAliasGroupId.value(), SHARED_ALIAS_GROUP);
+
+    const std::optional<AliasGroupId> intermediateAliasGroupId =
+        mrtDecoder->getAliasGroupId(intermediateResource.reference);
+    ASSERT_TRUE(intermediateAliasGroupId.has_value());
+    EXPECT_EQ(intermediateAliasGroupId.value(), SHARED_ALIAS_GROUP);
+    EXPECT_EQ(mrtDecoder->getCategory(intermediateResource.reference), ResourceCategory::INTERMEDIATE);
+    EXPECT_EQ(mrtDecoder->getDescriptorType(intermediateResource.reference), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    EXPECT_EQ(mrtDecoder->getVkFormat(intermediateResource.reference), VK_FORMAT_R4G4_UNORM_PACK8);
+    EXPECT_EQ(mrtDecoder->getTensorShape(intermediateResource.reference),
+              DataView<int64_t>(intermediateShape.data(), intermediateShape.size()));
+    EXPECT_EQ(mrtDecoder->getTensorStride(intermediateResource.reference),
+              DataView<int64_t>(intermediateStrides.data(), intermediateStrides.size()));
+
+    const SamplerConfigHandle intermediateHandle = mrtDecoder->getSamplerConfigHandle(intermediateResource.reference);
+    ASSERT_NE(intermediateHandle, nullptr);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigMinFilter(intermediateHandle), SAMPLER_MIN_FILTER);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigMagFilter(intermediateHandle), SAMPLER_MAG_FILTER);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigAddressModeU(intermediateHandle), SAMPLER_ADDRESS_MODE_U);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigAddressModeV(intermediateHandle), SAMPLER_ADDRESS_MODE_V);
+    EXPECT_EQ(mrtDecoder->getSamplerConfigBorderColor(intermediateHandle), SAMPLER_BORDER_COLOR);
+
+    const std::optional<AliasGroupId> defaultAliasGroupId = mrtDecoder->getAliasGroupId(defaultResource.reference);
+    EXPECT_FALSE(defaultAliasGroupId.has_value());
+    const SamplerConfigHandle defaultHandle = mrtDecoder->getSamplerConfigHandle(defaultResource.reference);
+    EXPECT_EQ(defaultHandle, nullptr);
+}
+
 TEST(CppVerify, ModelResourceSizeWrapRejected) {
     Logger logger;
     const uint64_t resourceOffset = 46;
@@ -356,9 +426,10 @@ TEST(CModelResourceTable, EncodeDecode) {
 
     ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_category(resourceTableDecoder, resource0.reference) ==
                 mlsdk_decoder_mrt_category_input);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).has_value);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).value ==
-                mlsdkVkDescriptorTypeStorageImage);
+    mlsdk_vk_descriptor_type resource0DescriptorType = 0;
+    ASSERT_TRUE(
+        mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference, &resource0DescriptorType));
+    ASSERT_TRUE(resource0DescriptorType == mlsdkVkDescriptorTypeStorageImage);
     ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource0.reference) == mlsdkVkFormatR4g4UnormPack8);
 
     mlsdk_decoder_tensor_dimensions tensorShape1;
@@ -373,7 +444,9 @@ TEST(CModelResourceTable, EncodeDecode) {
 
     ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_category(resourceTableDecoder, resource1.reference) ==
                 mlsdk_decoder_mrt_category_constant);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource1.reference).has_value == false);
+    mlsdk_vk_descriptor_type resource1DescriptorType = 0;
+    ASSERT_FALSE(
+        mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource1.reference, &resource1DescriptorType));
     ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource1.reference) ==
                 mlsdkVkFormatR4g4b4a4UnormPack16);
 
@@ -430,9 +503,10 @@ TEST(CModelResourceTable, UnknownDimensions) {
 
     ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_category(resourceTableDecoder, resource0.reference) ==
                 mlsdk_decoder_mrt_category_input);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).has_value);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference).value ==
-                mlsdkVkDescriptorTypeStorageImage);
+    mlsdk_vk_descriptor_type resource0DescriptorType = 0;
+    ASSERT_TRUE(
+        mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource0.reference, &resource0DescriptorType));
+    ASSERT_TRUE(resource0DescriptorType == mlsdkVkDescriptorTypeStorageImage);
     ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource0.reference) == mlsdkVkFormatR4g4UnormPack8);
 
     mlsdk_decoder_tensor_dimensions tensorShape1;
@@ -442,7 +516,9 @@ TEST(CModelResourceTable, UnknownDimensions) {
 
     ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_category(resourceTableDecoder, resource1.reference) ==
                 mlsdk_decoder_mrt_category_constant);
-    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource1.reference).has_value == false);
+    mlsdk_vk_descriptor_type resource1DescriptorType = 0;
+    ASSERT_FALSE(
+        mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, resource1.reference, &resource1DescriptorType));
     ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, resource1.reference) ==
                 mlsdkVkFormatR4g4b4a4UnormPack16);
 
@@ -511,6 +587,109 @@ TEST(CModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
     mlsdk_decoder_sampler_config_handle defaultHandle =
         mlsdk_decoder_model_resource_table_get_sampler_config_handle(resourceTableDecoder, defaultResource.reference);
     ASSERT_TRUE(defaultHandle == nullptr);
+}
+
+TEST(CModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
+    std::stringstream buffer;
+
+    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    std::vector<int64_t> inputShape{1, 2, 3, 4};
+    std::vector<int64_t> inputStrides{8, 12, 16, 20};
+    std::vector<int64_t> intermediateShape{4, 3, 2, 1};
+    std::vector<int64_t> intermediateStrides{20, 16, 12, 8};
+    constexpr AliasGroupId SHARED_ALIAS_GROUP = 17;
+
+    constexpr uint32_t SAMPLER_MIN_FILTER = 0;     // VK_FILTER_NEAREST
+    constexpr uint32_t SAMPLER_MAG_FILTER = 1;     // VK_FILTER_LINEAR
+    constexpr uint32_t SAMPLER_ADDRESS_MODE_U = 2; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+    constexpr uint32_t SAMPLER_ADDRESS_MODE_V = 3; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
+    constexpr uint32_t SAMPLER_BORDER_COLOR = 4;   // VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE
+
+    auto inputResource =
+        encoder->AddInputResource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, inputShape,
+                                  inputStrides, SHARED_ALIAS_GROUP);
+    auto intermediateResource = encoder->AddIntermediateResource(
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_FORMAT_R4G4_UNORM_PACK8, intermediateShape, intermediateStrides);
+    encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
+    encoder->SetAliasGroup(intermediateResource, SHARED_ALIAS_GROUP);
+    encoder->AddSamplerConfig(intermediateResource, SAMPLER_MIN_FILTER, SAMPLER_MAG_FILTER, SAMPLER_ADDRESS_MODE_U,
+                              SAMPLER_ADDRESS_MODE_V, SAMPLER_BORDER_COLOR);
+    auto defaultResource =
+        encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_FORMAT_R4G4B4A4_UNORM_PACK16, inputShape, {});
+
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+    std::string data = buffer.str();
+
+    std::vector<uint8_t> headerDecoderMemory;
+    headerDecoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
+    mlsdk_decoder_header_decoder *headerDecoder =
+        mlsdk_decoder_create_header_decoder(data.c_str(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), headerDecoderMemory.data());
+    ASSERT_TRUE(mlsdk_decoder_is_header_valid(headerDecoder));
+    ASSERT_TRUE(mlsdk_decoder_is_header_compatible(headerDecoder));
+
+    mlsdk_decoder_vgf_section_info section;
+    mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_resources, &section);
+
+    std::vector<uint8_t> resourceTableDecoderMemory;
+    resourceTableDecoderMemory.resize(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
+    mlsdk_decoder_model_resource_table_decoder *resourceTableDecoder =
+        mlsdk_decoder_create_model_resource_table_decoder(data.c_str() + section.offset, section.size,
+                                                          resourceTableDecoderMemory.data());
+    ASSERT_NE(resourceTableDecoder, nullptr);
+
+    mlsdk_alias_group_id inputAliasGroupId = 0;
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_alias_group_id(resourceTableDecoder, inputResource.reference,
+                                                                      &inputAliasGroupId));
+    ASSERT_EQ(inputAliasGroupId, SHARED_ALIAS_GROUP);
+
+    mlsdk_alias_group_id intermediateAliasGroupId = 0;
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_alias_group_id(
+        resourceTableDecoder, intermediateResource.reference, &intermediateAliasGroupId));
+    ASSERT_EQ(intermediateAliasGroupId, SHARED_ALIAS_GROUP);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_get_category(resourceTableDecoder, intermediateResource.reference) ==
+                mlsdk_decoder_mrt_category_intermediate);
+    mlsdk_vk_descriptor_type intermediateDescriptorType = 0;
+    ASSERT_TRUE(mlsdk_decoder_get_vk_descriptor_type(resourceTableDecoder, intermediateResource.reference,
+                                                     &intermediateDescriptorType));
+    ASSERT_TRUE(intermediateDescriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    ASSERT_TRUE(mlsdk_decoder_get_vk_format(resourceTableDecoder, intermediateResource.reference) ==
+                VK_FORMAT_R4G4_UNORM_PACK8);
+
+    mlsdk_decoder_tensor_dimensions decodedIntermediateShape;
+    mlsdk_decoder_model_resource_table_get_tensor_shape(resourceTableDecoder, intermediateResource.reference,
+                                                        &decodedIntermediateShape);
+    ASSERT_TRUE(DataView<int64_t>(decodedIntermediateShape.data, decodedIntermediateShape.size) ==
+                DataView<int64_t>(intermediateShape.data(), intermediateShape.size()));
+
+    mlsdk_decoder_tensor_dimensions decodedIntermediateStride;
+    mlsdk_decoder_model_resource_table_get_tensor_strides(resourceTableDecoder, intermediateResource.reference,
+                                                          &decodedIntermediateStride);
+    ASSERT_TRUE(DataView<int64_t>(decodedIntermediateStride.data, decodedIntermediateStride.size) ==
+                DataView<int64_t>(intermediateStrides.data(), intermediateStrides.size()));
+
+    mlsdk_decoder_sampler_config_handle intermediateHandle =
+        mlsdk_decoder_model_resource_table_get_sampler_config_handle(resourceTableDecoder,
+                                                                     intermediateResource.reference);
+    ASSERT_NE(intermediateHandle, nullptr);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_min_filter(
+                    resourceTableDecoder, intermediateHandle) == SAMPLER_MIN_FILTER);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_mag_filter(
+                    resourceTableDecoder, intermediateHandle) == SAMPLER_MAG_FILTER);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_u(
+                    resourceTableDecoder, intermediateHandle) == SAMPLER_ADDRESS_MODE_U);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_address_mode_v(
+                    resourceTableDecoder, intermediateHandle) == SAMPLER_ADDRESS_MODE_V);
+    ASSERT_TRUE(mlsdk_decoder_model_resource_table_sampler_config_get_border_color(
+                    resourceTableDecoder, intermediateHandle) == SAMPLER_BORDER_COLOR);
+
+    mlsdk_alias_group_id defaultAliasGroupId = 0;
+    ASSERT_FALSE(mlsdk_decoder_model_resource_table_get_alias_group_id(resourceTableDecoder, defaultResource.reference,
+                                                                       &defaultAliasGroupId));
+    mlsdk_decoder_sampler_config_handle defaultHandle =
+        mlsdk_decoder_model_resource_table_get_sampler_config_handle(resourceTableDecoder, defaultResource.reference);
+    ASSERT_EQ(defaultHandle, nullptr);
 }
 
 TEST(CVerify, ModelResourceSizeWrapRejected) {

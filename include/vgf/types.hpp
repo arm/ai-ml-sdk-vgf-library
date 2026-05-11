@@ -100,6 +100,17 @@ using SamplerAddressModeType = int32_t;
  */
 using BorderColorType = int32_t;
 
+/**
+ * \brief VGF identifier for a symmetric resource alias group.
+ *
+ * Values are encoder-local and multiple MRT entries may share the same alias
+ * group id to indicate shared storage.
+ */
+using AliasGroupId = uint32_t;
+
+/// \brief Reserved alias group id value used as the on-disk "unset" sentinel.
+constexpr AliasGroupId INVALID_ALIAS_GROUP_ID = UINT32_MAX_VALUE;
+
 /// \brief Value that corresponds to an Undefined VkFormat.
 constexpr FormatType UndefinedFormat() { return 0; }
 

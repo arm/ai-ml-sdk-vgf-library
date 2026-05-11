@@ -441,6 +441,10 @@ class PyModelResourceTableDecoder final : public ModelResourceTableDecoder {
         PYBIND11_OVERRIDE_PURE(std::optional<DescriptorType>, ModelResourceTableDecoder, getDescriptorType, id);
     }
 
+    std::optional<AliasGroupId> getAliasGroupId(uint32_t id) const override {
+        PYBIND11_OVERRIDE_PURE(std::optional<AliasGroupId>, ModelResourceTableDecoder, getAliasGroupId, id);
+    }
+
     FormatType getVkFormat(uint32_t id) const override {
         PYBIND11_OVERRIDE_PURE(FormatType, ModelResourceTableDecoder, getVkFormat, id);
     }
@@ -487,6 +491,7 @@ void pyInitModelResourceTableDecoder(py::module m) {
         .def(py::init<>())
         .def("size", &ModelResourceTableDecoder::size)
         .def("getDescriptorType", &ModelResourceTableDecoder::getDescriptorType, py::arg("id"))
+        .def("getAliasGroupId", &ModelResourceTableDecoder::getAliasGroupId, py::arg("id"))
         .def("getVkFormat", &ModelResourceTableDecoder::getVkFormat, py::arg("id"))
         .def("getCategory", &ModelResourceTableDecoder::getCategory, py::arg("id"))
         .def(

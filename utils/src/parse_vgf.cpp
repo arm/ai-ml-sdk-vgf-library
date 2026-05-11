@@ -52,7 +52,7 @@ std::vector<uint32_t> dataViewToVector(DataView<uint32_t> dataView) { return {da
 
 Resource::Resource(uint32_t index, const ModelResourceTableDecoder &decoder)
     : mIndex(index), mCategory(decoder.getCategory(index)), mDescriptorType(decoder.getDescriptorType(index)),
-      mVkFormat(decoder.getVkFormat(index)) {
+      mVkFormat(decoder.getVkFormat(index)), mAliasGroupId(decoder.getAliasGroupId(index)) {
     const SamplerConfigHandle samplerConfigHandle = decoder.getSamplerConfigHandle(index);
     if (samplerConfigHandle != nullptr) {
         mSamplerConfig.emplace(decoder.getSamplerConfigMinFilter(samplerConfigHandle),
