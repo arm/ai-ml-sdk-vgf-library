@@ -9,11 +9,13 @@
 #include "header.hpp"
 #include "internal_logging.hpp"
 #include "internal_types.hpp"
+#include "utils.hpp"
 #include "vgf_generated.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstring>
 #include <limits>
 #include <optional>
 #include <tuple>
@@ -150,6 +152,10 @@ template <class T> bool VerifyImpl(const void *data, const uint64_t size) {
 
 const char *getConstantSectionVersion(const void *data) {
     return static_cast<const char *>(data) + CONSTANT_SECTION_VERSION_OFFSET;
+}
+
+bool hasConstantSectionVersion(const void *data) {
+    return std::memcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE) == 0;
 }
 
 } // namespace
@@ -843,17 +849,23 @@ class ConstantDecoderV00Impl : public ConstantDecoder {
             return std::nullopt;
         }
 
-        const uint64_t dataOffset = CONSTANT_SECTION_METADATA_OFFSET + declaredCount * sizeof(ConstantMetaDataV00);
+        const auto metadataBytes = checkedMul(declaredCount, sizeof(ConstantMetaDataV00));
+        const auto dataOffset = metadataBytes.has_value() ? checkedAdd(CONSTANT_SECTION_METADATA_OFFSET, *metadataBytes)
+                                                          : std::optional<uint64_t>{};
+        if (!dataOffset.has_value()) {
+            logging::error("VerifyConstant: Constant data offset exceeds addressable size");
+            return std::nullopt;
+        }
 #if SIZE_MAX < UINT64_MAX
-        if (dataOffset > SIZE_MAX_VALUE) {
+        if (*dataOffset > SIZE_MAX_VALUE) {
             logging::error("VerifyConstant: Constant data offset exceeds addressable size");
             return std::nullopt;
         }
 #endif
 
         const auto *metaData = static_cast<const uint8_t *>(data) + CONSTANT_SECTION_METADATA_OFFSET;
-        const auto *dataStart = static_cast<const uint8_t *>(data) + static_cast<size_t>(dataOffset);
-        const uint64_t dataSize = sectionSize - dataOffset;
+        const auto *dataStart = static_cast<const uint8_t *>(data) + static_cast<size_t>(*dataOffset);
+        const uint64_t dataSize = sectionSize - *dataOffset;
 
         for (uint64_t idx = 0; idx < declaredCount; ++idx) {
             const auto *entry =
@@ -893,10 +905,7 @@ class ConstantDecoderV00Impl : public ConstantDecoder {
         }
 #endif
 
-        if (offset > dataSize || entrySize > dataSize || entrySize > dataSize - offset) {
-            return false;
-        }
-        return true;
+        return byteRangeWithinBounds({offset, entrySize}, dataSize);
     }
 
     uint64_t count_ = 0;
@@ -913,7 +922,7 @@ std::unique_ptr<ConstantDecoder> CreateConstantDecoder(const void *const data, c
         return nullptr;
     }
     std::unique_ptr<ConstantDecoder> decoder;
-    if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
+    if (hasConstantSectionVersion(data)) {
         // V00 constant section
         decoder = ConstantDecoderV00Impl::Create(data, size);
         if (decoder == nullptr) {
@@ -945,7 +954,7 @@ ConstantDecoder *CreateConstantDecoderInPlace(const void *const data, const uint
         logging::error("Constant section too small to contain version");
         return nullptr;
     }
-    if (strcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION) == 0) {
+    if (hasConstantSectionVersion(data)) {
         // V00 constant section
         auto *decoder = ConstantDecoderV00Impl::CreateInPlace(data, size, decoderMem);
         if (decoder == nullptr) {
