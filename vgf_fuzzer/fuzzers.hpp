@@ -10,12 +10,14 @@
 
 #include "vgf/version.h"
 
-static_assert(MLSDK_VGF_LIBRARY_API_VERSION_MAJOR == 0 && MLSDK_VGF_LIBRARY_API_VERSION_MINOR == 8 &&
+static_assert(MLSDK_VGF_LIBRARY_API_VERSION_MAJOR == 0 && MLSDK_VGF_LIBRARY_API_VERSION_MINOR == 10 &&
                   MLSDK_VGF_LIBRARY_API_VERSION_PATCH == 0,
               "Public API version changed: update fuzzer coverage alongside the new API version.");
 
 void FuzzCDecoders(const uint8_t *data, size_t size);
 void FuzzCDecoderAccessors(const uint8_t *data, size_t size);
+void FuzzCEncoderSmoke(const uint8_t *data, size_t size);
 
 void FuzzCppDecoders(const uint8_t *data, size_t size);
 void FuzzCppDecoderAccessors(const uint8_t *data, size_t size);
+void FuzzCppEncoderSmoke(const uint8_t *data, size_t size);

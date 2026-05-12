@@ -13,10 +13,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     // C++ surface
     FuzzCppDecoders(data, size);
     FuzzCppDecoderAccessors(data, size);
+    FuzzCppEncoderSmoke(data, size);
 
     // C surface
     FuzzCDecoders(data, size);
     FuzzCDecoderAccessors(data, size);
+    FuzzCEncoderSmoke(data, size);
 
     return 0;
 }

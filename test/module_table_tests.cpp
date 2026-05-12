@@ -247,13 +247,8 @@ TEST(CppVerify, ModuleFlatbufferVerifyRejected) {
 }
 
 TEST(CModuleTable, Empty) {
-    std::stringstream buffer;
-
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
 
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
@@ -280,15 +275,13 @@ TEST(CModuleTable, Empty) {
 }
 
 TEST(CModuleTable, Single) {
-    std::stringstream buffer;
     std::vector<uint32_t> code{1, 2, 3, 4};
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::GRAPH, "test", "main", code);
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_graph, "test",
+                                                                     "main", code.data(), code.size());
 
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
@@ -329,14 +322,11 @@ TEST(CModuleTable, Single) {
 }
 
 TEST(CModuleTable, Single2) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module =
+        mlsdk_encoder_add_spirv_module(encoder, mlsdk_encoder_module_type_compute, "test", "main", nullptr, 0);
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::COMPUTE, "test", "main");
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
@@ -378,14 +368,11 @@ TEST(CModuleTable, Single2) {
 }
 
 TEST(CModuleTable, SingleGLSLModule) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module = mlsdk_encoder_add_source_module(
+        encoder, mlsdk_encoder_module_type_compute, "glsl", "main", mlsdk_encoder_shader_type_glsl, "void main(){}");
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module = encoder->AddModule(ModuleType::COMPUTE, "glsl", "main", ShaderType::GLSL, "void main(){}");
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
@@ -427,15 +414,12 @@ TEST(CModuleTable, SingleGLSLModule) {
 }
 
 TEST(CModuleTable, SingleHLSLModule) {
-    std::stringstream buffer;
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    mlsdk_encoder_module_ref module =
+        mlsdk_encoder_add_source_module(encoder, mlsdk_encoder_module_type_compute, "hlsl", "main",
+                                        mlsdk_encoder_shader_type_hlsl, "[numthreads(1,1,1)] void main(){}");
 
-    std::unique_ptr<Encoder> encoder = CreateEncoder(pretendVulkanHeaderVersion);
-    ModuleRef module =
-        encoder->AddModule(ModuleType::COMPUTE, "hlsl", "main", ShaderType::HLSL, "[numthreads(1,1,1)] void main(){}");
-    encoder->Finish();
-    ASSERT_TRUE(encoder->WriteTo(buffer));
-
-    std::string data = buffer.str();
+    std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
 
     std::vector<uint8_t> headerDecoderMemory;
