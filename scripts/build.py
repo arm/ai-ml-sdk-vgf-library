@@ -279,6 +279,7 @@ class Builder:
                     f"{VGF_LIB_DIR / 'vgf_dump'}",
                     f"{VGF_LIB_DIR / 'vgf_updater'}",
                 ]
+                os.makedirs(f"{self.build_dir}/cppcheck", exist_ok=True)
 
                 lint_cmd = [
                     "cppcheck",
@@ -290,6 +291,8 @@ class Builder:
                     "--enable=information,performance,portability,style",
                     f"-i={DEPENDENCY_DIR}",
                     f"--suppress=unreadVariable",
+                    f"--suppress=missingInclude",
+                    f"--suppress=missingIncludeSystem",
                     f"--suppress=unmatchedSuppression",
                     f"--suppress=noValidConfiguration",
                     f"--suppress=preprocessorErrorDirective",
