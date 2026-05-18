@@ -28,8 +28,8 @@ struct DType {
 
 struct DataPtr {
     const char *ptr = nullptr;
-    std::vector<int64_t> shape = {};
-    DType dtype = {};
+    std::vector<int64_t> shape;
+    DType dtype;
 
     DataPtr() = default;
     DataPtr(const char *ptr, const std::vector<int64_t> &shape, const DType &dtype)

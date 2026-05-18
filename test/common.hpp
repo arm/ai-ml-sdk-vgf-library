@@ -9,6 +9,7 @@
 #include "vgf/encoder.h"
 #include "vgf/logging.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <filesystem>
@@ -30,19 +31,10 @@ class Logger {
     ~Logger() { DisableLogging(); }
 
     bool contains(std::initializer_list<std::string_view> tokens) const {
-        for (const auto &msg : messages_) {
-            bool allFound = true;
-            for (const auto &token : tokens) {
-                if (msg.find(token) == std::string::npos) {
-                    allFound = false;
-                    break;
-                }
-            }
-            if (allFound) {
-                return true;
-            }
-        }
-        return false;
+        return std::any_of(messages_.begin(), messages_.end(), [tokens](const auto &msg) {
+            return std::all_of(tokens.begin(), tokens.end(),
+                               [&msg](const auto &token) { return msg.find(token) != std::string::npos; });
+        });
     }
 
   private:

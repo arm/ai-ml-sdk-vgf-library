@@ -152,7 +152,7 @@ TEST(CDecode, WrongMagic) {
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
-    mlsdk_decoder_header_decoder *decoder =
+    const mlsdk_decoder_header_decoder *decoder =
         mlsdk_decoder_create_header_decoder(data.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
                                             static_cast<uint64_t>(data.size()), decoderMemory.data());
     ASSERT_TRUE(nullptr == decoder);
