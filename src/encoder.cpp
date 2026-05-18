@@ -17,6 +17,7 @@
 #include <cstring>
 #include <fstream>
 #include <limits>
+#include <list>
 
 namespace mlsdk::vgflib {
 
@@ -299,34 +300,26 @@ class EncoderImpl : public Encoder {
             sparsityDim32 = static_cast<int32_t>(sparsityDimension);
         }
 
-        const auto sizeInBytesAligned = checkedAlignUp(static_cast<uint64_t>(sizeInBytes), sizeof(uint64_t));
-        if (!sizeInBytesAligned.has_value()) {
-            logging::error("Constant size exceeds addressable on-disk metadata size");
-            encodingFailed_ = true;
-            return {UINT32_MAX_VALUE};
-        }
-        if (*sizeInBytesAligned > SIZE_MAX_VALUE) {
-            logging::error("Constant size exceeds addressable host allocation size");
-            encodingFailed_ = true;
-            return {UINT32_MAX_VALUE};
-        }
-        const auto nextDataOffset = checkedAdd(constDataOffset_, *sizeInBytesAligned);
-        if (!nextDataOffset.has_value()) {
+        uint64_t nextDataOffset = constDataOffset_;
+        const auto constantDataRange =
+            appendAlignedByteRange(static_cast<uint64_t>(sizeInBytes), sizeof(uint64_t), nextDataOffset);
+        if (!constantDataRange.has_value()) {
             logging::error("Constant data section size exceeds addressable on-disk metadata size");
             encodingFailed_ = true;
             return {UINT32_MAX_VALUE};
         }
+        const auto &[dataRange, paddedSize] = *constantDataRange;
 
         constsMetaData_.emplace_back(ConstantMetaDataV00{
             resourceRef.reference,
             sparsityDim32,
-            sizeInBytes,
-            constDataOffset_,
+            dataRange.size,
+            dataRange.offset,
         });
 
-        auto &constantData = constsData_.emplace_back(static_cast<size_t>(*sizeInBytesAligned), 0);
+        auto &constantData = constsData_.emplace_back(static_cast<size_t>(paddedSize), 0);
         std::memcpy(constantData.data(), data, sizeInBytes);
-        constDataOffset_ = *nextDataOffset;
+        constDataOffset_ = nextDataOffset;
 
         return {static_cast<uint32_t>(constsMetaData_.size() - 1)};
     }
