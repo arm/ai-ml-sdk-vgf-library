@@ -394,10 +394,12 @@ class EncoderImpl : public Encoder {
         }
 
         SectionIndexTable table;
-        const auto &headerSection = table.AddSection(sizeof(Header));
-        const auto &moduleSection = table.AddSection(moduleBuilder_.GetSize());
-        const auto &modelSequenceSection = table.AddSection(modelSequenceBuilder_.GetSize());
-        const auto &modelResourceSection = table.AddSection(modelResourceBuilder_.GetSize());
+        const auto &headerSection = table.AddSection(sizeof(Header), VGF_SECTION_ALIGNMENT_VALUE);
+        const auto &moduleSection = table.AddSection(moduleBuilder_.GetSize(), VGF_SECTION_ALIGNMENT_VALUE);
+        const auto &modelSequenceSection =
+            table.AddSection(modelSequenceBuilder_.GetSize(), VGF_SECTION_ALIGNMENT_VALUE);
+        const auto &modelResourceSection =
+            table.AddSection(modelResourceBuilder_.GetSize(), VGF_SECTION_ALIGNMENT_VALUE);
 
         auto numConsts = static_cast<uint64_t>(constsMetaData_.size());
         const auto constantMetadataSize = checkedMul(numConsts, sizeof(ConstantMetaDataV00));
@@ -411,7 +413,7 @@ class EncoderImpl : public Encoder {
             logging::error("Constant section size exceeds addressable on-disk metadata size");
             return false;
         }
-        const auto &constantSection = table.AddSection(*constantSectionSize);
+        const auto &constantSection = table.AddSection(*constantSectionSize, VGF_SECTION_ALIGNMENT_VALUE);
 
         // calculate alignments and offsets
         table.Update();

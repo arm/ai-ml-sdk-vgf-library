@@ -485,7 +485,8 @@ TEST(CModelSequenceTable, SegmentInfo) {
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
     ASSERT_TRUE(modelSequenceSection.size > 0);
-    ASSERT_TRUE(modelSequenceSection.offset == HEADER_HEADER_SIZE_VALUE + moduleSection.size);
+    ASSERT_TRUE(modelSequenceSection.offset ==
+                testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + moduleSection.size, VGF_SECTION_ALIGNMENT_VALUE));
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
@@ -540,7 +541,8 @@ TEST(CModelSequenceTable, DescripterSetInfo) {
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
     ASSERT_TRUE(modelSequenceSection.size > 0);
-    ASSERT_TRUE(modelSequenceSection.offset == HEADER_HEADER_SIZE_VALUE + moduleSection.size);
+    ASSERT_TRUE(modelSequenceSection.offset ==
+                testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + moduleSection.size, VGF_SECTION_ALIGNMENT_VALUE));
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
     mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder = mlsdk_decoder_create_model_sequence_decoder(
@@ -597,7 +599,8 @@ TEST(CModelSequenceTable, DescriptorBindingSlot) {
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
     ASSERT_TRUE(modelSequenceSection.size > 0);
-    ASSERT_TRUE(modelSequenceSection.offset == HEADER_HEADER_SIZE_VALUE + moduleSection.size);
+    ASSERT_TRUE(modelSequenceSection.offset ==
+                testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + moduleSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
@@ -664,7 +667,8 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
     ASSERT_TRUE(modelSequenceSection.size > 0);
-    ASSERT_TRUE(modelSequenceSection.offset == HEADER_HEADER_SIZE_VALUE + moduleSection.size);
+    ASSERT_TRUE(modelSequenceSection.offset ==
+                testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + moduleSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(moduleTabledecoder) == 1);
 
@@ -746,7 +750,8 @@ TEST(CModelSequenceTable, BindingSlot) {
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
     ASSERT_TRUE(modelSequenceSection.size > 0);
-    ASSERT_TRUE(modelSequenceSection.offset == HEADER_HEADER_SIZE_VALUE + moduleSection.size);
+    ASSERT_TRUE(modelSequenceSection.offset ==
+                testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + moduleSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
@@ -816,7 +821,8 @@ TEST(CModelSequenceTable, SegmentConstants) {
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
     ASSERT_TRUE(modelSequenceSection.size > 0);
-    ASSERT_TRUE(modelSequenceSection.offset == HEADER_HEADER_SIZE_VALUE + moduleSection.size);
+    ASSERT_TRUE(modelSequenceSection.offset ==
+                testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + moduleSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());
@@ -871,7 +877,8 @@ TEST(CModelSequenceTable, SegmentDispatchShape) {
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
     ASSERT_TRUE(modelSequenceSection.size > 0);
-    ASSERT_TRUE(modelSequenceSection.offset == HEADER_HEADER_SIZE_VALUE + moduleSection.size);
+    ASSERT_TRUE(modelSequenceSection.offset ==
+                testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + moduleSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     ASSERT_TRUE(mlsdk_decoder_get_module_table_num_entries(moduleTabledecoder) == 1);
 
@@ -931,7 +938,8 @@ TEST(CModelSequenceTable, PushConstantRange) {
     mlsdk_decoder_vgf_section_info modelSequenceSection;
     mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_model_sequence, &modelSequenceSection);
     ASSERT_TRUE(modelSequenceSection.size > 0);
-    ASSERT_TRUE(modelSequenceSection.offset == HEADER_HEADER_SIZE_VALUE + moduleSection.size);
+    ASSERT_TRUE(modelSequenceSection.offset ==
+                testutils::AlignUp(HEADER_HEADER_SIZE_VALUE + moduleSection.size, VGF_SECTION_ALIGNMENT_VALUE));
 
     std::vector<uint8_t> modelSequenceDecoderMemory;
     modelSequenceDecoderMemory.resize(mlsdk_decoder_model_sequence_decoder_mem_reqs());

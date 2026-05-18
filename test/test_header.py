@@ -17,6 +17,10 @@ pretendVulkanHeaderVersion = 123
 pytestmark = pytest.mark.header_test
 
 
+def align_up(value, alignment=8):
+    return ((value + alignment - 1) // alignment) * alignment
+
+
 def test_encode_decode_header():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
@@ -48,22 +52,19 @@ def test_encode_decode_header():
     assert headerDecoder.GetModuleTableOffset() == vgf.HEADER_HEADER_SIZE_VALUE
 
     assert headerDecoder.GetModelSequenceTableSize() > 0
-    assert (
-        headerDecoder.GetModelSequenceTableOffset()
-        == vgf.HEADER_HEADER_SIZE_VALUE + headerDecoder.GetModuleTableSize()
+    assert headerDecoder.GetModelSequenceTableOffset() == align_up(
+        vgf.HEADER_HEADER_SIZE_VALUE + headerDecoder.GetModuleTableSize()
     )
 
     assert headerDecoder.GetModelResourceTableSize() > 0
-    assert (
-        headerDecoder.GetModelResourceTableOffset()
-        == headerDecoder.GetModelSequenceTableOffset()
+    assert headerDecoder.GetModelResourceTableOffset() == align_up(
+        headerDecoder.GetModelSequenceTableOffset()
         + headerDecoder.GetModelSequenceTableSize()
     )
 
     assert headerDecoder.GetConstantsSize() > 0
-    assert (
-        headerDecoder.GetConstantsOffset()
-        == headerDecoder.GetModelResourceTableOffset()
+    assert headerDecoder.GetConstantsOffset() == align_up(
+        headerDecoder.GetModelResourceTableOffset()
         + headerDecoder.GetModelResourceTableSize()
     )
 
