@@ -163,24 +163,24 @@ std::vector<Module> parseModuleTable(const void *const data, uint64_t size) {
     return modules;
 }
 
-void writeOutputText(const std::string &path, const char *ptr, size_t size) {
+void writeOutputText(const std::string &path, const std::string_view &data) {
     if (path == "-") {
-        std::cout << std::string_view(ptr, size);
+        std::cout << data;
         return;
     }
 
     std::ios_base::openmode flags = std::ios::out | std::ios::trunc;
     std::ofstream file(path, flags);
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    file.write(ptr, static_cast<std::streamsize>(size));
+    file << data;
 }
 
-void writeOutputBinary(const std::string &path, const char *ptr, size_t size) {
+void writeOutputBinary(const std::string &path, const std::string_view &data) {
     if (path == "-") {
 #ifdef _WIN32
         _setmode(_fileno(stdout), _O_BINARY);
 #endif
-        std::cout << std::string_view(ptr, size);
+        std::cout << data;
 #ifdef _WIN32
         _setmode(_fileno(stdout), _O_TEXT);
 #endif
@@ -190,29 +190,24 @@ void writeOutputBinary(const std::string &path, const char *ptr, size_t size) {
     std::ios_base::openmode flags = std::ios::out | std::ios::trunc | std::ios::binary;
     std::ofstream file(path, flags);
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    file.write(ptr, static_cast<std::streamsize>(size));
+    file << data;
 }
 
 void writeOutputJSON(const std::string &path, json &json) {
     std::string jsonContents = json.dump(/*indent=*/4);
-    writeOutputText(path, jsonContents.c_str(), jsonContents.size());
+    writeOutputText(path, jsonContents);
 }
 
 struct ScenarioTensorResource {
-    ScenarioTensorResource(const std::string &name, const std::string &uid, const std::string &path, bool isSrc,
-                           VkFormat format, const DataView<int64_t> &dims)
-        : mName(name), mUid(uid), mPath(path), mIsSrc(isSrc), mFormat(format) {
+    ScenarioTensorResource(std::string uid, std::string path, bool isSrc, VkFormat format,
+                           const DataView<int64_t> &dims)
+        : mUid(std::move(uid)), mPath(std::move(path)), mIsSrc(isSrc), mFormat(format) {
         // dynamic dimensions are represented as the lowest int64_t value in LLVM
         mDims.reserve(dims.size());
         std::transform(dims.begin(), dims.end(), std::back_inserter(mDims),
                        [](int64_t v) { return v == std::numeric_limits<int64_t>::lowest() ? int64_t{-1} : v; });
     }
 
-    ScenarioTensorResource(const std::string &uid, const std::string &path, bool isInput, VkFormat format,
-                           const DataView<int64_t> &dims)
-        : ScenarioTensorResource("tensor", uid, path, isInput, format, dims) {}
-
-    std::string mName;
     std::string mUid;
     std::string mPath;
     bool mIsSrc;
@@ -221,61 +216,35 @@ struct ScenarioTensorResource {
 };
 
 void to_json(json &j, const ScenarioTensorResource &tensor) {
-    if (tensor.mName == "graph") {
-        j = json{{tensor.mName, {{"uid", tensor.mUid}, {tensor.mIsSrc ? "src" : "dst", tensor.mPath}}}};
-    } else {
-        j = json{{tensor.mName,
-                  {
-                      {"uid", tensor.mUid},
-                      {tensor.mIsSrc ? "src" : "dst", tensor.mPath},
-                      {"shader_access", tensor.mIsSrc ? "readonly" : "writeonly"},
-                      {"format", FormatTypeToString(tensor.mFormat)},
-                      {"dims", tensor.mDims},
-                  }}};
-    }
+    j = json{{"tensor",
+              {
+                  {"uid", tensor.mUid},
+                  {tensor.mIsSrc ? "src" : "dst", tensor.mPath},
+                  {"shader_access", tensor.mIsSrc ? "readonly" : "writeonly"},
+                  {"format", FormatTypeToString(tensor.mFormat)},
+                  {"dims", tensor.mDims},
+              }}};
 }
 
 struct ScenarioGraphResource {
-    ScenarioGraphResource(const std::string &name, const std::string &uid, const std::string &path, bool isSrc,
-                          VkFormat format, const DataView<int64_t> &dims)
-        : mName(name), mUid(uid), mPath(path), mIsSrc(isSrc), mFormat(format), mDims(dims.begin(), dims.end()) {}
+    ScenarioGraphResource(std::string uid, std::string path) : mUid(std::move(uid)), mPath(std::move(path)) {}
 
-    ScenarioGraphResource(const std::string &uid, const std::string &src)
-        : ScenarioGraphResource("graph", uid, src, true, UndefinedFormat(), {}) {}
-
-    std::string mName;
     std::string mUid;
     std::string mPath;
-    bool mIsSrc;
-    VkFormat mFormat;
-    std::vector<uint64_t> mDims;
 };
 
 void to_json(json &j, const ScenarioGraphResource &graph) {
-    if (graph.mName == "graph") {
-        j = json{{graph.mName, {{"uid", graph.mUid}, {graph.mIsSrc ? "src" : "dst", graph.mPath}}}};
-    } else {
-        j = json{{graph.mName,
-                  {
-                      {"uid", graph.mUid},
-                      {graph.mIsSrc ? "src" : "dst", graph.mPath},
-                      {"shader_access", graph.mIsSrc ? "readonly" : "writeonly"},
-                      {"format", FormatTypeToString(graph.mFormat)},
-                      {"dims", graph.mDims},
-                  }}};
-    }
+    j = json{{"graph",
+              {
+                  {"uid", graph.mUid},
+                  {"src", graph.mPath},
+              }}};
 }
 
 struct ScenarioShaderResource {
-    ScenarioShaderResource(const std::string &name, const std::string &uid, const std::string &path,
-                           const std::string &type, const std::string &entry)
-        : mName(name), mUid(uid), mPath(path), mType(type), mEntry(entry) {}
+    ScenarioShaderResource(std::string uid, std::string path, std::string type, std::string entry)
+        : mUid(std::move(uid)), mPath(std::move(path)), mType(std::move(type)), mEntry(std::move(entry)) {}
 
-    ScenarioShaderResource(const std::string &uid, const std::string &src, const std::string &type,
-                           const std::string &entry)
-        : ScenarioShaderResource("shader", uid, src, type, entry) {}
-
-    std::string mName;
     std::string mUid;
     std::string mPath;
     std::string mType;
@@ -283,18 +252,13 @@ struct ScenarioShaderResource {
 };
 
 void to_json(json &j, const ScenarioShaderResource &shader) {
-    if (shader.mName == "shader") {
-        j = json{{shader.mName,
-                  {{"uid", shader.mUid}, {"src", shader.mPath}, {"type", shader.mType}, {"entry", shader.mEntry}}}};
-    } else {
-        j = json{{shader.mName,
-                  {
-                      {"uid", shader.mUid},
-                      {"src", shader.mPath},
-                      {"type", shader.mType},
-                      {"entry", shader.mEntry},
-                  }}};
-    }
+    j = json{{"shader",
+              {
+                  {"uid", shader.mUid},
+                  {"src", shader.mPath},
+                  {"type", shader.mType},
+                  {"entry", shader.mEntry},
+              }}};
 }
 
 struct ScenarioBinding {
@@ -492,21 +456,29 @@ void getHlsl(const std::string &inputFile, uint32_t index, const std::function<v
 
 void dumpSpirv(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
     getSpirv(inputFile, index, [&](const uint32_t *data, size_t size) {
-        writeOutputBinary(outputFile, reinterpret_cast<const char *>(data), size * sizeof(uint32_t));
+        std::string_view dataBytes(reinterpret_cast<const char *>(data), size * sizeof(uint32_t));
+        writeOutputBinary(outputFile, dataBytes);
     });
 }
 
 void dumpGlsl(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
-    getGlsl(inputFile, index, [&](const char *data, size_t size) { writeOutputText(outputFile, data, size); });
+    getGlsl(inputFile, index, [&](const char *data, size_t size) {
+        std::string_view dataBytes(data, size);
+        writeOutputText(outputFile, dataBytes);
+    });
 }
 
 void dumpHlsl(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
-    getHlsl(inputFile, index, [&](const char *data, size_t size) { writeOutputText(outputFile, data, size); });
+    getHlsl(inputFile, index, [&](const char *data, size_t size) {
+        std::string_view dataBytes(data, size);
+        writeOutputText(outputFile, dataBytes);
+    });
 }
 
 void dumpConstant(const std::string &inputFile, const std::string &outputFile, uint32_t index) {
     getConstant(inputFile, index, [&](const uint8_t *data, size_t size) {
-        writeOutputBinary(outputFile, reinterpret_cast<const char *>(data), size);
+        std::string_view dataBytes(reinterpret_cast<const char *>(data), size);
+        writeOutputBinary(outputFile, dataBytes);
     });
 }
 
