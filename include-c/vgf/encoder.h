@@ -41,7 +41,7 @@ typedef struct mlsdk_encoder_s mlsdk_encoder;
 /**
  * @brief Sparsity dimension value for constants that are not sparse.
  */
-#define MLSDK_ENCODER_CONSTANT_NOT_SPARSE_DIMENSION ((int64_t)-1)
+#define MLSDK_ENCODER_CONSTANT_NOT_SPARSE_DIMENSION (INT64_C(-1))
 
 /**
  * @brief Descriptor set index sentinel for preserving legacy positional descriptor set semantics.
