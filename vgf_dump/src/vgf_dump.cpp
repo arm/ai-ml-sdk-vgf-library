@@ -9,6 +9,7 @@
 #include <vgf/types.hpp>
 
 #include "parse_vgf.hpp"
+#include "utils.hpp"
 #include <vgf-utils/memory_map.hpp>
 #include <vgf-utils/numpy.hpp>
 
@@ -19,6 +20,9 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <numeric>
+#include <optional>
 #include <sstream>
 #include <utility>
 
@@ -27,6 +31,9 @@
 #include <sys/types.h>
 
 #ifdef _WIN32
+#    ifndef NOMINMAX
+#        define NOMINMAX
+#    endif
 #    include <windows.h>
 
 #    include <fcntl.h>
@@ -223,6 +230,46 @@ void to_json(json &j, const ScenarioTensorResource &tensor) {
                   {"shader_access", tensor.mIsSrc ? "readonly" : "writeonly"},
                   {"format", FormatTypeToString(tensor.mFormat)},
                   {"dims", tensor.mDims},
+              }}};
+}
+
+uint32_t bufferSize(const DataView<int64_t> &shape) {
+    const auto size = std::accumulate(
+        shape.begin(), shape.end(), std::optional<uint64_t>{1}, [](std::optional<uint64_t> currentSize, int64_t dim) {
+            if (!currentSize.has_value()) {
+                return currentSize;
+            }
+            if (dim <= 0) {
+                throw std::runtime_error("Cannot create scenario buffer resource with non-positive dimension");
+            }
+            return checkedMul(*currentSize, static_cast<uint64_t>(dim));
+        });
+    if (!size.has_value()) {
+        throw std::runtime_error("Scenario buffer resource size overflow");
+    }
+    if (*size > std::numeric_limits<uint32_t>::max()) {
+        throw std::runtime_error("Scenario buffer resource size exceeds uint32_t range");
+    }
+    return static_cast<uint32_t>(*size);
+}
+
+struct ScenarioBufferResource {
+    ScenarioBufferResource(std::string uid, std::string path, bool isSrc, const DataView<int64_t> &shape)
+        : mUid(std::move(uid)), mPath(std::move(path)), mIsSrc(isSrc), mSize(bufferSize(shape)) {}
+
+    std::string mUid;
+    std::string mPath;
+    bool mIsSrc;
+    uint32_t mSize;
+};
+
+void to_json(json &j, const ScenarioBufferResource &buffer) {
+    j = json{{"buffer",
+              {
+                  {"uid", buffer.mUid},
+                  {buffer.mIsSrc ? "src" : "dst", buffer.mPath},
+                  {"shader_access", buffer.mIsSrc ? "readonly" : "writeonly"},
+                  {"size", buffer.mSize},
               }}};
 }
 
@@ -577,6 +624,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     }
 
     std::vector<ScenarioTensorResource> tensorResources;
+    std::vector<ScenarioBufferResource> bufferResources;
     BindingSlotArrayHandle seqInputsHandle = modelSequenceDecoder->getModelSequenceInputBindingSlotsHandle();
     for (uint32_t i = 0; i < modelSequenceDecoder->getBindingsSize(seqInputsHandle); ++i) {
         std::string uid = "input_" + std::to_string(i) + "_ref";
@@ -592,6 +640,10 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
             tensorResources.push_back(ScenarioTensorResource(uid, "TEMPLATE_PATH_TENSOR_INPUT_" + std::to_string(i),
                                                              true, modelResourceDecoder->getVkFormat(mrtIndex),
                                                              modelResourceDecoder->getTensorShape(mrtIndex)));
+        } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
+                   descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
+            bufferResources.push_back(ScenarioBufferResource(uid, "TEMPLATE_PATH_BUFFER_INPUT_" + std::to_string(i),
+                                                             true, modelResourceDecoder->getTensorShape(mrtIndex)));
         } else {
             std::stringstream ss;
             ss << "Not implemented descriptor type support " << descTypeName
@@ -617,6 +669,10 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
             tensorResources.push_back(ScenarioTensorResource(uid, "TEMPLATE_PATH_TENSOR_OUTPUT_" + std::to_string(i),
                                                              false, modelResourceDecoder->getVkFormat(mrtIndex),
                                                              modelResourceDecoder->getTensorShape(mrtIndex)));
+        } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
+                   descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
+            bufferResources.push_back(ScenarioBufferResource(uid, "TEMPLATE_PATH_BUFFER_OUTPUT_" + std::to_string(i),
+                                                             false, modelResourceDecoder->getTensorShape(mrtIndex)));
         } else {
             std::stringstream ss;
             ss << "Not implemented descriptor type support " << descTypeName
@@ -663,6 +719,9 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     }
     for (auto &tensorResource : tensorResources) {
         json["resources"].push_back(tensorResource);
+    }
+    for (auto &bufferResource : bufferResources) {
+        json["resources"].push_back(bufferResource);
     }
     for (auto &shaderResource : shaderResources) {
         json["resources"].push_back(shaderResource);

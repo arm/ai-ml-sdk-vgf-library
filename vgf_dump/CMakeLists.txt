@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2022-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2022-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -15,6 +15,7 @@ target_include_directories(static_vgf_dump PUBLIC
     include
 )
 target_include_directories(static_vgf_dump PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../src>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../utils/src>
 )
 target_link_libraries(static_vgf_dump PUBLIC vgf vgf-utils nlohmann_json::nlohmann_json)
