@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -21,7 +21,7 @@ std::vector<uint32_t> spirv_assemble([[maybe_unused]] const std::string &code) {
     core.Assemble(code, &spirv);
     assert(core.Validate(spirv));
 #else
-    spirv = {0};
+    spirv.push_back(0U);
 #endif
 
     return spirv;
