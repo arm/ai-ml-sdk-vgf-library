@@ -681,20 +681,17 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         }
     }
 
-    uint32_t shaderIdx = 0;
     std::vector<ScenarioShaderSubstitutions> shaderSubstitutions;
     std::vector<ScenarioShaderResource> shaderResources;
-    for (auto &m :
+    for (const auto &m :
          parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
-
         if (m.mType == ModuleType::COMPUTE) {
-            std::string shaderRef = "shader_" + std::to_string(shaderIdx) + "_ref";
+            std::string shaderRef = "shader_" + std::to_string(m.mIndex) + "_ref";
             shaderSubstitutions.emplace_back(shaderRef, std::string(m.mName));
             const std::string shaderType = m.mShaderType;
             const std::string shaderPathType = shaderType == "SPIR-V" ? "SPIRV" : shaderType;
-            const std::string shaderPath = "TEMPLATE_PATH_SHADER_" + shaderPathType + "_" + std::to_string(shaderIdx);
+            const std::string shaderPath = "TEMPLATE_PATH_SHADER_" + shaderPathType + "_" + std::to_string(m.mIndex);
             shaderResources.push_back(ScenarioShaderResource(shaderRef, shaderPath, shaderType, m.mEntryPoint));
-            shaderIdx++;
         }
     }
 
