@@ -43,10 +43,7 @@ bool validateSectionsSizesInHeader(const HeaderDecoder &headerDecoder, uint64_t 
             return false;
         }
         const uint64_t remaining = fileSize - offset;
-        if (size > remaining) {
-            return false;
-        }
-        return true;
+        return (size <= remaining);
     };
 
     const uint64_t moduleOffset = headerDecoder.GetModuleTableOffset();

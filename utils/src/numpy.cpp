@@ -21,7 +21,12 @@ bool isLittleEndian() {
     return reinterpret_cast<uint8_t *>(&num)[1] == 0;
 }
 
-char getEndianChar(uint64_t size) { return size < 2 ? '|' : isLittleEndian() ? '<' : '>'; }
+char getEndianChar(uint64_t size) {
+    if (size < 2) {
+        return '|';
+    }
+    return isLittleEndian() ? '<' : '>';
+}
 
 uint64_t sizeOf(const std::vector<int64_t> &shape, const uint64_t &itemsize) {
     return std::accumulate(shape.begin(), shape.end(), itemsize, std::multiplies<uint64_t>());
@@ -109,11 +114,7 @@ bool checkFortranOrder(const std::string &dict) {
     }
 
     const auto valuePos = dict.find("False", keyPos);
-    if (valuePos == std::string::npos || valuePos != keyPos + 17) {
-        return false;
-    }
-
-    return true;
+    return (valuePos != std::string::npos) && (valuePos == keyPos + 17);
 }
 
 void writeHeader(std::ostream &out, const std::vector<int64_t> &shape, const std::string &dtype) {
@@ -302,7 +303,7 @@ void write(const std::string &filename, const char *ptr, const std::vector<int64
     writeHeader(file, shape, dtypeToStr(dtype));
 
     // write data to file
-    file.write(reinterpret_cast<const char *>(ptr), std::streamsize(sizeOf(shape, itemsize)));
+    file.write(ptr, std::streamsize(sizeOf(shape, itemsize)));
     file.close();
 }
 

@@ -231,9 +231,8 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
                     modelOutputBindingSlots.push_back(binding);
                 }
             }
-            const auto descriptorPosition = static_cast<uint32_t>(descriptorIdx);
             const uint32_t encodedSetIndex =
-                (dscInfo.mSetIndex == descriptorPosition) ? std::numeric_limits<uint32_t>::max() : dscInfo.mSetIndex;
+                (dscInfo.mSetIndex == descriptorIdx) ? std::numeric_limits<uint32_t>::max() : dscInfo.mSetIndex;
             descriptorSetInfoRefs.push_back(encoder.AddDescriptorSetInfo(descriptorBindingSlotsRefs, encodedSetIndex));
             ++descriptorIdx;
         }

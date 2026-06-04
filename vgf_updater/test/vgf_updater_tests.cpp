@@ -16,7 +16,7 @@
 namespace fs = std::filesystem;
 
 namespace {
-::testing::AssertionResult compareFiles(fs::path fileOne, fs::path fileTwo) {
+::testing::AssertionResult compareFiles(const fs::path &fileOne, const fs::path &fileTwo) {
     const auto fileOneSize = fs::file_size(fileOne);
     const auto fileTwoSize = fs::file_size(fileTwo);
     if (fileOneSize != fileTwoSize) {
@@ -47,8 +47,7 @@ namespace {
     std::vector<char> fileTwoBuffer(fileTwoSize);
     fileTwoBytes.read(fileTwoBuffer.data(), static_cast<std::streamsize>(fileTwoSize));
 
-    return std::equal(std::istreambuf_iterator<char>(fileOneBytes.rdbuf()), std::istreambuf_iterator<char>(),
-                      std::istreambuf_iterator<char>(fileTwoBytes.rdbuf()))
+    return std::equal(fileOneBuffer.begin(), fileOneBuffer.end(), fileTwoBuffer.begin())
                ? testing::AssertionSuccess()
                : testing::AssertionFailure() << "Compared files " << fileOne << " and " << fileTwo << " are different.";
 }
