@@ -477,8 +477,8 @@ void getSpirv(const std::string &inputFile, uint32_t index,
     if (!decoder->hasSPIRVCode(index)) {
         throw std::runtime_error("Module index " + std::to_string(index) + " has no stored SPIRV code");
     }
-    DataView<uint32_t> data = decoder->getSPIRVModuleCode(index);
-    callback(&data[0], data.size());
+    const auto data = decoder->getSPIRVModuleCode(index);
+    callback(data.data(), data.size());
 }
 
 void getGlsl(const std::string &inputFile, uint32_t index, const std::function<void(const char *, size_t)> &callback) {
@@ -594,8 +594,8 @@ void getConstant(const std::string &inputFile, uint32_t index,
                                  " out of bounds. Number of constants: " + std::to_string(decoder->size()));
     }
 
-    DataView<uint8_t> data = decoder->getConstant(index);
-    callback(&data[0], data.size());
+    const auto data = decoder->getConstant(index);
+    callback(data.data(), data.size());
 }
 
 json getScenario(const std::string &inputFile, bool add_boundaries) {

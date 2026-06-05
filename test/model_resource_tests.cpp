@@ -41,9 +41,11 @@ constexpr bool DataViewTests() {
     static_assert(DataView<uint32_t>() == DataView<uint32_t>(nullptr, 0),
                   "Two DataViews constructed with nullptr and size 0 should be equal");
 
+    static_assert(DataView<int>(nullptr, 0).data() == nullptr, "Data pointer should be nullptr");
+
     int i = 42;
     DataView<int> dv(&i, 1);
-    return dv[0] == i;
+    return (dv[0] == i) && (dv.data() == &i);
 }
 
 } // namespace

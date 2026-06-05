@@ -22,6 +22,7 @@ template <typename T> class DataView {
     constexpr DataView(const T *ptr, size_t size) noexcept : ptr_(ptr), size_(size) {}
     constexpr DataView() noexcept = default;
 
+    constexpr auto data() const noexcept { return ptr_; }
     constexpr size_t size() const noexcept { return size_; }
     constexpr T const &operator[](uint32_t i) const noexcept { return ptr_[i]; };
 
