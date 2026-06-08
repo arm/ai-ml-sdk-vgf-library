@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import argparse
+import importlib.machinery
 import os
 import pathlib
 import platform
@@ -365,11 +366,36 @@ class Builder:
                 self.generate_cmake_package("ZIP", True)
 
             if self.package_pip:
-                os.makedirs("pip_package/vgf_lib/binaries/", exist_ok=True)
-                shutil.copytree(
-                    self.install, "pip_package/vgf_lib/binaries/", dirs_exist_ok=True
+                pip_package_dir = VGF_LIB_DIR / "pip_package"
+                pip_binaries_dir = pip_package_dir / "vgf_lib" / "binaries"
+                os.makedirs(pip_binaries_dir, exist_ok=True)
+                shutil.copytree(self.install, pip_binaries_dir, dirs_exist_ok=True)
+                shutil.copyfile("README.md", pip_package_dir / "README.md")
+
+                for suffix in importlib.machinery.EXTENSION_SUFFIXES:
+                    for old_extension in pip_package_dir.glob(f"vgfpy{suffix}"):
+                        old_extension.unlink()
+
+                staged_extensions = []
+                for suffix in importlib.machinery.EXTENSION_SUFFIXES:
+                    staged_extensions.extend(
+                        pathlib.Path(self.build_dir).glob(f"**/vgfpy{suffix}")
+                    )
+
+                if not staged_extensions:
+                    print("ERROR: vgfpy extension was not found in build directory")
+                    return 1
+
+                if len(staged_extensions) > 1:
+                    print(
+                        "ERROR: Multiple vgfpy extensions found in build directory, unable to determine which one to package"
+                    )
+                    return 1
+
+                shutil.copyfile(
+                    staged_extensions[0],
+                    pip_package_dir / staged_extensions[0].name,
                 )
-                shutil.copyfile("README.md", "pip_package/README.md")
 
                 package_version = ""
                 if self.package_version:
@@ -385,7 +411,7 @@ class Builder:
                 result = subprocess.Popen(
                     [sys.executable, "-m", "build"],
                     env=os.environ,
-                    cwd="pip_package",
+                    cwd=pip_package_dir,
                 )
                 result.communicate()
                 if result.returncode != 0:
