@@ -2,6 +2,29 @@
 
 ---
 
+## Version 0.10.0 – *Resource Metadata & C API Expansion*
+
+### Highlights
+
+- Added a C encoder API.
+- Added alias group support to VGF resources.
+- Added sampler metadata support through the `ExtraConfig` union.
+- Expanded module sections to accept GLSL and HLSL source code.
+- Added explicit descriptor set indices with legacy fallback handling.
+- Aligned VGF sections in 0.4.3 files.
+
+### Build, Packaging & Developer Experience
+
+- Split binary and documentation build flows.
+- Updated dependencies, packaging, and build tooling.
+
+### Bug Fixes
+
+- Fixed `vgf_dump` scenario templates for storage buffers.
+- Fixed tensor JSON output.
+- Updated dynamic-shape Scenario JSON output to use `-1`.
+- Hardened raw constant section handling.
+
 ## Version 0.9.0 – *Decoder Hardening & Build Updates*
 
 ### Highlights
