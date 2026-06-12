@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -8,10 +8,11 @@
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
+#include <version.hpp>
 
 int main(int argc, char *argv[]) {
     try {
-        argparse::ArgumentParser parser(argv[0]);
+        argparse::ArgumentParser parser(argv[0], mlsdk::vgf_updater::details::version);
 
         // Set up positional args
         parser.add_argument("-i", "--input").help("The VGF input file to convert").required();
