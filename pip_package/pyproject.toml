@@ -11,6 +11,11 @@ name = "ai_ml_sdk_vgf_library"
 description = "ML SDK VGF Library"
 readme = "README.md"
 dynamic = ["version"]
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Arm Limited" }
+]
+requires-python = ">=3.8"
 
 [project.scripts]
 vgf_dump = "vgf_lib.cli:main"
