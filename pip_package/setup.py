@@ -54,7 +54,8 @@ class BDistWheel(bdist_wheel):
         elif system == "Darwin":
             assert machine == "arm64"
             platformName = "macosx_11_0_arm64"
-        return ("py3", "none", platformName)
+        python_tag, abi_tag, _ = super().get_tag()
+        return (python_tag, abi_tag, platformName)
 
 
 def get_prebuilt_extension():
