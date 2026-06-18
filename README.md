@@ -151,8 +151,10 @@ You can install the build artifacts for this project into a specified location.
 To install the build artifacts, pass the `--install` option with the required
 path.
 
-To create an archive with the build artifacts option, you must add the
-`--package` option. The archive is stored in the provided location.
+To create an archive containing the build artifacts, pass the `--package-type`
+option with an archive type such as `zip` or `tgz`. Use `--package-dir` to
+choose where the archive is written; by default, packages are written to the
+build directory.
 
 For more command line options, see the help output:
 
