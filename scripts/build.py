@@ -217,6 +217,9 @@ class Builder:
             cmake_setup_cmd.append("-DML_SDK_VGF_LIB_BUILD_PYLIB=ON")
             cmake_setup_cmd.append(f"-DPYBIND11_PATH={self.pybind11_path}")
 
+        if self.package_version:
+            cmake_setup_cmd.append(f"-DML_SDK_PACKAGE_VERSION={self.package_version}")
+
         if self.enable_sanitizers:
             if self.target_platform != "host":
                 print(
@@ -544,7 +547,7 @@ def parse_arguments():
     )
     parser.add_argument(
         "--package-version",
-        help="Manually specify pip package version number",
+        help="Manually specify package version number",
         default="",
     )
     parser.add_argument(
