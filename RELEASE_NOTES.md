@@ -5,7 +5,12 @@
 ## Unreleased
 
 ### Build, Packaging & Developer Experience
- - Updated vgf_dump and vgf_updater `--version` output to report the package version and include git revision and dependency revision information
+
+- Updated vgf_dump and vgf_updater `--version` output to report the package version and include git revision and dependency revision information
+
+### Bug Fixes
+
+- Hardened header decoding.
 
 ## Version 0.10.0 – *Resource Metadata & C API Expansion*
 

@@ -211,6 +211,10 @@ class HeaderDecoderImpl : public HeaderDecoder {
             logging::error("Header size is not the expected size");
             return nullptr;
         }
+        if (fileSize < HeaderSize()) {
+            logging::error("File size is smaller than the header size");
+            return nullptr;
+        }
         auto decoder = std::unique_ptr<HeaderDecoderImpl>(new HeaderDecoderImpl(data));
         if (!_verify(decoder.get(), fileSize)) {
             return nullptr;
@@ -226,6 +230,10 @@ class HeaderDecoderImpl : public HeaderDecoder {
         }
         if (headerSize != HeaderSize()) {
             logging::error("Header size is not the expected size");
+            return nullptr;
+        }
+        if (fileSize < HeaderSize()) {
+            logging::error("File size is smaller than the header size");
             return nullptr;
         }
         auto *decoder = new (decoderMem) HeaderDecoderImpl(data);
