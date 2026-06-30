@@ -55,6 +55,19 @@ TEST(DataView, Basic) {
     ASSERT_TRUE(DataViewTests());
 }
 
+TEST(DataView, EqualityRejectsDifferentUint32ElementAtAnyPosition) {
+    const std::vector<uint32_t> data{1, 2, 3, 4};
+
+    for (size_t i = 0; i < data.size(); ++i) {
+        SCOPED_TRACE(i);
+        std::vector<uint32_t> differentData = data;
+        differentData[i] = 99;
+
+        ASSERT_FALSE(DataView<uint32_t>(data.data(), data.size()) ==
+                     DataView<uint32_t>(differentData.data(), differentData.size()));
+    }
+}
+
 TEST(CppModelResourceTable, EmptyTable) {
     std::stringstream buffer;
 

@@ -43,12 +43,12 @@ template <typename T> class DataView {
             return false;
         }
 
-        return std::memcmp(ptr_, other.ptr_, size_) == 0;
+        return std::memcmp(ptr_, other.ptr_, size_ * sizeof(T)) == 0;
     }
 
   private:
     const T *ptr_ = nullptr;
-    size_t size_ = 0;
+    size_t size_ = 0; // Number of elements, not bytes.
 };
 
 /**
