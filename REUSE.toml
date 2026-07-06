@@ -31,6 +31,6 @@ SPDX-FileCopyrightText = "Copyright 2025 Arm Limited and/or its affiliates <open
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "schema/vgf_generated.h"
+path = "schema/generated/vgf_generated.h"
 SPDX-FileCopyrightText = "Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>"
 SPDX-License-Identifier = "Apache-2.0"
