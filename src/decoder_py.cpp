@@ -112,7 +112,7 @@ void pyInitHeaderDecoder(py::module m) {
         [](const py::buffer &buffer, uint64_t headerSize, uint64_t fileSize) {
             return CreateHeaderDecoder(buffer.request().ptr, headerSize, fileSize);
         },
-        py::arg("data"), py::arg("headerSize"), py::arg("fileSize"));
+        py::keep_alive<0, 1>(), py::arg("data"), py::arg("headerSize"), py::arg("fileSize"));
 
     m.attr("HEADER_MAGIC_VALUE_OLD") = HEADER_MAGIC_VALUE_OLD;
     m.attr("HEADER_MAGIC_VALUE") = HEADER_MAGIC_VALUE;
@@ -249,7 +249,7 @@ void pyInitModuleTableDecoder(py::module m) {
     m.def(
         "CreateModuleTableDecoder",
         [](const py::buffer &buffer, uint64_t size) { return CreateModuleTableDecoder(buffer.request().ptr, size); },
-        py::arg("data"), py::arg("size"));
+        py::keep_alive<0, 1>(), py::arg("data"), py::arg("size"));
 }
 
 // Model Sequence Decoder
@@ -426,7 +426,7 @@ void pyInitModelSequenceTableDecoder(py::module m) {
         [](const py::buffer &buffer, uint64_t size) {
             return CreateModelSequenceTableDecoder(buffer.request().ptr, size);
         },
-        py::arg("data"), py::arg("size"));
+        py::keep_alive<0, 1>(), py::arg("data"), py::arg("size"));
 }
 
 // Model Resource Table Decoder
@@ -522,7 +522,7 @@ void pyInitModelResourceTableDecoder(py::module m) {
         [](const py::buffer &buffer, uint64_t size) {
             return CreateModelResourceTableDecoder(buffer.request().ptr, size);
         },
-        py::arg("data"), py::arg("size"));
+        py::keep_alive<0, 1>(), py::arg("data"), py::arg("size"));
 }
 
 // Constant Decoder
@@ -567,7 +567,7 @@ void pyInitConstantDecoder(py::module m) {
     m.def(
         "CreateConstantDecoder",
         [](const py::buffer &buffer, uint64_t size) { return CreateConstantDecoder(buffer.request().ptr, size); },
-        py::arg("data"), py::arg("size"));
+        py::keep_alive<0, 1>(), py::arg("data"), py::arg("size"));
 }
 
 // Python Binding Module Decoder Setup
