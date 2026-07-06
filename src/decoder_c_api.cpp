@@ -383,7 +383,12 @@ void mlsdk_decoder_model_sequence_get_segment_dispatch_shape(
     assert(dispatchShape != nullptr && "dispatchShape is null");
     DataView<uint32_t> data =
         reinterpret_cast<ModelSequenceTableDecoder *>(modelSequenceDecoder)->getSegmentDispatchShape(segIdx);
-    assert(data.size() == 3 && "wrong dispatchShape size");
+    if (data.size() != 3) {
+        dispatchShape->data[0] = 0;
+        dispatchShape->data[1] = 0;
+        dispatchShape->data[2] = 0;
+        return;
+    }
     dispatchShape->data[0] = data[0];
     dispatchShape->data[1] = data[1];
     dispatchShape->data[2] = data[2];
