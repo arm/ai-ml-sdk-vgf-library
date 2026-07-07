@@ -468,6 +468,14 @@ PushConstantRangeHandle ToHandle(const flatbuffers::Vector<flatbuffers::Offset<V
     return reinterpret_cast<PushConstantRangeHandle>(ptr);
 }
 
+const VGF::SegmentInfo *FromHandle(GraphConstantBindingArrayHandle handle) {
+    return reinterpret_cast<const VGF::SegmentInfo *>(handle);
+}
+
+GraphConstantBindingArrayHandle ToHandle(const VGF::SegmentInfo *ptr) {
+    return reinterpret_cast<GraphConstantBindingArrayHandle>(ptr);
+}
+
 const VGF::SamplerConfig *FromHandle(SamplerConfigHandle handle) {
     return reinterpret_cast<const VGF::SamplerConfig *>(handle);
 }
@@ -511,6 +519,42 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
             return {};
         }
         return {constants->data(), constants->size()};
+    }
+
+    [[nodiscard]] GraphConstantBindingArrayHandle getSegmentConstantBindingsHandle(uint32_t segmentIdx) const override {
+        return ToHandle(getSegmentAt(segmentIdx));
+    }
+
+    [[nodiscard]] size_t getGraphConstantBindingsSize(GraphConstantBindingArrayHandle handle) const override {
+        const auto *segment = FromHandle(handle);
+        if (segment == nullptr) {
+            return 0;
+        }
+
+        const auto *constantBindings = segment->constant_bindings();
+        if (constantBindings != nullptr) {
+            return constantBindings->size();
+        }
+
+        const auto *constants = segment->constants();
+        return constants == nullptr ? 0 : constants->size();
+    }
+
+    [[nodiscard]] GraphConstantBinding getGraphConstantBinding(GraphConstantBindingArrayHandle handle,
+                                                               uint32_t bindingIdx) const override {
+        const auto *segment = FromHandle(handle);
+        assert(segment != nullptr && "no graph constant bindings found");
+
+        const auto *constantBindings = segment->constant_bindings();
+        if (constantBindings != nullptr) {
+            const auto *binding = constantBindings->Get(bindingIdx);
+            return {binding->graph_constant_id(), binding->constant_table_index()};
+        }
+
+        const auto *constants = segment->constants();
+        assert(constants != nullptr && "no graph constant bindings found");
+        const auto constantIndex = constants->Get(bindingIdx);
+        return {constantIndex, constantIndex};
     }
 
     [[nodiscard]] DataView<uint32_t> getSegmentDispatchShape(uint32_t segmentIdx) const override {

@@ -177,8 +177,8 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
 
         auto &[modelInputBindingSlots, modelOutputBindingSlots] = modelSequenceIO;
 
-        std::vector<ConstantRef> constantRefs{};
-        constantRefs.reserve(segment.mConstants.size());
+        std::unordered_map<uint32_t, ConstantRef> constantRefsByIndex{};
+        constantRefsByIndex.reserve(segment.mConstants.size());
         for (const auto constantIdx : segment.mConstants) {
             const auto constantIt = constantsByIndex.find(constantIdx);
             if (constantIt == constantsByIndex.end()) {
@@ -193,8 +193,19 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
                 throw std::runtime_error("Constant resource category mismatch");
             }
             const auto constantResourceRef = resourceRefs[constantData.mMrtIndex];
-            constantRefs.push_back(encoder.AddConstant(constantResourceRef, constantData.mConstantData,
-                                                       constantData.mConstantSize, constantData.mSparsityDimension));
+            constantRefsByIndex.emplace(
+                constantIdx, encoder.AddConstant(constantResourceRef, constantData.mConstantData,
+                                                 constantData.mConstantSize, constantData.mSparsityDimension));
+        }
+
+        std::vector<GraphConstantBindingRef> constantBindings{};
+        constantBindings.reserve(segment.mConstantBindings.size());
+        for (const auto &binding : segment.mConstantBindings) {
+            const auto constantIt = constantRefsByIndex.find(binding.mConstantIndex);
+            if (constantIt == constantRefsByIndex.end()) {
+                throw std::runtime_error("Missing constant data for index " + std::to_string(binding.mConstantIndex));
+            }
+            constantBindings.emplace_back(binding.mGraphConstantId, constantIt->second);
         }
 
         const auto getPushConstRangeRef = [&encoder](const auto &range) {
@@ -238,7 +249,7 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
         }
 
         encoder.AddSegmentInfo(moduleRefs[segment.mModuleIndex], segment.mName, descriptorSetInfoRefs,
-                               segmentInputBindingSlots, segmentOutputBindingSlots, constantRefs, dispatchShape,
+                               segmentInputBindingSlots, segmentOutputBindingSlots, constantBindings, dispatchShape,
                                pushConstants);
     }
     return modelSequenceIO;

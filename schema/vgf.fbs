@@ -99,6 +99,11 @@ table PushConstantRange {
     size: uint;
 }
 
+table ConstantBinding {
+    graph_constant_id: uint;
+    constant_table_index: uint;
+}
+
 table SegmentInfo {
     type: ModuleType;
     name: string;
@@ -109,6 +114,7 @@ table SegmentInfo {
     constants: [uint];
     dispatch_shape: [uint];
     push_constant_ranges: [PushConstantRange];
+    constant_bindings: [ConstantBinding];
 }
 
 table ModelSequenceTable {

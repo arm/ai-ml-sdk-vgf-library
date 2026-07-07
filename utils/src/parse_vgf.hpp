@@ -69,6 +69,15 @@ struct PushConstantRange {
     uint32_t mSize{0};
 };
 
+struct GraphConstantBinding {
+    GraphConstantBinding() = default;
+    GraphConstantBinding(uint32_t graphConstantId, uint32_t constantIndex)
+        : mGraphConstantId(graphConstantId), mConstantIndex(constantIndex) {}
+
+    uint32_t mGraphConstantId{0};
+    uint32_t mConstantIndex{0};
+};
+
 struct DescriptorSetInfo {
     DescriptorSetInfo() = default;
     DescriptorSetInfo(std::vector<BindingSlot> bindings, uint32_t setIndex)
@@ -83,11 +92,12 @@ struct Segment {
     Segment(uint32_t index, mlsdk::vgflib::ModuleType type, uint32_t moduleIndex, std::string_view &name,
             std::vector<BindingSlot> inputs, std::vector<BindingSlot> outputs,
             std::vector<DescriptorSetInfo> descriptorSetInfos, std::vector<PushConstantRange> pushConstantRanges,
-            std::vector<uint32_t> constants, std::vector<uint32_t> dispatchShape)
+            std::vector<uint32_t> constants, std::vector<uint32_t> dispatchShape,
+            std::vector<GraphConstantBinding> constantBindings)
         : mIndex(index), mType(type), mModuleIndex(moduleIndex), mName(name), mInputs(std::move(inputs)),
           mOutputs(std::move(outputs)), mDescriptorSetInfos(std::move(descriptorSetInfos)),
           mPushConstantRanges(std::move(pushConstantRanges)), mConstants(std::move(constants)),
-          mDispatchShape(std::move(dispatchShape)) {}
+          mDispatchShape(std::move(dispatchShape)), mConstantBindings(std::move(constantBindings)) {}
 
     uint32_t mIndex{0};
     mlsdk::vgflib::ModuleType mType{mlsdk::vgflib::ModuleType::COMPUTE};
@@ -99,6 +109,7 @@ struct Segment {
     std::vector<PushConstantRange> mPushConstantRanges;
     std::vector<uint32_t> mConstants;
     std::vector<uint32_t> mDispatchShape;
+    std::vector<GraphConstantBinding> mConstantBindings;
 };
 
 struct NamedBindingSlot {

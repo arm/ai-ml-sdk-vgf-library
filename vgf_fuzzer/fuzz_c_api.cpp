@@ -153,6 +153,13 @@ void FuzzCDecoderAccessors(const uint8_t *data, size_t size) {
             }
             mlsdk_decoder_constant_indexes constIdx{};
             mlsdk_decoder_model_sequence_get_segment_constant_indexes(seqDec, idx, &constIdx);
+            const auto constantBindings = mlsdk_decoder_model_sequence_get_segment_constant_bindings(seqDec, idx);
+            const auto constantBindingCount = mlsdk_decoder_graph_constant_binding_size(seqDec, constantBindings);
+            if (constantBindingCount > 0) {
+                const auto constantIdx = static_cast<uint32_t>(std::min<size_t>(constantBindingCount - 1, UINT32_MAX));
+                mlsdk_decoder_graph_constant_binding binding{};
+                mlsdk_decoder_graph_constant_binding_get(seqDec, constantBindings, constantIdx, &binding);
+            }
             mlsdk_decoder_model_sequence_get_segment_type(seqDec, idx);
             mlsdk_decoder_model_sequence_get_segment_name(seqDec, idx);
             mlsdk_decoder_model_sequence_get_segment_module_index(seqDec, idx);
@@ -274,12 +281,12 @@ void FuzzCEncoderSmoke(const uint8_t *data, size_t size) {
     const uint32_t dispatchShape[] = {1, 1, 1};
     const mlsdk_encoder_binding_slot_ref inputs[] = {inputBinding};
     const mlsdk_encoder_binding_slot_ref outputs[] = {outputBinding};
-    const mlsdk_encoder_constant_ref constants[] = {constant};
+    const mlsdk_encoder_graph_constant_binding_ref constantBindings[] = {{10000, constant}};
     const mlsdk_encoder_push_const_range_ref pushConstRanges[] = {pushConstRange};
-    (void)mlsdk_encoder_add_segment_info(encoder, spirvModule, "segment", descriptors, std::size(descriptors), inputs,
-                                         std::size(inputs), outputs, std::size(outputs), constants,
-                                         std::size(constants), dispatchShape, pushConstRanges,
-                                         std::size(pushConstRanges));
+    (void)mlsdk_encoder_add_segment_info_with_constant_bindings(
+        encoder, spirvModule, "segment", descriptors, std::size(descriptors), inputs, std::size(inputs), outputs,
+        std::size(outputs), constantBindings, std::size(constantBindings), dispatchShape, pushConstRanges,
+        std::size(pushConstRanges));
 
     const char *inputNames[] = {"input"};
     const char *outputNames[] = {"output"};

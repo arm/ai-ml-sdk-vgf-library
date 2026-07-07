@@ -202,9 +202,10 @@ std::string T3_encode_simple_graph_with_constants_sample() {
                                                 // ResourceCategory INPUT or INTERMEDIATE
                             {outputBindingRef}, // the output bindings of the segment. Linked resource can be
                                                 // either ResourceCategory OUTPUT or INTERMEDIATE
-                            {
+                            std::vector{
                                 // **NEW** the constants required by the model
-                                weightConstRef, // **NEW** index 0 for weights
+                                vgflib::GraphConstantBindingRef{
+                                    weightConstRef}, // **NEW** graph constant ID and constant table index 0 for weights
                             },
                             {}, // this segment is for a graph module so doesn't require any dispatch shape
                             {}  // this example does not make use of push constants.

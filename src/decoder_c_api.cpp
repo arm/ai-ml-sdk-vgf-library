@@ -253,6 +253,14 @@ NameArrayHandle from_c_handle(mlsdk_decoder_names_handle handleIn) {
     return reinterpret_cast<NameArrayHandle>(handleIn);
 }
 
+mlsdk_decoder_graph_constant_bindings_handle to_c_handle(GraphConstantBindingArrayHandle handleIn) {
+    return reinterpret_cast<mlsdk_decoder_graph_constant_bindings_handle>(handleIn);
+}
+
+GraphConstantBindingArrayHandle from_c_handle(mlsdk_decoder_graph_constant_bindings_handle handleIn) {
+    return reinterpret_cast<GraphConstantBindingArrayHandle>(handleIn);
+}
+
 } // namespace
 
 size_t mlsdk_decoder_binding_slot_size(const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder,
@@ -353,6 +361,32 @@ void mlsdk_decoder_model_sequence_get_segment_constant_indexes(
         reinterpret_cast<const ModelSequenceTableDecoder *>(modelSequenceDecoder)->getSegmentConstantIndexes(segIdx);
     constant->data = data.begin();
     constant->size = data.size();
+}
+
+mlsdk_decoder_graph_constant_bindings_handle mlsdk_decoder_model_sequence_get_segment_constant_bindings(
+    const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder, uint32_t segIdx) {
+    assert(modelSequenceDecoder != nullptr && "modelSequenceDecoder is null");
+    return to_c_handle(reinterpret_cast<const ModelSequenceTableDecoder *>(modelSequenceDecoder)
+                           ->getSegmentConstantBindingsHandle(segIdx));
+}
+
+size_t mlsdk_decoder_graph_constant_binding_size(const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder,
+                                                 mlsdk_decoder_graph_constant_bindings_handle handle) {
+    assert(modelSequenceDecoder != nullptr && "modelSequenceDecoder is null");
+    return reinterpret_cast<const ModelSequenceTableDecoder *>(modelSequenceDecoder)
+        ->getGraphConstantBindingsSize(from_c_handle(handle));
+}
+
+void mlsdk_decoder_graph_constant_binding_get(const mlsdk_decoder_model_sequence_decoder *const modelSequenceDecoder,
+                                              mlsdk_decoder_graph_constant_bindings_handle handle, uint32_t bindingIdx,
+                                              mlsdk_decoder_graph_constant_binding *binding) {
+    assert(modelSequenceDecoder != nullptr && "modelSequenceDecoder is null");
+    assert(binding != nullptr && "binding is null");
+
+    const auto output = reinterpret_cast<const ModelSequenceTableDecoder *>(modelSequenceDecoder)
+                            ->getGraphConstantBinding(from_c_handle(handle), bindingIdx);
+    binding->graph_constant_id = output.graphConstantId;
+    binding->constant_table_index = output.constantIndex;
 }
 
 mlsdk_decoder_module_type

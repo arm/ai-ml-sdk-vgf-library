@@ -493,6 +493,21 @@ MLSDKAPI uint32_t mlsdk_decoder_binding_slot_mrt_index(const mlsdk_decoder_model
 typedef struct mlsdk_decoder_push_constant_ranges_handle_s const *mlsdk_decoder_push_constant_ranges_handle;
 
 /**
+ * @brief Handle to refer to an array of graph constant bindings
+ *
+ */
+typedef struct mlsdk_decoder_graph_constant_bindings_handle_s const *mlsdk_decoder_graph_constant_bindings_handle;
+
+/**
+ * @brief Graph constant binding
+ *
+ */
+typedef struct {
+    uint32_t graph_constant_id;
+    uint32_t constant_table_index;
+} mlsdk_decoder_graph_constant_binding;
+
+/**
  * @brief Returns the number of push constant ranges
  *
  * @param modelSequenceDecoder The pointer to the model sequence decoder
@@ -602,6 +617,40 @@ MLSDKAPI uint32_t mlsdk_decoder_model_sequence_get_segment_descriptorset_index(
 MLSDKAPI void mlsdk_decoder_model_sequence_get_segment_constant_indexes(
     const mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder, uint32_t segIdx,
     mlsdk_decoder_constant_indexes *constant);
+
+/**
+ * @brief Gets the graph constant bindings handle for a given segment
+ *
+ * @param modelSequenceDecoder The pointer to the model sequence decoder
+ * @param segIdx The index of segment in the model sequence
+ * @return Handle to the graph constant binding array
+ */
+MLSDKAPI mlsdk_decoder_graph_constant_bindings_handle mlsdk_decoder_model_sequence_get_segment_constant_bindings(
+    const mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder, uint32_t segIdx);
+
+/**
+ * @brief Returns the number of graph constant bindings
+ *
+ * @param modelSequenceDecoder The pointer to the model sequence decoder
+ * @param handle The handle to the graph constant bindings
+ * @return Number of graph constant bindings
+ */
+MLSDKAPI size_t
+mlsdk_decoder_graph_constant_binding_size(const mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder,
+                                          mlsdk_decoder_graph_constant_bindings_handle handle);
+
+/**
+ * @brief Returns a given graph constant binding
+ *
+ * @param modelSequenceDecoder The pointer to the model sequence decoder
+ * @param handle The handle to the graph constant bindings
+ * @param bindingIdx The index of the graph constant binding in the graph constant bindings
+ * @param binding The pointer to the graph constant binding output
+ */
+MLSDKAPI void mlsdk_decoder_graph_constant_binding_get(const mlsdk_decoder_model_sequence_decoder *modelSequenceDecoder,
+                                                       mlsdk_decoder_graph_constant_bindings_handle handle,
+                                                       uint32_t bindingIdx,
+                                                       mlsdk_decoder_graph_constant_binding *binding);
 
 /**
  * @brief Returns the type of a given segment of model sequence

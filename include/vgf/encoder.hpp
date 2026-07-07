@@ -37,6 +37,17 @@ class ResourceRef : public Ref<ResourceRef> {};
 /// \brief Class to store reference to a Constant
 class ConstantRef : public Ref<ConstantRef> {};
 
+/// \brief Class to store reference to a graph constant binding
+struct GraphConstantBindingRef {
+    GraphConstantBindingRef() = default;
+    GraphConstantBindingRef(uint32_t graphConstantId, ConstantRef constant)
+        : graphConstantId(graphConstantId), constant(constant) {}
+    GraphConstantBindingRef(ConstantRef constant) : graphConstantId(constant.reference), constant(constant) {}
+
+    uint32_t graphConstantId = 0;
+    ConstantRef constant = {0};
+};
+
 /// \brief Class to store reference to a Binding Slot
 class BindingSlotRef : public Ref<BindingSlotRef> {};
 
@@ -186,22 +197,42 @@ class Encoder {
     /// \return PushConstRangeRef type containing information for the added push constant range
     virtual PushConstRangeRef AddPushConstRange(uint32_t stageFlags, uint32_t offset, uint32_t size) = 0;
 
-    /// \brief Add segment info with approprate references
+    /// \brief Add segment info with legacy constant references
     ///
     /// \param module Module reference of the added module
     /// \param name Unique string name of the segment
     /// \param descriptors Vector of references to descriptor set info
     /// \param inputs Vector of references to binding slots used as inputs
     /// \param outputs Vector of references to binding slots used as outputs
-    /// \param constants Vector of references to segment constants
+    /// \param constants Vector of references to segment constants. This legacy overload assumes
+    ///                  graph_constant_id == constant_table_index.
     /// \param dispatchShape 3-dimensional array of dispatch shape
     /// \param pushConstRanges Vector of references to segment push constant ranges
     /// \return SegmentInfoRef type containing information for the added push constant range
     virtual SegmentInfoRef
-    AddSegmentInfo(ModuleRef module, const std::string &name, const std::vector<DescriptorSetInfoRef> &descriptors = {},
-                   const std::vector<BindingSlotRef> &inputs = {}, const std::vector<BindingSlotRef> &outputs = {},
-                   const std::vector<ConstantRef> &constants = {}, const std::array<uint32_t, 3> &dispatchShape = {},
+    AddSegmentInfo(ModuleRef module, const std::string &name, const std::vector<DescriptorSetInfoRef> &descriptors,
+                   const std::vector<BindingSlotRef> &inputs, const std::vector<BindingSlotRef> &outputs,
+                   const std::vector<ConstantRef> &constants, const std::array<uint32_t, 3> &dispatchShape = {},
                    const std::vector<PushConstRangeRef> &pushConstRanges = {}) = 0;
+
+    /// \brief Add segment info with appropriate references
+    ///
+    /// \param module Module reference of the added module
+    /// \param name Unique string name of the segment
+    /// \param descriptors Vector of references to descriptor set info
+    /// \param inputs Vector of references to binding slots used as inputs
+    /// \param outputs Vector of references to binding slots used as outputs
+    /// \param constantBindings Vector of references to segment constant bindings
+    /// \param dispatchShape 3-dimensional array of dispatch shape
+    /// \param pushConstRanges Vector of references to segment push constant ranges
+    /// \return SegmentInfoRef type containing information for the added segment
+    virtual SegmentInfoRef AddSegmentInfo(ModuleRef module, const std::string &name,
+                                          const std::vector<DescriptorSetInfoRef> &descriptors = {},
+                                          const std::vector<BindingSlotRef> &inputs = {},
+                                          const std::vector<BindingSlotRef> &outputs = {},
+                                          const std::vector<GraphConstantBindingRef> &constantBindings = {},
+                                          const std::array<uint32_t, 3> &dispatchShape = {},
+                                          const std::vector<PushConstRangeRef> &pushConstRanges = {}) = 0;
 
     /// \brief Add the sequence of inputs and outputs to the model
     ///

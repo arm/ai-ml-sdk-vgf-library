@@ -375,6 +375,11 @@ void to_json(nlohmann::json &j, const PushConstantRange &pushConstantRange) {
                        {"size", pushConstantRange.mSize}};
 }
 
+void to_json(nlohmann::json &j, const GraphConstantBinding &constantBinding) {
+    j = nlohmann::json{{"graph_constant_id", constantBinding.mGraphConstantId},
+                       {"constant_table_index", constantBinding.mConstantIndex}};
+}
+
 void to_json(nlohmann::json &j, const DescriptorSetInfo &descriptorSetInfo) {
     j = nlohmann::json{{"bindings", descriptorSetInfo.mBindings}, {"set_index", descriptorSetInfo.mSetIndex}};
 }
@@ -387,9 +392,10 @@ void to_json(nlohmann::json &j, const Segment &segment) {
                        {"inputs", segment.mInputs},
                        {"outputs", segment.mOutputs},
                        {"descriptor_set_infos", segment.mDescriptorSetInfos},
-                       {"push_constant_ranges", segment.mPushConstantRanges},
                        {"constants", segment.mConstants},
-                       {"dispatch_shape", segment.mDispatchShape}};
+                       {"dispatch_shape", segment.mDispatchShape},
+                       {"push_constant_ranges", segment.mPushConstantRanges},
+                       {"constant_bindings", segment.mConstantBindings}};
 }
 
 void to_json(nlohmann::json &j, const NamedBindingSlot &namedSlot) {

@@ -5,6 +5,7 @@
 
 #include "vgf/encoder.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -53,6 +54,17 @@ class PyEncoder final : public Encoder {
 
         PYBIND11_OVERRIDE_PURE(SegmentInfoRef, Encoder, AddSegmentInfo, module, name, descriptors, inputs, outputs,
                                constants, dispatchShape, pushConstRanges);
+    }
+
+    SegmentInfoRef AddSegmentInfo(ModuleRef module, const std::string &name,
+                                  const std::vector<DescriptorSetInfoRef> &descriptors,
+                                  const std::vector<BindingSlotRef> &inputs, const std::vector<BindingSlotRef> &outputs,
+                                  const std::vector<GraphConstantBindingRef> &constantBindings,
+                                  const std::array<uint32_t, 3> &dispatchShape,
+                                  const std::vector<PushConstRangeRef> &pushConstRanges) override {
+
+        PYBIND11_OVERRIDE_PURE(SegmentInfoRef, Encoder, AddSegmentInfo, module, name, descriptors, inputs, outputs,
+                               constantBindings, dispatchShape, pushConstRanges);
     }
 
     void AddModelSequenceInputsOutputs(const std::vector<BindingSlotRef> &inputs,
@@ -119,6 +131,10 @@ void pyInitEncoder(py::module m) {
     py::class_<ConstantRef>(m, "ConstantRef")
         .def(py::init<uint32_t>())
         .def_readonly("reference", &ConstantRef::reference);
+    py::class_<GraphConstantBindingRef>(m, "GraphConstantBindingRef")
+        .def(py::init<uint32_t, ConstantRef>())
+        .def_readwrite("graphConstantId", &GraphConstantBindingRef::graphConstantId)
+        .def_readonly("constant", &GraphConstantBindingRef::constant);
     py::class_<BindingSlotRef>(m, "BindingSlotRef")
         .def(py::init<uint32_t>())
         .def_readonly("reference", &BindingSlotRef::reference);
@@ -157,9 +173,28 @@ void pyInitEncoder(py::module m) {
              py::arg("setIndex") = std::numeric_limits<uint32_t>::max())
         .def("AddPushConstRange", &Encoder::AddPushConstRange, py::arg("stageFlags"), py::arg("offset"),
              py::arg("size"))
-        .def("AddSegmentInfo", &Encoder::AddSegmentInfo, py::arg("module"), py::arg("name"),
-             py::arg("descriptors") = py::list(), py::arg("inputs") = py::list(), py::arg("outputs") = py::list(),
-             py::arg("constants") = py::list(), py::arg("dispatchShape") = std::array<uint32_t, 3>(),
+        .def(
+            "AddSegmentInfo",
+            [](Encoder &encoder, ModuleRef module, const std::string &name,
+               const std::vector<DescriptorSetInfoRef> &descriptors, const std::vector<BindingSlotRef> &inputs,
+               const std::vector<BindingSlotRef> &outputs, const std::vector<ConstantRef> &constants,
+               const std::array<uint32_t, 3> &dispatchShape, const std::vector<PushConstRangeRef> &pushConstRanges) {
+                std::vector<GraphConstantBindingRef> constantBindings;
+                constantBindings.reserve(constants.size());
+                std::copy(constants.begin(), constants.end(), std::back_inserter(constantBindings));
+                return encoder.AddSegmentInfo(module, name, descriptors, inputs, outputs, constantBindings,
+                                              dispatchShape, pushConstRanges);
+            },
+            py::arg("module"), py::arg("name"), py::arg("descriptors") = py::list(), py::arg("inputs") = py::list(),
+            py::arg("outputs") = py::list(), py::arg("constants") = py::list(),
+            py::arg("dispatchShape") = std::array<uint32_t, 3>(), py::arg("pushConstRanges") = py::list())
+        .def("AddSegmentInfo",
+             py::overload_cast<ModuleRef, const std::string &, const std::vector<DescriptorSetInfoRef> &,
+                               const std::vector<BindingSlotRef> &, const std::vector<BindingSlotRef> &,
+                               const std::vector<GraphConstantBindingRef> &, const std::array<uint32_t, 3> &,
+                               const std::vector<PushConstRangeRef> &>(&Encoder::AddSegmentInfo),
+             py::arg("module"), py::arg("name"), py::arg("descriptors"), py::arg("inputs"), py::arg("outputs"),
+             py::arg("constantBindings"), py::arg("dispatchShape") = std::array<uint32_t, 3>(),
              py::arg("pushConstRanges") = py::list())
         .def("AddModelSequenceInputsOutputs", &Encoder::AddModelSequenceInputsOutputs, py::arg("inputs") = py::list(),
              py::arg("inputNames") = py::list(), py::arg("outputs") = py::list(), py::arg("outputNames") = py::list())

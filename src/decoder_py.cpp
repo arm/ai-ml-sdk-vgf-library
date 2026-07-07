@@ -274,6 +274,21 @@ class PyModelSequenceTableDecoder final : public ModelSequenceTableDecoder {
         PYBIND11_OVERRIDE_PURE(DataView<uint32_t>, ModelSequenceTableDecoder, getSegmentConstantIndexes, segmentIdx);
     }
 
+    GraphConstantBindingArrayHandle getSegmentConstantBindingsHandle(uint32_t segmentIdx) const override {
+        PYBIND11_OVERRIDE_PURE(GraphConstantBindingArrayHandle, ModelSequenceTableDecoder,
+                               getSegmentConstantBindingsHandle, segmentIdx);
+    }
+
+    size_t getGraphConstantBindingsSize(GraphConstantBindingArrayHandle handle) const override {
+        PYBIND11_OVERRIDE_PURE(size_t, ModelSequenceTableDecoder, getGraphConstantBindingsSize, handle);
+    }
+
+    GraphConstantBinding getGraphConstantBinding(GraphConstantBindingArrayHandle handle,
+                                                 uint32_t bindingIdx) const override {
+        PYBIND11_OVERRIDE_PURE(GraphConstantBinding, ModelSequenceTableDecoder, getGraphConstantBinding, handle,
+                               bindingIdx);
+    }
+
     ModuleType getSegmentType(uint32_t segmentIdx) const override {
         PYBIND11_OVERRIDE_PURE(ModuleType, ModelSequenceTableDecoder, getSegmentType, segmentIdx);
     }
@@ -367,6 +382,11 @@ class PyModelSequenceTableDecoder final : public ModelSequenceTableDecoder {
 
 void pyInitModelSequenceTableDecoder(py::module m) {
 
+    py::class_<GraphConstantBinding>(m, "GraphConstantBinding")
+        .def(py::init<>())
+        .def_readwrite("graphConstantId", &GraphConstantBinding::graphConstantId)
+        .def_readwrite("constantIndex", &GraphConstantBinding::constantIndex);
+
     py::class_<ModelSequenceTableDecoder, PyModelSequenceTableDecoder>(m, "ModelSequenceTableDecoder")
         .def(py::init<>())
         .def("modelSequenceTableSize", &ModelSequenceTableDecoder::modelSequenceTableSize)
@@ -378,6 +398,18 @@ void pyInitModelSequenceTableDecoder(py::module m) {
             "getSegmentConstantIndexes",
             [](const ModelSequenceTableDecoder &decoder, uint32_t segmentIdx) {
                 return pyDataView<uint32_t>(decoder.getSegmentConstantIndexes(segmentIdx));
+            },
+            py::arg("segmentIdx"))
+        .def(
+            "getSegmentConstantBindings",
+            [](const ModelSequenceTableDecoder &decoder, uint32_t segmentIdx) {
+                const auto *const handle = decoder.getSegmentConstantBindingsHandle(segmentIdx);
+                const auto size = decoder.getGraphConstantBindingsSize(handle);
+                py::list result;
+                for (uint32_t bindingIdx = 0; bindingIdx < size; ++bindingIdx) {
+                    result.append(decoder.getGraphConstantBinding(handle, bindingIdx));
+                }
+                return result;
             },
             py::arg("segmentIdx"))
         .def("getSegmentType", &ModelSequenceTableDecoder::getSegmentType, py::arg("segmentIdx"))

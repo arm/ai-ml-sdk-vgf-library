@@ -162,13 +162,31 @@ class EncoderImpl : public Encoder {
                                   const std::vector<ConstantRef> &constants,
                                   const std::array<uint32_t, 3> &dispatchShape,
                                   const std::vector<PushConstRangeRef> &pushConstRanges) override {
+        std::vector<GraphConstantBindingRef> constantBindings;
+        constantBindings.reserve(constants.size());
+        std::copy(constants.begin(), constants.end(), std::back_inserter(constantBindings));
+        return AddSegmentInfo(module, name, descriptors, inputs, outputs, constantBindings, dispatchShape,
+                              pushConstRanges);
+    }
+
+    SegmentInfoRef AddSegmentInfo(ModuleRef module, const std::string &name,
+                                  const std::vector<DescriptorSetInfoRef> &descriptors,
+                                  const std::vector<BindingSlotRef> &inputs, const std::vector<BindingSlotRef> &outputs,
+                                  const std::vector<GraphConstantBindingRef> &constantBindings,
+                                  const std::array<uint32_t, 3> &dispatchShape,
+                                  const std::vector<PushConstRangeRef> &pushConstRanges) override {
 
         assert(!finished_ && "cannot add segment infos when marked finished");
 
         ModuleType type = moduleRefToType_[module.reference];
 
         auto constantOffsets = modelSequenceBuilder_.CreateVector<uint32_t>(
-            constants.size(), [&constants](size_t i) { return constants[i].reference; });
+            constantBindings.size(), [&constantBindings](size_t i) { return constantBindings[i].constant.reference; });
+        auto constantBindingOffsets = modelSequenceBuilder_.CreateVector<flatbuffers::Offset<VGF::ConstantBinding>>(
+            constantBindings.size(), [this, &constantBindings](size_t i) {
+                return VGF::CreateConstantBinding(modelSequenceBuilder_, constantBindings[i].graphConstantId,
+                                                  constantBindings[i].constant.reference);
+            });
         auto dispatchShapeOffsets = modelSequenceBuilder_.CreateVector(dispatchShape.data(), dispatchShape.size());
 
         auto descriptorSetOffsets = modelSequenceBuilder_.CreateVector<flatbuffers::Offset<VGF::DescriptorSetInfo>>(
@@ -188,7 +206,7 @@ class EncoderImpl : public Encoder {
         segmentInfos_.emplace_back(
             VGF::CreateSegmentInfo(modelSequenceBuilder_, toVGF(type), modelSequenceBuilder_.CreateString(name.c_str()),
                                    module.reference, descriptorSetOffsets, inputOffsets, outputOffsets, constantOffsets,
-                                   dispatchShapeOffsets, pushConstRangeOffsets));
+                                   dispatchShapeOffsets, pushConstRangeOffsets, constantBindingOffsets));
 
         const auto segmentRef = static_cast<SegmentInfoRef::RefType>(segmentInfos_.size() - 1);
         logging::debug("Added segment info. Name: " + name + " ModuleRef: " + std::to_string(module.reference) +

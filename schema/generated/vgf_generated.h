@@ -51,6 +51,9 @@ struct DescriptorSetInfoBuilder;
 struct PushConstantRange;
 struct PushConstantRangeBuilder;
 
+struct ConstantBinding;
+struct ConstantBindingBuilder;
+
 struct SegmentInfo;
 struct SegmentInfoBuilder;
 
@@ -1039,6 +1042,57 @@ inline ::flatbuffers::Offset<PushConstantRange> CreatePushConstantRange(
   return builder_.Finish();
 }
 
+struct ConstantBinding FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef ConstantBindingBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_GRAPH_CONSTANT_ID = 4,
+    VT_CONSTANT_TABLE_INDEX = 6
+  };
+  uint32_t graph_constant_id() const {
+    return GetField<uint32_t>(VT_GRAPH_CONSTANT_ID, 0);
+  }
+  uint32_t constant_table_index() const {
+    return GetField<uint32_t>(VT_CONSTANT_TABLE_INDEX, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_GRAPH_CONSTANT_ID, 4) &&
+           VerifyField<uint32_t>(verifier, VT_CONSTANT_TABLE_INDEX, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct ConstantBindingBuilder {
+  typedef ConstantBinding Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_graph_constant_id(uint32_t graph_constant_id) {
+    fbb_.AddElement<uint32_t>(ConstantBinding::VT_GRAPH_CONSTANT_ID, graph_constant_id, 0);
+  }
+  void add_constant_table_index(uint32_t constant_table_index) {
+    fbb_.AddElement<uint32_t>(ConstantBinding::VT_CONSTANT_TABLE_INDEX, constant_table_index, 0);
+  }
+  explicit ConstantBindingBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<ConstantBinding> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<ConstantBinding>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<ConstantBinding> CreateConstantBinding(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t graph_constant_id = 0,
+    uint32_t constant_table_index = 0) {
+  ConstantBindingBuilder builder_(_fbb);
+  builder_.add_constant_table_index(constant_table_index);
+  builder_.add_graph_constant_id(graph_constant_id);
+  return builder_.Finish();
+}
+
 struct SegmentInfo FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef SegmentInfoBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -1050,7 +1104,8 @@ struct SegmentInfo FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_OUTPUTS = 14,
     VT_CONSTANTS = 16,
     VT_DISPATCH_SHAPE = 18,
-    VT_PUSH_CONSTANT_RANGES = 20
+    VT_PUSH_CONSTANT_RANGES = 20,
+    VT_CONSTANT_BINDINGS = 22
   };
   VGF::ModuleType type() const {
     return static_cast<VGF::ModuleType>(GetField<uint8_t>(VT_TYPE, 0));
@@ -1079,6 +1134,9 @@ struct SegmentInfo FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<::flatbuffers::Offset<VGF::PushConstantRange>> *push_constant_ranges() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<VGF::PushConstantRange>> *>(VT_PUSH_CONSTANT_RANGES);
   }
+  const ::flatbuffers::Vector<::flatbuffers::Offset<VGF::ConstantBinding>> *constant_bindings() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<VGF::ConstantBinding>> *>(VT_CONSTANT_BINDINGS);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_TYPE, 1) &&
@@ -1101,6 +1159,9 @@ struct SegmentInfo FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyOffset(verifier, VT_PUSH_CONSTANT_RANGES) &&
            verifier.VerifyVector(push_constant_ranges()) &&
            verifier.VerifyVectorOfTables(push_constant_ranges()) &&
+           VerifyOffset(verifier, VT_CONSTANT_BINDINGS) &&
+           verifier.VerifyVector(constant_bindings()) &&
+           verifier.VerifyVectorOfTables(constant_bindings()) &&
            verifier.EndTable();
   }
 };
@@ -1136,6 +1197,9 @@ struct SegmentInfoBuilder {
   void add_push_constant_ranges(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<VGF::PushConstantRange>>> push_constant_ranges) {
     fbb_.AddOffset(SegmentInfo::VT_PUSH_CONSTANT_RANGES, push_constant_ranges);
   }
+  void add_constant_bindings(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<VGF::ConstantBinding>>> constant_bindings) {
+    fbb_.AddOffset(SegmentInfo::VT_CONSTANT_BINDINGS, constant_bindings);
+  }
   explicit SegmentInfoBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -1157,8 +1221,10 @@ inline ::flatbuffers::Offset<SegmentInfo> CreateSegmentInfo(
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<VGF::BindingSlot>>> outputs = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> constants = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> dispatch_shape = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<VGF::PushConstantRange>>> push_constant_ranges = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<VGF::PushConstantRange>>> push_constant_ranges = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<VGF::ConstantBinding>>> constant_bindings = 0) {
   SegmentInfoBuilder builder_(_fbb);
+  builder_.add_constant_bindings(constant_bindings);
   builder_.add_push_constant_ranges(push_constant_ranges);
   builder_.add_dispatch_shape(dispatch_shape);
   builder_.add_constants(constants);
@@ -1181,7 +1247,8 @@ inline ::flatbuffers::Offset<SegmentInfo> CreateSegmentInfoDirect(
     const std::vector<::flatbuffers::Offset<VGF::BindingSlot>> *outputs = nullptr,
     const std::vector<uint32_t> *constants = nullptr,
     const std::vector<uint32_t> *dispatch_shape = nullptr,
-    const std::vector<::flatbuffers::Offset<VGF::PushConstantRange>> *push_constant_ranges = nullptr) {
+    const std::vector<::flatbuffers::Offset<VGF::PushConstantRange>> *push_constant_ranges = nullptr,
+    const std::vector<::flatbuffers::Offset<VGF::ConstantBinding>> *constant_bindings = nullptr) {
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto set_infos__ = set_infos ? _fbb.CreateVector<::flatbuffers::Offset<VGF::DescriptorSetInfo>>(*set_infos) : 0;
   auto inputs__ = inputs ? _fbb.CreateVector<::flatbuffers::Offset<VGF::BindingSlot>>(*inputs) : 0;
@@ -1189,6 +1256,7 @@ inline ::flatbuffers::Offset<SegmentInfo> CreateSegmentInfoDirect(
   auto constants__ = constants ? _fbb.CreateVector<uint32_t>(*constants) : 0;
   auto dispatch_shape__ = dispatch_shape ? _fbb.CreateVector<uint32_t>(*dispatch_shape) : 0;
   auto push_constant_ranges__ = push_constant_ranges ? _fbb.CreateVector<::flatbuffers::Offset<VGF::PushConstantRange>>(*push_constant_ranges) : 0;
+  auto constant_bindings__ = constant_bindings ? _fbb.CreateVector<::flatbuffers::Offset<VGF::ConstantBinding>>(*constant_bindings) : 0;
   return VGF::CreateSegmentInfo(
       _fbb,
       type,
@@ -1199,7 +1267,8 @@ inline ::flatbuffers::Offset<SegmentInfo> CreateSegmentInfoDirect(
       outputs__,
       constants__,
       dispatch_shape__,
-      push_constant_ranges__);
+      push_constant_ranges__,
+      constant_bindings__);
 }
 
 struct ModelSequenceTable FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
