@@ -292,6 +292,75 @@ def test_encode_decode_model_sequence_table_segment_constants():
     assert constantIndexes[2] == constants[2].reference
 
 
+def test_encode_decode_model_sequence_table_segment_constant_bindings():
+
+    encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
+
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
+    bindings = [
+        vgf.GraphConstantBindingRef(10000, vgf.ConstantRef(0)),
+        vgf.GraphConstantBindingRef(7, vgf.ConstantRef(1)),
+    ]
+
+    segment = encoder.AddSegmentInfo(module, "test_segment", [], [], [], bindings)
+
+    encoder.Finish()
+
+    stream = io.BytesIO()
+    assert encoder.WriteTo(stream)
+
+    buffer = stream.getbuffer()
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
+    assert headerDecoder is not None
+
+    seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
+    )
+    assert seqTableDecoder is not None
+
+    constantIndexes = seqTableDecoder.getSegmentConstantIndexes(segment.reference)
+    assert list(constantIndexes) == [0, 1]
+
+    decodedBindings = seqTableDecoder.getSegmentConstantBindings(segment.reference)
+    assert len(decodedBindings) == 2
+    assert decodedBindings[0].graphConstantId == 10000
+    assert decodedBindings[0].constantIndex == 0
+    assert decodedBindings[1].graphConstantId == 7
+    assert decodedBindings[1].constantIndex == 1
+
+
+def test_encode_decode_model_sequence_table_segment_constants_decode_as_identity_bindings():
+
+    encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
+
+    module = encoder.AddModule(vgf.ModuleType.Graph, "test_module", "entry_point")
+    constants = [vgf.ConstantRef(1), vgf.ConstantRef(2), vgf.ConstantRef(3)]
+
+    segment = encoder.AddSegmentInfo(module, "test_segment", constants=constants)
+
+    encoder.Finish()
+
+    stream = io.BytesIO()
+    assert encoder.WriteTo(stream)
+
+    buffer = stream.getbuffer()
+    headerDecoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
+    assert headerDecoder is not None
+
+    seqTableDecoder = vgf.CreateModelSequenceTableDecoder(
+        buffer[headerDecoder.GetModelSequenceTableOffset() :],
+        headerDecoder.GetModelSequenceTableSize(),
+    )
+    assert seqTableDecoder is not None
+
+    decodedBindings = seqTableDecoder.getSegmentConstantBindings(segment.reference)
+    assert len(decodedBindings) == len(constants)
+    for binding, constant in zip(decodedBindings, constants):
+        assert binding.graphConstantId == constant.reference
+        assert binding.constantIndex == constant.reference
+
+
 def test_encode_decode_model_sequence_table_segment_dispatch_shape():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)

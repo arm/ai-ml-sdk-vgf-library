@@ -209,7 +209,7 @@ class Encoder {
     /// \param dispatchShape 3-dimensional array of dispatch shape
     /// \param pushConstRanges Vector of references to segment push constant ranges
     /// \return SegmentInfoRef type containing information for the added push constant range
-    virtual SegmentInfoRef
+    [[deprecated("Use graph constant bindings instead of raw constant refs")]] virtual SegmentInfoRef
     AddSegmentInfo(ModuleRef module, const std::string &name, const std::vector<DescriptorSetInfoRef> &descriptors,
                    const std::vector<BindingSlotRef> &inputs, const std::vector<BindingSlotRef> &outputs,
                    const std::vector<ConstantRef> &constants, const std::array<uint32_t, 3> &dispatchShape = {},
