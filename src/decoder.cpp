@@ -25,8 +25,16 @@ namespace mlsdk::vgflib {
 namespace {
 
 template <typename T> inline T ReadBytesAs(const void *const baseAddr, size_t offset) {
+    static_assert(std::is_trivially_copyable_v<T>, "ReadBytesAs requires a trivially copyable type");
     const auto *bytes = static_cast<const uint8_t *>(baseAddr) + offset;
-    return *reinterpret_cast<const T *>(bytes);
+    T value{};
+    std::memcpy(&value, bytes, sizeof(T));
+    return value;
+}
+
+FourCCValue ReadFourCC(const void *const baseAddr, size_t offset) {
+    const auto *bytes = static_cast<const char *>(baseAddr) + offset;
+    return FourCC(bytes[0], bytes[1], bytes[2], bytes[3]);
 }
 
 bool validateSectionsSizesInHeader(const HeaderDecoder &headerDecoder, uint64_t fileSize) {
@@ -201,23 +209,30 @@ class HeaderDecoderImpl : public HeaderDecoder {
                GetPatch() == HEADER_PATCH_VERSION_VALUE;
     }
 
-    [[nodiscard]] FormatVersion GetVersion() const override {
-        return {header_->version.major, header_->version.minor, header_->version.patch};
-    }
+    [[nodiscard]] FormatVersion GetVersion() const override { return {GetMajor(), GetMinor(), GetPatch()}; }
 
     [[nodiscard]] bool IsValid() const override {
-        return header_->magic == HEADER_MAGIC_VALUE || header_->magic == OldMagicAsFourCC();
+        const FourCCValue magic = ReadFourCC(header_, HEADER_MAGIC_OFFSET);
+        return magic == HEADER_MAGIC_VALUE || magic == OldMagicAsFourCC();
     }
 
-    [[nodiscard]] uint16_t GetEncoderVulkanHeadersVersion() const override { return header_->vkHeaderVersion; }
+    [[nodiscard]] uint16_t GetEncoderVulkanHeadersVersion() const override {
+        return ReadBytesAs<uint16_t>(header_, HEADER_VK_HEADER_VERSION_OFFSET);
+    }
 
     [[nodiscard]] bool CheckVersion() const override {
         return IsValid() && GetMajor() == HEADER_MAJOR_VERSION_VALUE && GetMinor() <= HEADER_MINOR_VERSION_VALUE;
     }
 
-    [[nodiscard]] uint8_t GetMajor() const override { return header_->version.major; }
-    [[nodiscard]] uint8_t GetMinor() const override { return header_->version.minor; }
-    [[nodiscard]] uint8_t GetPatch() const override { return header_->version.patch; }
+    [[nodiscard]] uint8_t GetMajor() const override {
+        return ReadBytesAs<uint8_t>(header_, HEADER_VERSION_OFFSET + offsetof(FormatVersion, major));
+    }
+    [[nodiscard]] uint8_t GetMinor() const override {
+        return ReadBytesAs<uint8_t>(header_, HEADER_VERSION_OFFSET + offsetof(FormatVersion, minor));
+    }
+    [[nodiscard]] uint8_t GetPatch() const override {
+        return ReadBytesAs<uint8_t>(header_, HEADER_VERSION_OFFSET + offsetof(FormatVersion, patch));
+    }
 
     [[nodiscard]] uint64_t GetModuleTableSize() const override {
         return ReadBytesAs<uint64_t>(header_, HEADER_MODULE_SECTION_SIZE_OFFSET);
@@ -256,9 +271,9 @@ class HeaderDecoderImpl : public HeaderDecoder {
         return true;
     }
 
-    explicit HeaderDecoderImpl(const void *const data) : header_(static_cast<const Header *>(data)) {}
+    explicit HeaderDecoderImpl(const void *const data) : header_(data) {}
 
-    const Header *const header_;
+    const void *const header_;
 };
 
 size_t HeaderSize() { return HEADER_HEADER_SIZE_VALUE; }
