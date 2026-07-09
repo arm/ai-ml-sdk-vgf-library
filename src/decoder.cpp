@@ -124,6 +124,13 @@ constexpr FourCCValue OldMagicAsFourCC() {
     return FourCC(toChar(v, 0), toChar(v, 8), toChar(v, 16), toChar(v, 24));
 }
 
+std::string_view ToStringView(const flatbuffers::String *string) {
+    if (string == nullptr) {
+        return {};
+    }
+    return std::string_view{string->c_str()};
+}
+
 template <class T> bool VerifyImpl(const void *data, const uint64_t size) {
     const std::string typeName{verifyTypeName<T>()};
 
@@ -304,7 +311,7 @@ class ModuleTableDecoderImpl : public ModuleTableDecoder {
     [[nodiscard]] ModuleType getModuleType(uint32_t idx) const override { return fromVGF(getModuleAt(idx)->type()); }
 
     [[nodiscard]] std::string_view getModuleName(uint32_t idx) const override {
-        return std::string_view{getModuleAt(idx)->name()->c_str()};
+        return ToStringView(getModuleAt(idx)->name());
     }
 
     [[nodiscard]] bool hasSPIRV(uint32_t idx) const override {
@@ -340,7 +347,7 @@ class ModuleTableDecoderImpl : public ModuleTableDecoder {
     }
 
     [[nodiscard]] std::string_view getModuleEntryPoint(uint32_t idx) const override {
-        return std::string_view{getModuleAt(idx)->entry_point()->c_str()};
+        return ToStringView(getModuleAt(idx)->entry_point());
     }
 
     [[nodiscard]] DataView<uint32_t> getModuleCode(uint32_t idx) const override {
@@ -568,7 +575,7 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
     }
 
     [[nodiscard]] std::string_view getSegmentName(uint32_t segmentIdx) const override {
-        return std::string_view{getSegmentAt(segmentIdx)->name()->c_str()};
+        return ToStringView(getSegmentAt(segmentIdx)->name());
     }
 
     [[nodiscard]] uint32_t getSegmentModuleIndex(uint32_t segmentIdx) const override {
@@ -658,7 +665,11 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
 
     [[nodiscard]] DataView<int64_t> getTensorShape(uint32_t id) const override {
         const auto *entry = getEntryAt(id);
-        const auto *shape = entry->description()->shape();
+        const auto *description = entry->description();
+        if (description == nullptr) {
+            return {};
+        }
+        const auto *shape = description->shape();
         if (shape == nullptr) {
             return {};
         }
@@ -667,7 +678,11 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
 
     [[nodiscard]] DataView<int64_t> getTensorStride(uint32_t id) const override {
         const auto *entry = getEntryAt(id);
-        const auto *strides = entry->description()->strides();
+        const auto *description = entry->description();
+        if (description == nullptr) {
+            return {};
+        }
+        const auto *strides = description->strides();
         if (strides == nullptr) {
             return {};
         }
