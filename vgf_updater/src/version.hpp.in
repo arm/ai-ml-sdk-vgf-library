@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -10,7 +10,8 @@
 namespace mlsdk::vgf_updater::details {
 
 const std::string version{R""""({
-  "version": "@GIT_REVISION@",
+  "version": "@RUNTIME_VERSION@",
+  "revision": "@GIT_REVISION@",
   "dependencies": [
     @DEP_GIT_REVISIONS@
   ]
