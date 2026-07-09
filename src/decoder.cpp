@@ -491,6 +491,9 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
     }
 
     [[nodiscard]] size_t getBindingsSize(BindingSlotArrayHandle handle) const override {
+        if (handle == nullptr) {
+            return 0;
+        }
         return FromHandle(handle)->size();
     }
 
@@ -526,6 +529,9 @@ class ModelSequenceTableDecoderImpl : public ModelSequenceTableDecoder {
     }
 
     [[nodiscard]] size_t getPushConstRangesSize(PushConstantRangeHandle handle) const override {
+        if (handle == nullptr) {
+            return 0;
+        }
         return FromHandle(handle)->size();
     }
 
