@@ -165,6 +165,31 @@ template <class T> bool VerifyImpl(const void *data, const uint64_t size) {
     return true;
 }
 
+template <class T> bool VerifySemantic(const T *) { return true; }
+
+template <> bool VerifySemantic<VGF::ModelSequenceTable>(const VGF::ModelSequenceTable *modelSequenceTable) {
+    const auto *segments = modelSequenceTable->segments();
+    if (segments == nullptr) {
+        return true;
+    }
+
+    for (flatbuffers::uoffset_t i = 0; i < segments->size(); ++i) {
+        const auto *segment = segments->Get(i);
+        if (segment == nullptr) {
+            continue;
+        }
+
+        const auto *dispatchShape = segment->dispatch_shape();
+        if (dispatchShape != nullptr && dispatchShape->size() != 3) {
+            logging::error("VerifyModelSequenceTable: SegmentInfo.dispatch_shape must contain 3 elements at index " +
+                           std::to_string(i));
+            return false;
+        }
+    }
+
+    return true;
+}
+
 const char *getConstantSectionVersion(const void *data) {
     return static_cast<const char *>(data) + CONSTANT_SECTION_VERSION_OFFSET;
 }
@@ -607,6 +632,10 @@ std::unique_ptr<ModelSequenceTableDecoder> CreateModelSequenceTableDecoder(const
         logging::error("Model sequence table could not be decoded safely");
         return nullptr;
     }
+    if (!VerifySemantic(flatbuffers::GetRoot<const VGF::ModelSequenceTable>(data))) {
+        logging::error("Model sequence table could not be decoded safely");
+        return nullptr;
+    }
     return std::make_unique<ModelSequenceTableDecoderImpl>(data, size);
 }
 
@@ -615,6 +644,10 @@ ModelSequenceTableDecoder *CreateModelSequenceTableDecoderInPlace(const void *co
     assert(data != nullptr && "data is null");
     assert(decoderMem != nullptr && "decoderMem is null");
     if (!VerifyImpl<VGF::ModelSequenceTable>(data, size)) {
+        logging::error("Model sequence table could not be decoded safely");
+        return nullptr;
+    }
+    if (!VerifySemantic(flatbuffers::GetRoot<const VGF::ModelSequenceTable>(data))) {
         logging::error("Model sequence table could not be decoded safely");
         return nullptr;
     }
