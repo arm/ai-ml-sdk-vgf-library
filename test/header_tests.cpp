@@ -13,7 +13,10 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
+#include <cstring>
 #include <sstream>
+#include <vector>
 
 using namespace mlsdk::vgflib;
 
@@ -85,6 +88,16 @@ TEST(CppDecode, WrongMagic) {
     ASSERT_TRUE(vgf1 == FourCC('V', 'G', 'F', '1'));
 }
 
+TEST(CppDecode, TruncatedHeaderRejected) {
+    const Header header({0, 0}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::vector<uint8_t> data(HeaderSize() - 1);
+    std::memcpy(data.data(), &header, data.size());
+
+    std::unique_ptr<HeaderDecoder> decoder =
+        CreateHeaderDecoder(data.data(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
+    ASSERT_TRUE(nullptr == decoder);
+}
+
 TEST(CppEncode, FailToWrite) {
     std::stringbuf roBuf("", std::ios_base::in); // read-only stream
     std::ostream roStream(&roBuf);
@@ -149,6 +162,19 @@ TEST(CDecode, HeaderTest) {
 
 TEST(CDecode, WrongMagic) {
     std::array<char, HEADER_HEADER_SIZE_VALUE> data = {0};
+
+    std::vector<uint8_t> decoderMemory;
+    decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
+    const mlsdk_decoder_header_decoder *decoder =
+        mlsdk_decoder_create_header_decoder(data.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
+                                            static_cast<uint64_t>(data.size()), decoderMemory.data());
+    ASSERT_TRUE(nullptr == decoder);
+}
+
+TEST(CDecode, TruncatedHeaderRejected) {
+    const Header header({0, 0}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::vector<uint8_t> data(mlsdk_decoder_header_size() - 1);
+    std::memcpy(data.data(), &header, data.size());
 
     std::vector<uint8_t> decoderMemory;
     decoderMemory.resize(mlsdk_decoder_header_decoder_mem_reqs());
