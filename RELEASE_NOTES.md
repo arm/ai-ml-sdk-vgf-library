@@ -11,6 +11,7 @@
 ### Bug Fixes
 
 - Hardened header decoding.
+- Fixed `DataView` equality operator.
 
 ## Version 0.10.0 – *Resource Metadata & C API Expansion*
 
