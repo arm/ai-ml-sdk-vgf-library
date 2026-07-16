@@ -18,6 +18,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -27,6 +28,15 @@ using namespace vgflib;
 using namespace vgfutils;
 
 namespace {
+
+void requireIndexInBounds(uint32_t referencedValue, size_t entryCount, std::string_view section, std::string_view field,
+                          uint32_t ownerId) {
+    if (static_cast<size_t>(referencedValue) >= entryCount) {
+        throw std::runtime_error(std::string(section) + " " + std::to_string(ownerId) + ": " + std::string(field) +
+                                 " " + std::to_string(referencedValue) + " out of range (" +
+                                 std::to_string(entryCount) + " entries)");
+    }
+}
 
 ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
     auto maybeAddSamplerConfig = [&resource, &encoder](ResourceRef resourceRef) {
@@ -121,7 +131,7 @@ std::vector<ResourceRef> collectResources(const std::vector<Resource> &resourceT
 }
 
 std::unordered_map<uint32_t, Constant> decodeConstants(const HeaderDecoder &headerDecoder, const MemoryMap &mapped,
-                                                       const ModelSequence &sequenceTable) {
+                                                       const ModelSequence &sequenceTable, size_t resourceCount) {
     std::unordered_map<uint32_t, Constant> constantsByIndex;
     const auto constantsSize = headerDecoder.GetConstantsSize();
     if (constantsSize == 0U) {
@@ -138,7 +148,9 @@ std::unordered_map<uint32_t, Constant> decodeConstants(const HeaderDecoder &head
             if (constantIdx >= parsedConstants.size()) {
                 throw std::runtime_error("Invalid constant index " + std::to_string(constantIdx));
             }
-            constantsByIndex.emplace(constantIdx, parsedConstants.at(constantIdx));
+            const auto &constant = parsedConstants.at(constantIdx);
+            requireIndexInBounds(constant.mMrtIndex, resourceCount, "Constant table entry", "MRT index", constantIdx);
+            constantsByIndex.emplace(constantIdx, constant);
         }
     }
 
@@ -151,8 +163,13 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
                     const std::vector<Resource> &resourceTable, Encoder &encoder) {
 
     std::pair<std::vector<BindingSlotRef>, std::vector<BindingSlotRef>> modelSequenceIO{};
+    if (resourceRefs.size() != resourceTable.size()) {
+        throw std::runtime_error("Internal error: resource ref/table size mismatch");
+    }
 
     for (const auto &segment : sequenceTable.mSegments) {
+        requireIndexInBounds(segment.mModuleIndex, moduleRefs.size(), "Segment", "module index", segment.mIndex);
+
         std::vector<BindingSlotRef> segmentInputBindingSlots;
         std::vector<BindingSlotRef> segmentOutputBindingSlots;
         std::vector<DescriptorSetInfoRef> descriptorSetInfoRefs;
@@ -168,6 +185,9 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
                 throw std::runtime_error("Missing constant data for index " + std::to_string(constantIdx));
             }
             const auto &constantData = constantIt->second;
+            const auto segmentConstantContext = "Segment " + std::to_string(segment.mIndex) + " constant";
+            requireIndexInBounds(constantData.mMrtIndex, resourceTable.size(), segmentConstantContext, "MRT index",
+                                 constantData.mIndex);
             const auto &resource = resourceTable[constantData.mMrtIndex];
             if (resource.mCategory != ResourceCategory::CONSTANT) {
                 throw std::runtime_error("Constant resource category mismatch");
@@ -195,6 +215,7 @@ auto encodeSegments(const ModelSequence &sequenceTable, const std::vector<Module
             std::vector<BindingSlotRef> descriptorBindingSlotsRefs;
 
             for (const auto &slot : dscInfo.mBindings) {
+                requireIndexInBounds(slot.mMrtIndex, resourceTable.size(), "BindingSlot", "MRT index", slot.mIndex);
                 const auto &resource = resourceTable[slot.mMrtIndex];
                 const auto resourceRef = resourceRefs[slot.mMrtIndex];
                 const auto binding = encoder.AddBindingSlot(slot.mBinding, resourceRef);
@@ -267,7 +288,7 @@ void update(const std::string &inputPath, const std::string &outputPath) {
     const auto modelSequenceTableSize = headerDecoder->GetModelSequenceTableSize();
     const auto sequenceTable = parseModelSequenceTable(mapped.ptr(modelSequenceTableOffset), modelSequenceTableSize);
 
-    const auto constantsByIndex = decodeConstants(*headerDecoder, mapped, sequenceTable);
+    const auto constantsByIndex = decodeConstants(*headerDecoder, mapped, sequenceTable, resourceTable.size());
 
     const auto &[modelInputBindingSlots, modelOutputBindingSlots] =
         encodeSegments(sequenceTable, moduleRefs, resourceRefs, constantsByIndex, resourceTable, *encoder);

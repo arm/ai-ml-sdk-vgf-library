@@ -24,6 +24,7 @@
 #include <numeric>
 #include <optional>
 #include <sstream>
+#include <string_view>
 #include <utility>
 
 #include <fcntl.h>
@@ -85,6 +86,15 @@ std::string DescriptorTypeToString(std::optional<DescriptorType> type) {
 }
 
 std::string FormatTypeToString(FormatType format) { return FormatTypeToName(format); }
+
+void requireIndexInBounds(uint32_t referencedValue, size_t entryCount, std::string_view section, std::string_view field,
+                          uint32_t ownerId) {
+    if (static_cast<size_t>(referencedValue) >= entryCount) {
+        throw std::runtime_error(std::string(section) + " " + std::to_string(ownerId) + ": " + std::string(field) +
+                                 " " + std::to_string(referencedValue) + " out of range (" +
+                                 std::to_string(entryCount) + " entries)");
+    }
+}
 
 struct Header {
     Header() = default;
@@ -450,6 +460,53 @@ void to_json(nlohmann::json &j, const Resource &resource) {
 
 namespace {
 
+// Validates cross-section references
+void validateParsedReferences(const std::vector<Module> &modules, const std::vector<vgfutils::Resource> &resources,
+                              const vgfutils::ModelSequence &modelSequence,
+                              const std::vector<vgfutils::Constant> &constants) {
+    for (const auto &constant : constants) {
+        requireIndexInBounds(constant.mMrtIndex, resources.size(), "Constant", "MRT index", constant.mIndex);
+    }
+
+    for (const auto &input : modelSequence.mInputs) {
+        requireIndexInBounds(input.mBindingSlot.mMrtIndex, resources.size(), "Model input", "MRT index",
+                             input.mBindingSlot.mIndex);
+    }
+    for (const auto &output : modelSequence.mOutputs) {
+        requireIndexInBounds(output.mBindingSlot.mMrtIndex, resources.size(), "Model output", "MRT index",
+                             output.mBindingSlot.mIndex);
+    }
+
+    for (const auto &segment : modelSequence.mSegments) {
+        const auto segmentContext = "Segment " + std::to_string(segment.mIndex);
+        requireIndexInBounds(segment.mModuleIndex, modules.size(), "Segment", "module index", segment.mIndex);
+
+        std::for_each(segment.mInputs.begin(), segment.mInputs.end(), [&resources, &segmentContext](const auto &slot) {
+            requireIndexInBounds(slot.mMrtIndex, resources.size(), segmentContext + " input binding slot", "MRT index",
+                                 slot.mIndex);
+        });
+        std::for_each(segment.mOutputs.begin(), segment.mOutputs.end(),
+                      [&resources, &segmentContext](const auto &slot) {
+                          requireIndexInBounds(slot.mMrtIndex, resources.size(),
+                                               segmentContext + " output binding slot", "MRT index", slot.mIndex);
+                      });
+
+        for (const auto &descriptorSetInfo : segment.mDescriptorSetInfos) {
+            const auto descriptorContext =
+                segmentContext + " descriptor set " + std::to_string(descriptorSetInfo.mSetIndex) + " binding slot";
+            std::for_each(descriptorSetInfo.mBindings.begin(), descriptorSetInfo.mBindings.end(),
+                          [&resources, &descriptorContext](const auto &slot) {
+                              requireIndexInBounds(slot.mMrtIndex, resources.size(), descriptorContext, "MRT index",
+                                                   slot.mIndex);
+                          });
+        }
+
+        for (const auto constantIndex : segment.mConstants) {
+            requireIndexInBounds(constantIndex, constants.size(), "Segment", "constant index", segment.mIndex);
+        }
+    }
+}
+
 std::unique_ptr<ModuleTableDecoder> getModuleTableDecoder(MemoryMap &mapped, uint32_t index) {
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
 
@@ -555,6 +612,7 @@ void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint
     }
 
     const auto mrtIndex = constantDecoder->getConstantMrtIndex(index);
+    requireIndexInBounds(mrtIndex, mrtDecoder->size(), "Constant", "MRT index", index);
     const auto format = mrtDecoder->getVkFormat(mrtIndex);
     const auto shapeView = mrtDecoder->getTensorShape(mrtIndex);
     const std::vector<int64_t> shape(shapeView.begin(), shapeView.end());
@@ -630,6 +688,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         std::string uid = "input_" + std::to_string(i) + "_ref";
         bindings.emplace_back(uid, modelSequenceDecoder->getBindingSlotBinding(seqInputsHandle, i));
         uint32_t mrtIndex = modelSequenceDecoder->getBindingSlotMrtIndex(seqInputsHandle, i);
+        requireIndexInBounds(mrtIndex, modelResourceDecoder->size(), "Model input", "MRT index", i);
 
         if (modelResourceDecoder->getCategory(mrtIndex) != ResourceCategory::INPUT) {
             throw std::runtime_error("VGF Input has a mismatched ResourceCategory");
@@ -659,6 +718,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         outputs.emplace_back(uid);
         bindings.emplace_back(uid, modelSequenceDecoder->getBindingSlotBinding(seqOutputsHandle, i));
         uint32_t mrtIndex = modelSequenceDecoder->getBindingSlotMrtIndex(seqOutputsHandle, i);
+        requireIndexInBounds(mrtIndex, modelResourceDecoder->size(), "Model output", "MRT index", i);
 
         if (modelResourceDecoder->getCategory(mrtIndex) != ResourceCategory::OUTPUT) {
             throw std::runtime_error("VGF Output has a mismatched ResourceCategory");
@@ -747,6 +807,7 @@ json getFile(const std::string &inputFile) {
     const auto resources = vgfutils::parseModelResourceTable(mapped.ptr(resourceOffset), resourceSize);
     const auto modelSequence = vgfutils::parseModelSequenceTable(mapped.ptr(sequenceOffset), sequenceSize);
     const auto constants = vgfutils::parseConstantSection(mapped.ptr(constantsOffset), constantsSize);
+    validateParsedReferences(modules, resources, modelSequence, constants);
 
     json json;
     json["header"] = header;
