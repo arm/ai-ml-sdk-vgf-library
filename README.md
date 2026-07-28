@@ -172,6 +172,19 @@ Install:
 pip install ai-ml-sdk-vgf-library
 ```
 
+## Install from source with pip
+
+From the repository root, install the package with:
+
+```bash
+pip install .
+```
+
+This command compiles the project’s C/C++ library and Python extension, then
+installs the resulting Python package. Ensure the prerequisites listed in
+[Building VGF Library from source](#building-vgf-library-from-source) are
+installed and the repository dependencies have been initialized.
+
 ## License
 
 The ML SDK VGF Library is distributed under the software licenses in
