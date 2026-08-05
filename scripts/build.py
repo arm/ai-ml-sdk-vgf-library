@@ -4,12 +4,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import argparse
-import importlib.machinery
 import os
 import pathlib
 import platform
 import re
-import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -59,6 +57,9 @@ class Builder:
         self.clang_tidy_fix = args.clang_tidy_fix
 
         self.package_dir = args.package_dir or self.build_dir
+        self.pip_package_dir = args.package_dir or str(
+            VGF_LIB_DIR / "pip_package" / "dist"
+        )
         self.package_tgz = "tgz" in args.package_type
         self.package_zip = "zip" in args.package_type
         self.package_pip = "pip" in args.package_type
@@ -67,13 +68,10 @@ class Builder:
         self.package_source_tgz = "source-tgz" in args.package_type
         self.package_source_zip = "source-zip" in args.package_type
 
-        self.build_pylib = args.build_pylib or args.test or self.package_pip
+        self.build_pylib = args.build_pylib or args.test
 
         if self.package_release_pip:
             self.package_pip = True
-
-        if not self.install and self.package_pip:
-            self.install = "pip_install"
 
     def setup_platform_build(self, cmake_cmd):
         system = platform.system()
@@ -369,37 +367,6 @@ class Builder:
                 self.generate_cmake_package("ZIP", True)
 
             if self.package_pip:
-                pip_package_dir = VGF_LIB_DIR / "pip_package"
-                pip_binaries_dir = pip_package_dir / "vgf_lib" / "binaries"
-                os.makedirs(pip_binaries_dir, exist_ok=True)
-                shutil.copytree(self.install, pip_binaries_dir, dirs_exist_ok=True)
-                shutil.copyfile("README.md", pip_package_dir / "README.md")
-
-                for suffix in importlib.machinery.EXTENSION_SUFFIXES:
-                    for old_extension in pip_package_dir.glob(f"vgfpy{suffix}"):
-                        old_extension.unlink()
-
-                staged_extensions = []
-                for suffix in importlib.machinery.EXTENSION_SUFFIXES:
-                    staged_extensions.extend(
-                        pathlib.Path(self.build_dir).glob(f"**/vgfpy{suffix}")
-                    )
-
-                if not staged_extensions:
-                    print("ERROR: vgfpy extension was not found in build directory")
-                    return 1
-
-                if len(staged_extensions) > 1:
-                    print(
-                        "ERROR: Multiple vgfpy extensions found in build directory, unable to determine which one to package"
-                    )
-                    return 1
-
-                shutil.copyfile(
-                    staged_extensions[0],
-                    pip_package_dir / staged_extensions[0].name,
-                )
-
                 package_version = ""
                 if self.package_version:
                     package_version = self.package_version
@@ -408,13 +375,33 @@ class Builder:
                         "" if self.package_release_pip else get_package_version()
                     )
 
-                os.environ[
+                build_env = os.environ.copy()
+                build_env[
                     "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_AI_ML_SDK_VGF_LIBRARY"
                 ] = package_version
+                build_env["VGF_PIP_BUILD_DIR"] = str(
+                    pathlib.Path(self.build_dir) / "pip"
+                )
+                build_env["VGF_PIP_BUILD_TYPE"] = self.build_type
+                build_env["ARGPARSE_PATH"] = self.argparse_path
+                build_env["JSON_PATH"] = self.json_path
+                build_env["FLATBUFFERS_PATH"] = self.flatbuffers_path
+                build_env["PYBIND11_PATH"] = self.pybind11_path
+                build_env.setdefault("CMAKE_BUILD_PARALLEL_LEVEL", str(self.threads))
+                if self.prefix_path:
+                    build_env["CMAKE_PREFIX_PATH"] = self.prefix_path
+
                 result = subprocess.Popen(
-                    [sys.executable, "-m", "build"],
-                    env=os.environ,
-                    cwd=pip_package_dir,
+                    [
+                        sys.executable,
+                        "-m",
+                        "build",
+                        "--wheel",
+                        "--outdir",
+                        self.pip_package_dir,
+                    ],
+                    env=build_env,
+                    cwd=VGF_LIB_DIR,
                 )
                 result.communicate()
                 if result.returncode != 0:
@@ -429,7 +416,7 @@ class Builder:
 
 
 def get_package_version():
-    pyproject = (VGF_LIB_DIR / "pip_package" / "pyproject.toml").read_text()
+    pyproject = (VGF_LIB_DIR / "pyproject.toml").read_text()
 
     regex_result = re.search(r'fallback_version\s*=\s*"([^"]+)"', pyproject)
     if not regex_result:
@@ -535,7 +522,10 @@ def parse_arguments():
     )
     parser.add_argument(
         "--package-dir",
-        help="Specify location for packages to be created. Default path is the build directory",
+        help=(
+            "Specify location for packages to be created. Defaults to the build "
+            "directory, or pip_package/dist for pip packages"
+        ),
         default="",
     )
     parser.add_argument(

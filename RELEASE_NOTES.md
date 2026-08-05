@@ -6,6 +6,7 @@
 
 ### Build, Packaging & Developer Experience
 
+- Moved pip package builds from pip_package to the repository root and made them compile the VGF C/C++ library and `vgfpy` Python extension automatically.
 - Updated vgf_dump and vgf_updater `--version` output to report the package version and include git revision and dependency revision information
 
 ### Bug Fixes
