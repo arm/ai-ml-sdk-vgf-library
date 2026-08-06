@@ -57,9 +57,7 @@ class Builder:
         self.clang_tidy_fix = args.clang_tidy_fix
 
         self.package_dir = args.package_dir or self.build_dir
-        self.pip_package_dir = args.package_dir or str(
-            VGF_LIB_DIR / "pip_package" / "dist"
-        )
+        self.pip_package_dir = args.pip_package_dir
         self.package_tgz = "tgz" in args.package_type
         self.package_zip = "zip" in args.package_type
         self.package_pip = "pip" in args.package_type
@@ -524,9 +522,17 @@ def parse_arguments():
         "--package-dir",
         help=(
             "Specify location for packages to be created. Defaults to the build "
-            "directory, or pip_package/dist for pip packages"
+            "directory."
         ),
         default="",
+    )
+    parser.add_argument(
+        "--pip-package-dir",
+        help=(
+            "Specify location for pip packages to be created. Defaults to "
+            "pip_package/dist"
+        ),
+        default="pip_package/dist",
     )
     parser.add_argument(
         "--package-type",
