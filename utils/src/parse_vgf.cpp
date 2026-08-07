@@ -5,6 +5,7 @@
 
 #include "parse_vgf.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string_view>
@@ -38,11 +39,44 @@ std::vector<std::string_view> parseNames(const ModelSequenceTableDecoder &decode
 std::vector<PushConstantRange> parsePushConstantRanges(const ModelSequenceTableDecoder &decoder,
                                                        PushConstantRangeHandle handle) {
     std::vector<PushConstantRange> output;
+    if (handle == nullptr) {
+        return output;
+    }
+
     output.reserve(decoder.getPushConstRangesSize(handle));
     for (uint32_t i = 0; i < decoder.getPushConstRangesSize(handle); ++i) {
         output.emplace_back(i, decoder.getPushConstRangeStageFlags(handle, i),
                             decoder.getPushConstRangeOffset(handle, i), decoder.getPushConstRangeSize(handle, i));
     }
+    return output;
+}
+
+std::vector<GraphConstantBinding> parseGraphConstantBindings(const ModelSequenceTableDecoder &decoder,
+                                                             GraphConstantBindingArrayHandle handle) {
+    std::vector<GraphConstantBinding> output;
+    if (handle == nullptr) {
+        return output;
+    }
+
+    output.reserve(decoder.getGraphConstantBindingsSize(handle));
+    for (uint32_t i = 0; i < decoder.getGraphConstantBindingsSize(handle); ++i) {
+        const auto binding = decoder.getGraphConstantBinding(handle, i);
+        output.emplace_back(binding.graphConstantId, binding.constantIndex);
+    }
+    return output;
+}
+
+std::vector<GraphConstantBinding> getEffectiveGraphConstantBindings(const ModelSequenceTableDecoder &decoder,
+                                                                    GraphConstantBindingArrayHandle handle,
+                                                                    DataView<uint32_t> constants) {
+    std::vector<GraphConstantBinding> output = parseGraphConstantBindings(decoder, handle);
+    if (!output.empty() || constants.empty()) {
+        return output;
+    }
+
+    output.reserve(constants.size());
+    std::transform(constants.begin(), constants.end(), std::back_inserter(output),
+                   [](uint32_t constantIndex) { return GraphConstantBinding{constantIndex, constantIndex}; });
     return output;
 }
 
@@ -143,12 +177,15 @@ ModelSequence parseModelSequenceTable(const void *data, uint64_t size) {
         std::vector<PushConstantRange> segmentPushConstantRange = parsePushConstantRanges(*decoder, pcrHandle);
 
         const DataView<uint32_t> segmentConstants = decoder->getSegmentConstantIndexes(i);
+        const auto *constantBindingsHandle = decoder->getSegmentConstantBindingsHandle(i);
+        std::vector<GraphConstantBinding> segmentConstantBindings =
+            getEffectiveGraphConstantBindings(*decoder, constantBindingsHandle, segmentConstants);
         const DataView<uint32_t> segmentDispatchShape = decoder->getSegmentDispatchShape(i);
 
         segments.emplace_back(i, segmentType, segmentModuleIndex, segmentName, std::move(segmentInputs),
                               std::move(segmentOutputs), std::move(segmentDescriptorSetInfos),
                               std::move(segmentPushConstantRange), dataViewToVector(segmentConstants),
-                              dataViewToVector(segmentDispatchShape));
+                              dataViewToVector(segmentDispatchShape), std::move(segmentConstantBindings));
     }
 
     return {std::move(segments), std::move(namedInputs), std::move(namedOutputs)};

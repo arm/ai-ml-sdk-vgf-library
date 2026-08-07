@@ -7,6 +7,7 @@
 #include "vgf/encoder.hpp"
 #include "vgf/types.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <fstream>
@@ -86,6 +87,20 @@ template <typename CRef, typename CppRef> std::vector<CppRef> to_ref_vector(cons
     output.reserve(size);
     for (size_t i = 0; i < size; ++i) {
         output.push_back(CppRef{refs[i].reference});
+    }
+    return output;
+}
+
+std::vector<GraphConstantBindingRef>
+to_graph_constant_binding_vector(const mlsdk_encoder_graph_constant_binding_ref *bindings, size_t size) {
+    if (bindings == nullptr || size == 0) {
+        return {};
+    }
+
+    std::vector<GraphConstantBindingRef> output;
+    output.reserve(size);
+    for (size_t i = 0; i < size; ++i) {
+        output.push_back({bindings[i].graph_constant_id, ConstantRef{bindings[i].constant.reference}});
     }
     return output;
 }
@@ -258,12 +273,40 @@ mlsdk_encoder_add_segment_info(mlsdk_encoder *encoder, mlsdk_encoder_module_ref 
         dispatch = {dispatchShape[0], dispatchShape[1], dispatchShape[2]};
     }
 
+    std::vector<GraphConstantBindingRef> constantBindings;
+    constantBindings.reserve(numConstants);
+    const auto constantRefs = to_ref_vector<mlsdk_encoder_constant_ref, ConstantRef>(constants, numConstants);
+    std::copy(constantRefs.begin(), constantRefs.end(), std::back_inserter(constantBindings));
+
+    return to_c_ref(encoder->encoder->AddSegmentInfo(
+        ModuleRef{module.reference}, name,
+        to_ref_vector<mlsdk_encoder_descriptor_set_info_ref, DescriptorSetInfoRef>(descriptors, numDescriptors),
+        to_ref_vector<mlsdk_encoder_binding_slot_ref, BindingSlotRef>(inputs, numInputs),
+        to_ref_vector<mlsdk_encoder_binding_slot_ref, BindingSlotRef>(outputs, numOutputs), constantBindings, dispatch,
+        to_ref_vector<mlsdk_encoder_push_const_range_ref, PushConstRangeRef>(pushConstRanges, numPushConstRanges)));
+}
+
+mlsdk_encoder_segment_info_ref mlsdk_encoder_add_segment_info_with_constant_bindings(
+    mlsdk_encoder *encoder, mlsdk_encoder_module_ref module, const char *name,
+    const mlsdk_encoder_descriptor_set_info_ref *descriptors, size_t numDescriptors,
+    const mlsdk_encoder_binding_slot_ref *inputs, size_t numInputs, const mlsdk_encoder_binding_slot_ref *outputs,
+    size_t numOutputs, const mlsdk_encoder_graph_constant_binding_ref *constantBindings, size_t numConstantBindings,
+    const uint32_t dispatchShape[3], const mlsdk_encoder_push_const_range_ref *pushConstRanges,
+    size_t numPushConstRanges) {
+    assert(encoder != nullptr && "encoder is null");
+    assert(name != nullptr && "name is null");
+
+    std::array<uint32_t, 3> dispatch{};
+    if (dispatchShape != nullptr) {
+        dispatch = {dispatchShape[0], dispatchShape[1], dispatchShape[2]};
+    }
+
     return to_c_ref(encoder->encoder->AddSegmentInfo(
         ModuleRef{module.reference}, name,
         to_ref_vector<mlsdk_encoder_descriptor_set_info_ref, DescriptorSetInfoRef>(descriptors, numDescriptors),
         to_ref_vector<mlsdk_encoder_binding_slot_ref, BindingSlotRef>(inputs, numInputs),
         to_ref_vector<mlsdk_encoder_binding_slot_ref, BindingSlotRef>(outputs, numOutputs),
-        to_ref_vector<mlsdk_encoder_constant_ref, ConstantRef>(constants, numConstants), dispatch,
+        to_graph_constant_binding_vector(constantBindings, numConstantBindings), dispatch,
         to_ref_vector<mlsdk_encoder_push_const_range_ref, PushConstRangeRef>(pushConstRanges, numPushConstRanges)));
 }
 

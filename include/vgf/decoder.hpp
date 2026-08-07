@@ -526,6 +526,16 @@ using NameArrayHandle = const NameArrayHandle_s *;
 struct PushConstantRangeHandle_s {};
 using PushConstantRangeHandle = const PushConstantRangeHandle_s *;
 
+// Graph Constant Binding Array Handle
+struct GraphConstantBindingArrayHandle_s {};
+using GraphConstantBindingArrayHandle = const GraphConstantBindingArrayHandle_s *;
+
+/// \brief Class to store a graph constant binding
+struct GraphConstantBinding {
+    uint32_t graphConstantId = 0;
+    uint32_t constantIndex = 0;
+};
+
 // Model Sequence Table Decoder
 class ModelSequenceTableDecoder {
   public:
@@ -561,6 +571,35 @@ class ModelSequenceTableDecoder {
      * @param segmentIdx
      */
     virtual DataView<uint32_t> getSegmentConstantIndexes(uint32_t segmentIdx) const = 0;
+
+    /**
+     * @brief Retrieves the 'GraphConstantBindingArrayHandle' corresponding to segment 'segmentIdx'
+     *
+     * @param segmentIdx
+     * @returns Handle to the graph constant binding array
+     */
+    virtual GraphConstantBindingArrayHandle getSegmentConstantBindingsHandle(uint32_t segmentIdx) const = 0;
+
+    /**
+     * @brief Retrieves the number of graph constant bindings
+     *
+     * @param handle Opaque handle to an array of graph constant bindings
+     * @returns The number of graph constant bindings in the array referenced by handle
+     *
+     * For legacy files without explicit bindings, each constant index is exposed
+     * as an identity binding where graphConstantId == constantIndex.
+     */
+    virtual size_t getGraphConstantBindingsSize(GraphConstantBindingArrayHandle handle) const = 0;
+
+    /**
+     * @brief Retrieves the graph constant binding at 'bindingIdx'
+     *
+     * @param handle Opaque handle to an array of graph constant bindings
+     * @param bindingIdx Index of the graph constant binding in the array
+     * @returns The selected graph constant binding
+     */
+    virtual GraphConstantBinding getGraphConstantBinding(GraphConstantBindingArrayHandle handle,
+                                                         uint32_t bindingIdx) const = 0;
 
     /**
      * @brief Returns the ModuleType of segment 'segmentIdx'

@@ -123,6 +123,12 @@ void FuzzCppDecoderAccessors(const uint8_t *data, size_t size) {
                 seqDec->getSegmentDescriptorSetIndex(idx, dIdx);
             }
             seqDec->getSegmentConstantIndexes(idx);
+            const auto constantBindings = seqDec->getSegmentConstantBindingsHandle(idx);
+            const auto constantBindingCount = seqDec->getGraphConstantBindingsSize(constantBindings);
+            if (constantBindingCount > 0) {
+                const auto constantIdx = static_cast<uint32_t>(std::min<size_t>(constantBindingCount - 1, UINT32_MAX));
+                seqDec->getGraphConstantBinding(constantBindings, constantIdx);
+            }
             seqDec->getSegmentType(idx);
             seqDec->getSegmentName(idx);
             seqDec->getSegmentModuleIndex(idx);
@@ -228,7 +234,7 @@ void FuzzCppEncoderSmoke(const uint8_t *data, size_t size) {
     const auto pushConstRange = encoder->AddPushConstRange(1, 0, 4);
     const std::array<uint32_t, 3> dispatchShape{1, 1, 1};
     encoder->AddSegmentInfo(spirvModule, "segment", {descriptor, legacyDescriptor}, {inputBinding}, {outputBinding},
-                            {constant}, dispatchShape, {pushConstRange});
+                            {GraphConstantBindingRef{10000, constant}}, dispatchShape, {pushConstRange});
     encoder->AddModelSequenceInputsOutputs({inputBinding}, {"input"}, {outputBinding}, {"output"});
     encoder->Finish();
 

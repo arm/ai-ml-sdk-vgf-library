@@ -14,6 +14,12 @@
 - Hardened header decoding.
 - Fixed `DataView` equality operator.
 
+### Highlights
+
+- Added per-segment graph constant bindings to map SPIR-V™ graph constant IDs to VGF constant table entries.
+- Added C++, C, and Python APIs for encoding and decoding explicit graph constant bindings.
+- Preserved legacy segment constant lists as identity bindings for older VGF files and callers.
+
 ## Version 0.10.0 – *Resource Metadata & C API Expansion*
 
 ### Highlights

@@ -118,6 +118,16 @@ typedef struct {
 } mlsdk_encoder_constant_ref;
 
 /**
+ * @brief Reference to an encoded graph constant binding entry.
+ */
+typedef struct {
+    /** Graph constant ID. */
+    uint32_t graph_constant_id;
+    /** Reference to an encoded constant entry. */
+    mlsdk_encoder_constant_ref constant;
+} mlsdk_encoder_graph_constant_binding_ref;
+
+/**
  * @brief Reference to an encoded binding slot entry.
  */
 typedef struct {
@@ -419,6 +429,34 @@ MLSDKAPI mlsdk_encoder_segment_info_ref mlsdk_encoder_add_segment_info(
     const mlsdk_encoder_descriptor_set_info_ref *descriptors, size_t numDescriptors,
     const mlsdk_encoder_binding_slot_ref *inputs, size_t numInputs, const mlsdk_encoder_binding_slot_ref *outputs,
     size_t numOutputs, const mlsdk_encoder_constant_ref *constants, size_t numConstants,
+    const uint32_t dispatchShape[3], const mlsdk_encoder_push_const_range_ref *pushConstRanges,
+    size_t numPushConstRanges);
+
+/**
+ * @brief Adds segment info with explicit graph constant bindings.
+ *
+ * @param encoder Encoder handle.
+ * @param module Module used by this segment.
+ * @param name Segment name.
+ * @param descriptors Pointer to descriptor set info references. May be nullptr when numDescriptors is zero.
+ * @param numDescriptors Number of descriptor set info references.
+ * @param inputs Pointer to segment input binding slot references. May be nullptr when numInputs is zero.
+ * @param numInputs Number of input binding slot references.
+ * @param outputs Pointer to segment output binding slot references. May be nullptr when numOutputs is zero.
+ * @param numOutputs Number of output binding slot references.
+ * @param constantBindings Pointer to graph constant binding references. May be nullptr when numConstantBindings is
+ * zero.
+ * @param numConstantBindings Number of graph constant binding references.
+ * @param dispatchShape Three-dimensional dispatch shape. Passing nullptr encodes {0, 0, 0}.
+ * @param pushConstRanges Pointer to push constant range references. May be nullptr when numPushConstRanges is zero.
+ * @param numPushConstRanges Number of push constant range references.
+ * @return Reference to the added segment.
+ */
+MLSDKAPI mlsdk_encoder_segment_info_ref mlsdk_encoder_add_segment_info_with_constant_bindings(
+    mlsdk_encoder *encoder, mlsdk_encoder_module_ref module, const char *name,
+    const mlsdk_encoder_descriptor_set_info_ref *descriptors, size_t numDescriptors,
+    const mlsdk_encoder_binding_slot_ref *inputs, size_t numInputs, const mlsdk_encoder_binding_slot_ref *outputs,
+    size_t numOutputs, const mlsdk_encoder_graph_constant_binding_ref *constantBindings, size_t numConstantBindings,
     const uint32_t dispatchShape[3], const mlsdk_encoder_push_const_range_ref *pushConstRanges,
     size_t numPushConstRanges);
 

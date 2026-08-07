@@ -132,18 +132,20 @@ std::string T1_encode_simple_graph_sample() {
         inputBindingRef, // Input binding slot (id=0)
         outputBindingRef // Output binding slot (id=1)
     });
+    std::vector<vgflib::GraphConstantBindingRef> constantBindings;
 
     // Add a segment. The order in which they are added to the encoder is the order in which they should be executed.
-    encoder->AddSegmentInfo(graphRef,                 // the graph module
-                            "segment_maxpool_graph1", // the name of the segment for debug/tooling purposes
-                            {descInfoRef},            // the descriptor sets used by the model
-                            {inputBindingRef},  // the input bindings of the segment. Linked resource can be either
-                                                //   ResourceCategory INPUT or INTERMEDIATE
-                            {outputBindingRef}, // the output binding of the segment. Linked resource can be either
-                                                //   ResourceCategory OUTPUT or INTERMEDIATE
-                            {}, // this graph module has only one MaxPool2D layer so doesn't make use of any constants
-                            {}, // this segment is for a graph module so doesn't require any dispatch shape
-                            {}  // this example does not make use of push constants.
+    encoder->AddSegmentInfo(
+        graphRef,                 // the graph module
+        "segment_maxpool_graph1", // the name of the segment for debug/tooling purposes
+        {descInfoRef},            // the descriptor sets used by the model
+        {inputBindingRef},        // the input bindings of the segment. Linked resource can be either
+                                  //   ResourceCategory INPUT or INTERMEDIATE
+        {outputBindingRef},       // the output binding of the segment. Linked resource can be either
+                                  //   ResourceCategory OUTPUT or INTERMEDIATE
+        constantBindings,         // this graph module has only one MaxPool2D layer so doesn't make use of any constants
+        {},                       // this segment is for a graph module so doesn't require any dispatch shape
+        {}                        // this example does not make use of push constants.
     );
 
     // Define the inputs and outputs for the model. In this simple case, they are the same as the inputs and outputs to
