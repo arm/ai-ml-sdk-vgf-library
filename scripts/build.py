@@ -308,6 +308,9 @@ class Builder:
                     f"-j{self.threads}",
                     f"-p{self.build_dir}",
                     "-extra-arg=-Wno-ignored-optimization-argument",
+                    # Keep zero-argument pybind11 overrides valid when clang-tidy
+                    # analyzes a C++17 compile database.
+                    "-extra-arg=-Wno-variadic-macro-arguments-omitted",
                 ] + src_dirs
 
                 if self.clang_tidy_fix:
