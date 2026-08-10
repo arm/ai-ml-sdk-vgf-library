@@ -186,7 +186,7 @@
             "licenseDeclared": "MIT",
             "name": "JSON for Modern Cpp",
             "supplier": "Organization: nlohmann",
-            "versionInfo": "3.11.3"
+            "versionInfo": "3.12.0"
         },
         {
             "SPDXID": "SPDXRef-package-3c53bb1a-f1ad-4f37-9f56-e59f0e9ef333",
@@ -288,7 +288,7 @@
             "name": "p-ranav/argparse",
             "copyrightText": "Copyright (c) 2018 Pranav Srinivas Kumar",
             "supplier": "Organization: p-ranav",
-            "versionInfo": "v3.1"
+            "versionInfo": "v3.2"
         },
         {
             "SPDXID": "SPDXRef-package-d68de693-37ca-4589-a088-91167bd3e408",
@@ -316,7 +316,7 @@
             "name": "pybind11",
             "copyrightText": "Copyright (c) 2016 Wenzel Jakob",
             "supplier": "Organization: Wenzel Jakob (github)",
-            "versionInfo": "2.13.6"
+            "versionInfo": "3.1.0"
         },
         {
             "SPDXID": "SPDXRef-package-19c1c0dd-fcb5-4363-ab62-c81727a5da98",
