@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2023-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2023-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -33,3 +33,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/gnu_compiler_options.cmake)
+
+# pybind11's override macros omit the variadic argument for methods without
+# parameters, which Clang diagnoses as a C++20 extension in C++17 builds.
+list(APPEND ML_SDK_VGF_LIB_COMPILE_OPTIONS -Wno-variadic-macro-arguments-omitted)
