@@ -26,7 +26,7 @@ void pyInitTypes(py::module m) {
 
     py::class_<FourCCValue>(m, "FourCCValue")
         .def(py::init<char, char, char, char>())
-        .def(py::self == py::self)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
         .def_readwrite("a", &FourCCValue::a)
         .def_readwrite("b", &FourCCValue::b)
         .def_readwrite("c", &FourCCValue::c)

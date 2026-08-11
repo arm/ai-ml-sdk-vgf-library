@@ -26,6 +26,8 @@
 using namespace mlsdk::vgflib;
 using logging::utils::Logger;
 
+namespace {
+
 const uint16_t pretendVulkanHeaderVersion = 123;
 
 std::vector<GraphConstantBinding> getSegmentConstantBindings(const ModelSequenceTableDecoder &decoder,
@@ -72,6 +74,8 @@ SegmentInfoRef AddSegmentInfoWithLegacyConstants(Encoder &encoder, ModuleRef mod
 #endif
     return segment;
 }
+
+} // namespace
 
 TEST(CppModelSequenceTable, SegmentInfo) {
     std::stringstream buffer;
@@ -817,8 +821,8 @@ TEST(CModelSequenceTable, SegmentBindingSlot) {
     const char *encodedInputNames[] = {"input"};
     const char *encodedOutputNames[] = {"output"};
     mlsdk_encoder_add_model_sequence_inputs_outputs(
-        encoder, inputBindings.data(), inputBindings.size(), encodedInputNames, std::size(encodedInputNames),
-        outputBindings.data(), outputBindings.size(), encodedOutputNames, std::size(encodedOutputNames));
+        encoder, inputBindings.data(), inputBindings.size(), &encodedInputNames[0], std::size(encodedInputNames),
+        outputBindings.data(), outputBindings.size(), &encodedOutputNames[0], std::size(encodedOutputNames));
 
     std::string data = testutils::FinishAndWriteCEncoder(encoder);
     ASSERT_TRUE(data.size() >= mlsdk_decoder_header_size());
@@ -894,8 +898,8 @@ TEST(CModelSequenceTable, BindingSlot) {
     const char *encodedInputNames[] = {"input_0"};
     const char *encodedOutputNames[] = {"output_0"};
     mlsdk_encoder_add_model_sequence_inputs_outputs(
-        encoder, inputBindings.data(), inputBindings.size(), encodedInputNames, std::size(encodedInputNames),
-        outputBindings.data(), outputBindings.size(), encodedOutputNames, std::size(encodedOutputNames));
+        encoder, inputBindings.data(), inputBindings.size(), &encodedInputNames[0], std::size(encodedInputNames),
+        outputBindings.data(), outputBindings.size(), &encodedOutputNames[0], std::size(encodedOutputNames));
 
     mlsdk_encoder_add_segment_info(encoder, module, "test_segment", nullptr, 0, inputBindings.data(),
                                    inputBindings.size(), outputBindings.data(), outputBindings.size(), nullptr, 0,

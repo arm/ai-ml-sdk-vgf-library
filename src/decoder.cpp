@@ -209,7 +209,8 @@ const char *getConstantSectionVersion(const void *data) {
 }
 
 bool hasConstantSectionVersion(const void *data) {
-    return std::memcmp(getConstantSectionVersion(data), CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE) == 0;
+    return std::memcmp(getConstantSectionVersion(data), &CONSTANT_SECTION_VERSION[0], CONSTANT_SECTION_VERSION_SIZE) ==
+           0;
 }
 
 } // namespace
@@ -937,7 +938,7 @@ class ConstantDecoderV00Impl : public ConstantDecoder {
         }
 
         const ByteRange range = _constantDataRange(*metaData);
-        return DataView<uint8_t>(data_ + static_cast<size_t>(range.offset), static_cast<size_t>(range.size));
+        return {data_ + static_cast<size_t>(range.offset), static_cast<size_t>(range.size)};
     }
 
     [[nodiscard]] uint32_t getConstantMrtIndex(uint32_t idx) const override {
@@ -1001,7 +1002,7 @@ class ConstantDecoderV00Impl : public ConstantDecoder {
 
         for (uint64_t idx = 0; idx < declaredCount; ++idx) {
             const auto *entry =
-                reinterpret_cast<const ConstantMetaDataV00 *>(metaData + idx * sizeof(ConstantMetaDataV00));
+                reinterpret_cast<const ConstantMetaDataV00 *>(metaData + (idx * sizeof(ConstantMetaDataV00)));
             if (!_constantDataWithinBounds(entry, dataSize)) {
                 logging::error("VerifyConstant: Constant metadata offset/size exceeds section bounds at index " +
                                std::to_string(idx));
@@ -1021,7 +1022,7 @@ class ConstantDecoderV00Impl : public ConstantDecoder {
         if (metaData_ == nullptr || static_cast<uint64_t>(idx) >= count_) {
             return nullptr;
         }
-        return reinterpret_cast<const ConstantMetaDataV00 *>(metaData_ + idx * sizeof(ConstantMetaDataV00));
+        return reinterpret_cast<const ConstantMetaDataV00 *>(metaData_ + (idx * sizeof(ConstantMetaDataV00)));
     }
 
     [[nodiscard]] static ByteRange _constantDataRange(const ConstantMetaDataV00 &metaData) {

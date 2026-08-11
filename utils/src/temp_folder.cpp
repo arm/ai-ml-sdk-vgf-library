@@ -23,7 +23,7 @@ std::string randomString() {
 std::filesystem::path make_non_preferred(const std::filesystem::path &path) {
     std::string pathStr = path.generic_string();
     std::replace(pathStr.begin(), pathStr.end(), '\\', '/');
-    return std::filesystem::path(pathStr);
+    return {pathStr};
 }
 } // namespace
 

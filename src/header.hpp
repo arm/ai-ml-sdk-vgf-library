@@ -88,6 +88,7 @@ struct Header {
               constantSection.offset,
               constantSection.size,
           } {}
+    Header(const Header &) = default;
 
     const FourCCValue magic = HEADER_MAGIC_VALUE;
     const uint16_t vkHeaderVersion{0};
