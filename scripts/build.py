@@ -380,6 +380,8 @@ class Builder:
                 build_env[
                     "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_AI_ML_SDK_VGF_LIBRARY"
                 ] = package_version
+                if package_version:
+                    build_env["ML_SDK_PACKAGE_VERSION"] = package_version
                 build_env["VGF_PIP_BUILD_DIR"] = str(
                     pathlib.Path(self.build_dir) / "pip"
                 )

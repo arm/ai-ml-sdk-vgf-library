@@ -57,6 +57,9 @@ def _configure_and_build(extension_output_path, install_dir=None):
     cmake_prefix_path = os.environ.get("CMAKE_PREFIX_PATH")
     if cmake_prefix_path:
         cmake_setup_cmd.append(f"-DCMAKE_PREFIX_PATH={cmake_prefix_path}")
+    package_version = os.environ.get("ML_SDK_PACKAGE_VERSION")
+    if package_version:
+        cmake_setup_cmd.append(f"-DML_SDK_PACKAGE_VERSION={package_version}")
 
     cmake_build_cmd = [
         "cmake",
