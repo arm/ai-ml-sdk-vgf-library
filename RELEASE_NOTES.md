@@ -12,6 +12,7 @@
 ### Bug Fixes
 
 - Hardened header decoding.
+- Rejected misaligned section offsets in VGF 0.4.3 and newer during header decoding.
 - Fixed `DataView` equality operator.
 
 ### Highlights

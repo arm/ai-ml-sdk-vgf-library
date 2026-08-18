@@ -98,6 +98,30 @@ TEST(CppDecode, TruncatedHeaderRejected) {
     ASSERT_TRUE(nullptr == decoder);
 }
 
+TEST(CppDecode, MisalignedCurrentFormatSectionRejected) {
+    constexpr uint64_t MISSALIGNED_OFFSET = HEADER_HEADER_SIZE_VALUE + 4;
+    const Header header({MISSALIGNED_OFFSET, 0}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::vector<uint8_t> data(MISSALIGNED_OFFSET);
+    std::memcpy(data.data(), &header, sizeof(Header));
+
+    const auto decoder =
+        CreateHeaderDecoder(data.data(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
+    ASSERT_EQ(nullptr, decoder);
+}
+
+TEST(CppDecode, MisalignedLegacyFormatSectionAccepted) {
+    constexpr uint64_t MISSALIGNED_OFFSET = HEADER_HEADER_SIZE_VALUE + 4;
+    const Header header({MISSALIGNED_OFFSET, 0}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
+    std::vector<uint8_t> data(MISSALIGNED_OFFSET);
+    std::memcpy(data.data(), &header, sizeof(Header));
+    constexpr FormatVersion LEGACY_VERSION{0, 4, 2};
+    std::memcpy(data.data() + HEADER_VERSION_OFFSET, &LEGACY_VERSION, sizeof(LEGACY_VERSION));
+
+    const auto decoder =
+        CreateHeaderDecoder(data.data(), static_cast<uint64_t>(HeaderSize()), static_cast<uint64_t>(data.size()));
+    ASSERT_NE(nullptr, decoder);
+}
+
 TEST(CppEncode, FailToWrite) {
     std::stringbuf roBuf("", std::ios_base::in); // read-only stream
     std::ostream roStream(&roBuf);
