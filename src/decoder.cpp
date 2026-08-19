@@ -67,6 +67,23 @@ bool validateSectionsSizesInHeader(const HeaderDecoder &headerDecoder, uint64_t 
     return true;
 }
 
+bool validateSectionAlignmentsInHeader(const HeaderDecoder &headerDecoder) {
+    constexpr FormatVersion ALIGNED_SECTION_VERSION{0, 4, 3};
+    const auto version = headerDecoder.GetVersion();
+    if (std::tie(version.major, version.minor, version.patch) <
+        std::tie(ALIGNED_SECTION_VERSION.major, ALIGNED_SECTION_VERSION.minor, ALIGNED_SECTION_VERSION.patch)) {
+        return true;
+    }
+
+    const auto isAligned = [](uint64_t offset) { return offset % VGF_SECTION_ALIGNMENT_VALUE == 0; };
+    if (!isAligned(headerDecoder.GetModuleTableOffset()) || !isAligned(headerDecoder.GetModelSequenceTableOffset()) ||
+        !isAligned(headerDecoder.GetModelResourceTableOffset()) || !isAligned(headerDecoder.GetConstantsOffset())) {
+        logging::error("section alignment invalid (alignment=" + std::to_string(VGF_SECTION_ALIGNMENT_VALUE) + ")");
+        return false;
+    }
+    return true;
+}
+
 // FlatBuffers uses 32-bit offsets; cap verification to what the format can encode and what the platform can address.
 constexpr uint64_t maxFlatbufferBytes() {
     constexpr auto UOFFSET_MAX = static_cast<uint64_t>(std::numeric_limits<flatbuffers::uoffset_t>::max());
@@ -303,6 +320,9 @@ class HeaderDecoderImpl : public HeaderDecoder {
             return false;
         }
         if (!validateSectionsSizesInHeader(*decoder, fileSize)) {
+            return false;
+        }
+        if (!validateSectionAlignmentsInHeader(*decoder)) {
             return false;
         }
         return true;

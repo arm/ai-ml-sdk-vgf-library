@@ -231,7 +231,7 @@ TEST(CppVerify, ModuleMisalignedRejected) {
     Header header({moduleOffset, moduleSize}, {0, 0}, {0, 0}, {0, 0}, pretendVulkanHeaderVersion);
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
-    EXPECT_NE(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(HeaderSize()),
+    EXPECT_EQ(nullptr, CreateHeaderDecoder(buffer.data(), static_cast<uint64_t>(HeaderSize()),
                                            static_cast<uint64_t>(buffer.size())));
     EXPECT_EQ(nullptr, CreateModuleTableDecoder(buffer.data() + moduleOffset, moduleSize));
     EXPECT_TRUE(logger.contains({"VerifyModuleTable", "data alignment invalid"}));
@@ -502,7 +502,7 @@ TEST(CVerify, ModuleMisalignedRejected) {
     std::memcpy(buffer.data(), &header, sizeof(Header));
 
     std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
-    EXPECT_NE(nullptr,
+    EXPECT_EQ(nullptr,
               mlsdk_decoder_create_header_decoder(buffer.data(), static_cast<uint64_t>(mlsdk_decoder_header_size()),
                                                   static_cast<uint64_t>(buffer.size()), headerDecoderMemory.data()));
     std::vector<uint8_t> decoderMem(mlsdk_decoder_module_table_decoder_mem_reqs());
