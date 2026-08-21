@@ -7,6 +7,7 @@ add_executable(VGFLibTests
   constant_tests.cpp
   header_tests.cpp
   logging_tests.cpp
+  memory_map_tests.cpp
   model_resource_tests.cpp
   model_sequence_tests.cpp
   module_table_tests.cpp
