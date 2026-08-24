@@ -17,6 +17,7 @@
 
 ### Highlights
 
+- Added optional zero-copy alignment validation and move support to the `MemoryMap` utility.
 - Added per-segment graph constant bindings to map SPIR-V™ graph constant IDs to VGF constant table entries.
 - Added C++, C, and Python APIs for encoding and decoding explicit graph constant bindings.
 - Preserved legacy segment constant lists as identity bindings for older VGF files and callers.
