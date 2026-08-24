@@ -35,6 +35,28 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 include(flatbuffers)
 
+set(VGF_API_VERSION_MAJOR 0)
+set(VGF_API_VERSION_MINOR 0)
+set(VGF_API_VERSION_PATCH 0)
+set(VGF_API_VERSION_STRING "unknown")
+
+if(DEFINED ML_SDK_PACKAGE_VERSION AND NOT "${ML_SDK_PACKAGE_VERSION}" STREQUAL "")
+    if(NOT "${ML_SDK_PACKAGE_VERSION}" MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)")
+        message(FATAL_ERROR "ML_SDK_PACKAGE_VERSION must start with major.minor.patch, got '${ML_SDK_PACKAGE_VERSION}'")
+    endif()
+
+    set(VGF_API_VERSION_MAJOR ${CMAKE_MATCH_1})
+    set(VGF_API_VERSION_MINOR ${CMAKE_MATCH_2})
+    set(VGF_API_VERSION_PATCH ${CMAKE_MATCH_3})
+    set(VGF_API_VERSION_STRING "${ML_SDK_PACKAGE_VERSION}")
+endif()
+
+set(VGF_GENERATED_INCLUDE_DIR "${PROJECT_BINARY_DIR}/include")
+configure_file(
+    "${CMAKE_CURRENT_LIST_DIR}/cmake/version.h.in"
+    "${VGF_GENERATED_INCLUDE_DIR}/vgf/version.h"
+    @ONLY)
+
 #########################################################################################
 # Options
 option(ML_SDK_VGF_LIB_BUILD_DOCS "Build Documentation" OFF)

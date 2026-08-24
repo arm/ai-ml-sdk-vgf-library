@@ -15,6 +15,7 @@ set(VGF_SOURCES
 function(vgf_configure_target target_name)
     target_link_libraries(${target_name} PRIVATE $<BUILD_INTERFACE:vgf_schema>)
     target_include_directories(${target_name} PUBLIC
+        $<BUILD_INTERFACE:${VGF_GENERATED_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include-c>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -54,3 +55,6 @@ install(DIRECTORY
     ../include/
     ../include-c/
     TYPE INCLUDE)
+install(FILES
+    "${VGF_GENERATED_INCLUDE_DIR}/vgf/version.h"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/vgf")
