@@ -29,7 +29,7 @@ char getEndianChar(uint64_t size) {
 }
 
 uint64_t sizeOf(const std::vector<int64_t> &shape, const uint64_t &itemsize) {
-    return std::accumulate(shape.begin(), shape.end(), itemsize, std::multiplies<uint64_t>());
+    return std::accumulate(shape.begin(), shape.end(), itemsize, std::multiplies<>());
 }
 
 bool isPow2(uint32_t value) { return ((value & (~(value - 1))) == value); }
@@ -68,7 +68,7 @@ std::vector<int64_t> strToShape(const std::string &shapeStr) {
         token.erase(token.find_last_not_of(' ') + 1);
 
         try {
-            shape.push_back(std::stoull(token));
+            shape.push_back(std::stoll(token));
         } catch (const std::exception &e) {
             throw std::runtime_error(std::string("invalid shape: ") + e.what());
         }
@@ -104,7 +104,7 @@ DType getDtype(const std::string &dict) {
         throw std::runtime_error(std::string("invalid size in dtype: ") + e.what());
     }
 
-    return DType(kind, itemsize, byteorder);
+    return {kind, itemsize, byteorder};
 }
 
 bool checkFortranOrder(const std::string &dict) {

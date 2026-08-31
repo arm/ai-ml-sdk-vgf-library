@@ -604,7 +604,7 @@ void pyInitConstantDecoder(py::module m) {
 
 // Python Binding Module Decoder Setup
 
-void pyInitDecoder(py::module m) {
+void pyInitDecoder(const py::module &m) {
 
     py::class_<BindingSlotArrayHandle_s>(m, "BindingSlotArrayHandle_s").def(py::init<>());
     py::class_<NameArrayHandle_s>(m, "NameArrayHandle_s").def(py::init<>());

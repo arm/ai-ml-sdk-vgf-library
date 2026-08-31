@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2024, 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,7 +9,7 @@ namespace py = pybind11;
 
 extern void pyInitTypes(py::module m);
 extern void pyInitEncoder(py::module m);
-extern void pyInitDecoder(py::module m);
+extern void pyInitDecoder(const py::module &m);
 
 PYBIND11_MODULE(vgfpy, m) {
     pyInitTypes(m);

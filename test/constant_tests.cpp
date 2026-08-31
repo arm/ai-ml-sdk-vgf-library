@@ -25,7 +25,7 @@ using namespace mlsdk::vgflib;
 using logging::utils::Logger;
 
 const uint16_t pretendVulkanHeaderVersion = 123;
-constexpr size_t GB{1024 * 1024 * 1024};
+constexpr size_t GB{1024UL * 1024 * 1024};
 
 namespace {
 
@@ -34,7 +34,7 @@ std::vector<uint8_t> MakeConstantSectionV00(uint64_t count, const std::vector<Co
     const size_t metadataBytes = metadata.size() * sizeof(ConstantMetaDataV00);
     std::vector<uint8_t> buffer(CONSTANT_SECTION_METADATA_OFFSET + metadataBytes + constant.size(), 0);
 
-    std::memcpy(buffer.data() + CONSTANT_SECTION_VERSION_OFFSET, CONSTANT_SECTION_VERSION,
+    std::memcpy(buffer.data() + CONSTANT_SECTION_VERSION_OFFSET, &CONSTANT_SECTION_VERSION[0],
                 CONSTANT_SECTION_VERSION_SIZE);
     std::memcpy(buffer.data() + CONSTANT_SECTION_COUNT_OFFSET, &count, sizeof(count));
     if (!metadata.empty()) {
@@ -235,7 +235,7 @@ TEST(CppVerify, SectionTooSmallForMetadataRejected) {
 TEST(CppVerify, ConstantDataOffsetOverflowRejected) {
     Logger logger;
     std::array<uint8_t, CONSTANT_SECTION_METADATA_OFFSET> buffer{};
-    std::memcpy(buffer.data(), CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
+    std::memcpy(buffer.data(), &CONSTANT_SECTION_VERSION[0], CONSTANT_SECTION_VERSION_SIZE);
     const uint64_t declaredCount = UINT64_MAX;
     std::memcpy(buffer.data() + CONSTANT_SECTION_COUNT_OFFSET, &declaredCount, sizeof(declaredCount));
 
@@ -629,7 +629,7 @@ TEST(CVerify, SectionTooSmallForMetadataRejected) {
 TEST(CVerify, ConstantDataOffsetOverflowRejected) {
     Logger logger;
     std::array<uint8_t, CONSTANT_SECTION_METADATA_OFFSET> buffer{};
-    std::memcpy(buffer.data(), CONSTANT_SECTION_VERSION, CONSTANT_SECTION_VERSION_SIZE);
+    std::memcpy(buffer.data(), &CONSTANT_SECTION_VERSION[0], CONSTANT_SECTION_VERSION_SIZE);
     const uint64_t declaredCount = UINT64_MAX;
     std::memcpy(buffer.data() + CONSTANT_SECTION_COUNT_OFFSET, &declaredCount, sizeof(declaredCount));
 

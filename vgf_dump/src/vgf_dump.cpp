@@ -359,6 +359,27 @@ void to_json(json &j, const Boundary &boundary) {
               }}};
 }
 
+std::string samplerFilterToString(uint32_t value) {
+    if (value > static_cast<uint32_t>(INT32_MAX_VALUE)) {
+        return "Unknown(" + std::to_string(value) + ")";
+    }
+    return FilterTypeToName(static_cast<FilterType>(value));
+}
+
+std::string samplerAddressModeToString(uint32_t value) {
+    if (value > static_cast<uint32_t>(INT32_MAX_VALUE)) {
+        return "Unknown(" + std::to_string(value) + ")";
+    }
+    return SamplerAddressModeTypeToName(static_cast<SamplerAddressModeType>(value));
+}
+
+std::string samplerBorderColorToString(uint32_t value) {
+    if (value > static_cast<uint32_t>(INT32_MAX_VALUE)) {
+        return "Unknown(" + std::to_string(value) + ")";
+    }
+    return BorderColorTypeToName(static_cast<BorderColorType>(value));
+}
+
 } // namespace
 
 namespace vgfutils {
@@ -414,27 +435,6 @@ void to_json(nlohmann::json &j, const Constant &constant) {
     j = nlohmann::json{{"index", constant.mIndex},
                        {"mrt_index", constant.mMrtIndex},
                        {"sparsity_dimension", constant.mSparsityDimension}};
-}
-
-std::string samplerFilterToString(uint32_t value) {
-    if (value > static_cast<uint32_t>(INT32_MAX_VALUE)) {
-        return "Unknown(" + std::to_string(value) + ")";
-    }
-    return FilterTypeToName(static_cast<FilterType>(value));
-}
-
-std::string samplerAddressModeToString(uint32_t value) {
-    if (value > static_cast<uint32_t>(INT32_MAX_VALUE)) {
-        return "Unknown(" + std::to_string(value) + ")";
-    }
-    return SamplerAddressModeTypeToName(static_cast<SamplerAddressModeType>(value));
-}
-
-std::string samplerBorderColorToString(uint32_t value) {
-    if (value > static_cast<uint32_t>(INT32_MAX_VALUE)) {
-        return "Unknown(" + std::to_string(value) + ")";
-    }
-    return BorderColorTypeToName(static_cast<BorderColorType>(value));
 }
 
 void to_json(nlohmann::json &j, const ResourceSamplerConfig &samplerConfig) {
@@ -669,8 +669,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
     std::vector<ScenarioBinding> bindings;
     std::vector<ScenarioGraphResource> graphResources;
-    graphResources.push_back(
-        ScenarioGraphResource("vgf_graph_ref", std::filesystem::path(inputFile).filename().string()));
+    graphResources.emplace_back("vgf_graph_ref", std::filesystem::path(inputFile).filename().string());
 
     const auto resourceOffset = headerDecoder->GetModelResourceTableOffset();
     const auto resourceSize = headerDecoder->GetModelResourceTableSize();
@@ -702,13 +701,13 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
         std::string descTypeName = DescriptorTypeToString(modelResourceDecoder->getDescriptorType(mrtIndex));
         if (descTypeName == "VK_DESCRIPTOR_TYPE_TENSOR_ARM") {
-            tensorResources.push_back(ScenarioTensorResource(uid, "TEMPLATE_PATH_TENSOR_INPUT_" + std::to_string(i),
-                                                             true, modelResourceDecoder->getVkFormat(mrtIndex),
-                                                             modelResourceDecoder->getTensorShape(mrtIndex)));
+            tensorResources.emplace_back(uid, "TEMPLATE_PATH_TENSOR_INPUT_" + std::to_string(i), true,
+                                         modelResourceDecoder->getVkFormat(mrtIndex),
+                                         modelResourceDecoder->getTensorShape(mrtIndex));
         } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
                    descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
-            bufferResources.push_back(ScenarioBufferResource(uid, "TEMPLATE_PATH_BUFFER_INPUT_" + std::to_string(i),
-                                                             true, modelResourceDecoder->getTensorShape(mrtIndex)));
+            bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_INPUT_" + std::to_string(i), true,
+                                         modelResourceDecoder->getTensorShape(mrtIndex));
         } else {
             std::stringstream ss;
             ss << "Not implemented descriptor type support " << descTypeName
@@ -732,13 +731,13 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
         std::string descTypeName = DescriptorTypeToString(modelResourceDecoder->getDescriptorType(mrtIndex));
         if (descTypeName == "VK_DESCRIPTOR_TYPE_TENSOR_ARM") {
-            tensorResources.push_back(ScenarioTensorResource(uid, "TEMPLATE_PATH_TENSOR_OUTPUT_" + std::to_string(i),
-                                                             false, modelResourceDecoder->getVkFormat(mrtIndex),
-                                                             modelResourceDecoder->getTensorShape(mrtIndex)));
+            tensorResources.emplace_back(uid, "TEMPLATE_PATH_TENSOR_OUTPUT_" + std::to_string(i), false,
+                                         modelResourceDecoder->getVkFormat(mrtIndex),
+                                         modelResourceDecoder->getTensorShape(mrtIndex));
         } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
                    descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
-            bufferResources.push_back(ScenarioBufferResource(uid, "TEMPLATE_PATH_BUFFER_OUTPUT_" + std::to_string(i),
-                                                             false, modelResourceDecoder->getTensorShape(mrtIndex)));
+            bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_OUTPUT_" + std::to_string(i), false,
+                                         modelResourceDecoder->getTensorShape(mrtIndex));
         } else {
             std::stringstream ss;
             ss << "Not implemented descriptor type support " << descTypeName
@@ -757,13 +756,14 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
             const std::string shaderType = m.mShaderType;
             const std::string shaderPathType = shaderType == "SPIR-V" ? "SPIRV" : shaderType;
             const std::string shaderPath = "TEMPLATE_PATH_SHADER_" + shaderPathType + "_" + std::to_string(m.mIndex);
-            shaderResources.push_back(ScenarioShaderResource(shaderRef, shaderPath, shaderType, m.mEntryPoint));
+            shaderResources.emplace_back(shaderRef, shaderPath, shaderType, m.mEntryPoint);
         }
     }
 
     std::vector<json> commands;
     if (add_boundaries) {
-        commands.push_back(Boundary(std::vector<std::string>{}));
+        const Boundary boundary({});
+        commands.emplace_back(boundary);
     }
     commands.push_back(json{{"dispatch_graph",
                              {
@@ -772,7 +772,8 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
                                  {"graph_ref", "vgf_graph_ref"},
                              }}});
     if (add_boundaries) {
-        commands.push_back(Boundary(outputs));
+        const Boundary boundary(outputs);
+        commands.emplace_back(boundary);
     }
 
     json json;

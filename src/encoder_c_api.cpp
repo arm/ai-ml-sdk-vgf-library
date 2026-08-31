@@ -100,7 +100,7 @@ to_graph_constant_binding_vector(const mlsdk_encoder_graph_constant_binding_ref 
     std::vector<GraphConstantBindingRef> output;
     output.reserve(size);
     for (size_t i = 0; i < size; ++i) {
-        output.push_back({bindings[i].graph_constant_id, ConstantRef{bindings[i].constant.reference}});
+        output.emplace_back(bindings[i].graph_constant_id, ConstantRef{bindings[i].constant.reference});
     }
     return output;
 }
