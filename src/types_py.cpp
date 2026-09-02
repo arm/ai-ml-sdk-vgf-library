@@ -12,7 +12,7 @@ namespace py = pybind11;
 
 using namespace mlsdk::vgflib;
 
-void pyInitTypes(py::module m) {
+void pyInitTypes(py::module_ &m) {
 
     py::enum_<ModuleType>(m, "ModuleType").value("Compute", ModuleType::COMPUTE).value("Graph", ModuleType::GRAPH);
 
