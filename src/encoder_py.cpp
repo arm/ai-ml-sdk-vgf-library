@@ -122,7 +122,7 @@ class PyEncoder final : public Encoder {
     bool WriteTo(std::ostream &output) override { PYBIND11_OVERRIDE_PURE(bool, Encoder, WriteTo, output); }
 };
 
-void pyInitEncoder(py::module m) {
+void pyInitEncoder(py::module_ &m) {
 
     py::class_<ModuleRef>(m, "ModuleRef").def(py::init<uint32_t>()).def_readonly("reference", &ModuleRef::reference);
     py::class_<ResourceRef>(m, "ResourceRef")

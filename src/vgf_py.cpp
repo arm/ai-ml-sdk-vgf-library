@@ -7,9 +7,9 @@
 
 namespace py = pybind11;
 
-extern void pyInitTypes(py::module m);
-extern void pyInitEncoder(py::module m);
-extern void pyInitDecoder(const py::module &m);
+extern void pyInitTypes(py::module_ &m);
+extern void pyInitEncoder(py::module_ &m);
+extern void pyInitDecoder(py::module_ &m);
 
 PYBIND11_MODULE(vgfpy, m) {
     pyInitTypes(m);

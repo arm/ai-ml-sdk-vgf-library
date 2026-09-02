@@ -78,7 +78,7 @@ class PyHeaderDecoder final : public HeaderDecoder {
     }
 };
 
-void pyInitHeaderDecoder(py::module m) {
+void pyInitHeaderDecoder(py::module_ &m) {
 
     py::class_<FormatVersion>(m, "FormatVersion")
         .def(py::init<>())
@@ -202,7 +202,7 @@ class PyModuleTableDecoder final : public ModuleTableDecoder {
     }
 };
 
-void pyInitModuleTableDecoder(py::module m) {
+void pyInitModuleTableDecoder(py::module_ &m) {
 
     py::class_<ModuleTableDecoder, PyModuleTableDecoder>(m, "ModuleTableDecoder")
         .def(py::init<>())
@@ -380,7 +380,7 @@ class PyModelSequenceTableDecoder final : public ModelSequenceTableDecoder {
     }
 };
 
-void pyInitModelSequenceTableDecoder(py::module m) {
+void pyInitModelSequenceTableDecoder(py::module_ &m) {
 
     py::class_<GraphConstantBinding>(m, "GraphConstantBinding")
         .def(py::init<>())
@@ -518,7 +518,7 @@ class PyModelResourceTableDecoder final : public ModelResourceTableDecoder {
     }
 };
 
-void pyInitModelResourceTableDecoder(py::module m) {
+void pyInitModelResourceTableDecoder(py::module_ &m) {
     py::class_<ModelResourceTableDecoder, PyModelResourceTableDecoder>(m, "ModelResourceTableDecoder")
         .def(py::init<>())
         .def("size", &ModelResourceTableDecoder::size)
@@ -582,7 +582,7 @@ class PyConstantDecoder final : public ConstantDecoder {
     }
 };
 
-void pyInitConstantDecoder(py::module m) {
+void pyInitConstantDecoder(py::module_ &m) {
 
     py::class_<ConstantDecoder, PyConstantDecoder>(m, "ConstantDecoder")
         .def(py::init<>())
@@ -604,7 +604,7 @@ void pyInitConstantDecoder(py::module m) {
 
 // Python Binding Module Decoder Setup
 
-void pyInitDecoder(const py::module &m) {
+void pyInitDecoder(py::module_ &m) {
 
     py::class_<BindingSlotArrayHandle_s>(m, "BindingSlotArrayHandle_s").def(py::init<>());
     py::class_<NameArrayHandle_s>(m, "NameArrayHandle_s").def(py::init<>());
