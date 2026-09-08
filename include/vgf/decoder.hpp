@@ -35,11 +35,11 @@ template <typename T> class DataView {
             return false;
         }
 
-        if (!ptr_ && !other.ptr_) {
+        if (ptr_ == nullptr && other.ptr_ == nullptr) {
             return true;
         }
 
-        if (!ptr_ || !other.ptr_) {
+        if (ptr_ == nullptr || other.ptr_ == nullptr) {
             return false;
         }
 

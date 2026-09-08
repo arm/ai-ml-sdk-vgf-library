@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 
 namespace mlsdk::vgflib {
 
@@ -68,6 +69,8 @@ constexpr uint8_t HEADER_PATCH_VERSION_VALUE = 0;
 // * HEADER_MAGIC_VALUE_OLD
 static_assert(HEADER_MAJOR_VERSION_VALUE == 0);
 
+// Header must remain trivially copyable because it represents the serialized wire format.
+// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 struct Header {
     Header(const SectionEntry &moduleSection, const SectionEntry &sequenceSection, const SectionEntry &resourceSection,
            const SectionEntry &constantSection, uint16_t vkHeaderVersion)
@@ -108,6 +111,7 @@ struct Header {
     const uint64_t reserved8{0};
 };
 
+static_assert(std::is_trivially_copyable_v<Header>, "Header must remain trivially copyable.");
 static_assert(sizeof(Header) == HEADER_HEADER_SIZE_VALUE, "Header size mismatched from spec.");
 static_assert(offsetof(Header, magic) == HEADER_MAGIC_OFFSET, "Magic field offset mismatched from spec.");
 static_assert(offsetof(Header, vkHeaderVersion) == HEADER_VK_HEADER_VERSION_OFFSET,
