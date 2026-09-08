@@ -17,6 +17,16 @@
 
 namespace mlsdk::vgflib {
 
+namespace detail {
+struct ModuleRefTag {};
+struct ResourceRefTag {};
+struct ConstantRefTag {};
+struct BindingSlotRefTag {};
+struct DescriptorSetInfoRefTag {};
+struct SegmentInfoRefTag {};
+struct PushConstRangeRefTag {};
+} // namespace detail
+
 template <typename> class Ref {
   public:
     using RefType = uint32_t;
@@ -29,36 +39,38 @@ template <typename> class Ref {
  */
 
 /// \brief Class to store reference to a Module
-class ModuleRef : public Ref<ModuleRef> {};
+class ModuleRef : public Ref<detail::ModuleRefTag> {};
 
 /// \brief Class to store reference to a Resource
-class ResourceRef : public Ref<ResourceRef> {};
+class ResourceRef : public Ref<detail::ResourceRefTag> {};
 
 /// \brief Class to store reference to a Constant
-class ConstantRef : public Ref<ConstantRef> {};
+class ConstantRef : public Ref<detail::ConstantRefTag> {};
 
 /// \brief Class to store reference to a graph constant binding
 struct GraphConstantBindingRef {
     GraphConstantBindingRef() = default;
     GraphConstantBindingRef(uint32_t graphConstantId, ConstantRef constant)
         : graphConstantId(graphConstantId), constant(constant) {}
-    GraphConstantBindingRef(ConstantRef constant) : graphConstantId(constant.reference), constant(constant) {}
+    // Implicit conversion is required when adapting legacy constant-reference ranges.
+    GraphConstantBindingRef(ConstantRef constant) // NOLINT(google-explicit-constructor)
+        : graphConstantId(constant.reference), constant(constant) {}
 
     uint32_t graphConstantId = 0;
     ConstantRef constant = {0};
 };
 
 /// \brief Class to store reference to a Binding Slot
-class BindingSlotRef : public Ref<BindingSlotRef> {};
+class BindingSlotRef : public Ref<detail::BindingSlotRefTag> {};
 
 /// \brief Class to store reference to a Descriptor Set
-class DescriptorSetInfoRef : public Ref<DescriptorSetInfoRef> {};
+class DescriptorSetInfoRef : public Ref<detail::DescriptorSetInfoRefTag> {};
 
 /// \brief Class to store reference to Segment Info
-class SegmentInfoRef : public Ref<SegmentInfoRef> {};
+class SegmentInfoRef : public Ref<detail::SegmentInfoRefTag> {};
 
 /// \brief Class to store reference to a Push Constant Range
-class PushConstRangeRef : public Ref<PushConstRangeRef> {};
+class PushConstRangeRef : public Ref<detail::PushConstRangeRefTag> {};
 
 class Encoder {
   public:

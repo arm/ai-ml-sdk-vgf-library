@@ -307,6 +307,8 @@ class Builder:
                     "-quiet",
                     f"-j{self.threads}",
                     f"-p{self.build_dir}",
+                    "-header-filter=vgf-lib/.*",
+                    r"-exclude-header-filter=.*\.generated\.hpp$",
                     "-extra-arg=-Wno-ignored-optimization-argument",
                     # Keep zero-argument pybind11 overrides valid when clang-tidy
                     # analyzes a C++17 compile database.

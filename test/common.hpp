@@ -27,6 +27,10 @@ class Logger {
     Logger() {
         EnableLogging([this](LogLevel, const std::string &message) { messages_.push_back(message); });
     }
+    Logger(const Logger &) = delete;
+    Logger &operator=(const Logger &) = delete;
+    Logger(Logger &&) = delete;
+    Logger &operator=(Logger &&) = delete;
 
     ~Logger() { DisableLogging(); }
 

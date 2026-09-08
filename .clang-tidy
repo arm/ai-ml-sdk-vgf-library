@@ -145,7 +145,6 @@ Checks: >
     cppcoreguidelines-virtual-class-destructor,
     google-build-explicit-make-pair,
     google-build-namespaces,
-    google-default-arguments,
     google-explicit-constructor,
     google-global-names-in-headers,
     google-readability-avoid-underscore-in-googletest-name,
@@ -273,9 +272,10 @@ Checks: >
     readability-use-std-min-max,
 
 WarningsAsErrors: '*'
-HeaderFilterRegex: 'vgf-lib/.*'
 FormatStyle: file
 CheckOptions:
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: true
   - key: bugprone-unsafe-functions.ReportDefaultFunctions
     value: 'true'
   - key: bugprone-unsafe-functions.ReportMoreUnsafeFunctions
