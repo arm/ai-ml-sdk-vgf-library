@@ -4,7 +4,12 @@ This software is verified for security for official releases and as such does
 not make promises about the quality of the product for patches delivered between
 releases.
 
-## Trust model for VGF inputs
+## Security Boundaries
+
+The VGF Library is not a sandbox or process-security boundary. The library
+relies on the operating system, filesystem, and caller being trusted. Weaknesses
+originating in those components or in a compromised same-process caller cannot
+be addressed in this library.
 
 VGF files (including embedded SPIR-V™) are expected to be provided by trusted
 tooling in the build and deployment pipeline. The decoder assumes VGF content is
