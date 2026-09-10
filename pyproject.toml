@@ -4,7 +4,7 @@
 #
 
 [build-system]
-requires = ["setuptools>=68", "setuptools-scm>=8", "wheel", "pybind11", "cmake>=3.22", "ninja>=1.10"]
+requires = ["setuptools>=68", "setuptools-scm>=8", "wheel", "pybind11", "cmake>=3.22", "ninja>=1.8.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -16,7 +16,7 @@ license = { text = "Apache-2.0" }
 authors = [
     { name = "Arm Limited" }
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 
 [project.scripts]
 vgf_dump = "vgf_lib.cli:main"
