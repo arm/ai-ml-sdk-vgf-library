@@ -243,7 +243,7 @@ void to_json(json &j, const ScenarioTensorResource &tensor) {
               }}};
 }
 
-uint32_t bufferSize(const DataView<int64_t> &shape) {
+uint32_t bufferElementCount(const DataView<int64_t> &shape) {
     const auto size = std::accumulate(
         shape.begin(), shape.end(), std::optional<uint64_t>{1}, [](std::optional<uint64_t> currentSize, int64_t dim) {
             if (!currentSize.has_value()) {
@@ -263,9 +263,20 @@ uint32_t bufferSize(const DataView<int64_t> &shape) {
     return static_cast<uint32_t>(*size);
 }
 
+uint32_t bufferSize(const DataView<int64_t> &shape, FormatType format) {
+    const uint32_t elementCount = bufferElementCount(shape);
+    const uint32_t elementSize = vgfutils::numpy::elementSizeFromBlockSize(blockSize(format));
+    const uint64_t byteSize = static_cast<uint64_t>(elementCount) * elementSize;
+    if (byteSize > std::numeric_limits<uint32_t>::max()) {
+        throw std::runtime_error("Scenario buffer resource size exceeds uint32_t range");
+    }
+    return static_cast<uint32_t>(byteSize);
+}
+
 struct ScenarioBufferResource {
-    ScenarioBufferResource(std::string uid, std::string path, bool isSrc, const DataView<int64_t> &shape)
-        : mUid(std::move(uid)), mPath(std::move(path)), mIsSrc(isSrc), mSize(bufferSize(shape)) {}
+    ScenarioBufferResource(std::string uid, std::string path, bool isSrc, const DataView<int64_t> &shape,
+                           FormatType format)
+        : mUid(std::move(uid)), mPath(std::move(path)), mIsSrc(isSrc), mSize(bufferSize(shape, format)) {}
 
     std::string mUid;
     std::string mPath;
@@ -707,7 +718,8 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
                    descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
             bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_INPUT_" + std::to_string(i), true,
-                                         modelResourceDecoder->getTensorShape(mrtIndex));
+                                         modelResourceDecoder->getTensorShape(mrtIndex),
+                                         modelResourceDecoder->getVkFormat(mrtIndex));
         } else {
             std::stringstream ss;
             ss << "Not implemented descriptor type support " << descTypeName
@@ -737,7 +749,8 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
                    descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
             bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_OUTPUT_" + std::to_string(i), false,
-                                         modelResourceDecoder->getTensorShape(mrtIndex));
+                                         modelResourceDecoder->getTensorShape(mrtIndex),
+                                         modelResourceDecoder->getVkFormat(mrtIndex));
         } else {
             std::stringstream ss;
             ss << "Not implemented descriptor type support " << descTypeName

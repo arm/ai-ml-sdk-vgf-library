@@ -15,6 +15,7 @@
 - Rejected misaligned section offsets in VGF 0.4.3 and newer during header decoding.
 - Fixed `DataView` equality operator.
 - Aligned VGF public version header to release component version.
+- Fixed `vgf_dump` scenario templates to emit storage and uniform buffer sizes in bytes.
 
 ### Highlights
 
