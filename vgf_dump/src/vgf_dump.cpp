@@ -700,6 +700,8 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     std::vector<ScenarioTensorResource> tensorResources;
     std::vector<ScenarioBufferResource> bufferResources;
     BindingSlotArrayHandle seqInputsHandle = modelSequenceDecoder->getModelSequenceInputBindingSlotsHandle();
+    uint32_t tensorInputIndex = 0;
+    uint32_t bufferInputIndex = 0;
     for (uint32_t i = 0; i < modelSequenceDecoder->getBindingsSize(seqInputsHandle); ++i) {
         std::string uid = "input_" + std::to_string(i) + "_ref";
         bindings.emplace_back(uid, modelSequenceDecoder->getBindingSlotBinding(seqInputsHandle, i));
@@ -712,12 +714,12 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
         std::string descTypeName = DescriptorTypeToString(modelResourceDecoder->getDescriptorType(mrtIndex));
         if (descTypeName == "VK_DESCRIPTOR_TYPE_TENSOR_ARM") {
-            tensorResources.emplace_back(uid, "TEMPLATE_PATH_TENSOR_INPUT_" + std::to_string(i), true,
+            tensorResources.emplace_back(uid, "TEMPLATE_PATH_TENSOR_INPUT_" + std::to_string(tensorInputIndex++), true,
                                          modelResourceDecoder->getVkFormat(mrtIndex),
                                          modelResourceDecoder->getTensorShape(mrtIndex));
         } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
                    descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
-            bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_INPUT_" + std::to_string(i), true,
+            bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_INPUT_" + std::to_string(bufferInputIndex++), true,
                                          modelResourceDecoder->getTensorShape(mrtIndex),
                                          modelResourceDecoder->getVkFormat(mrtIndex));
         } else {
@@ -730,6 +732,8 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
     std::vector<std::string> outputs;
     BindingSlotArrayHandle seqOutputsHandle = modelSequenceDecoder->getModelSequenceOutputBindingSlotsHandle();
+    uint32_t tensorOutputIndex = 0;
+    uint32_t bufferOutputIndex = 0;
     for (uint32_t i = 0; i < modelSequenceDecoder->getBindingsSize(seqOutputsHandle); ++i) {
         std::string uid = "output_" + std::to_string(i) + "_ref";
         outputs.emplace_back(uid);
@@ -743,13 +747,13 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
         std::string descTypeName = DescriptorTypeToString(modelResourceDecoder->getDescriptorType(mrtIndex));
         if (descTypeName == "VK_DESCRIPTOR_TYPE_TENSOR_ARM") {
-            tensorResources.emplace_back(uid, "TEMPLATE_PATH_TENSOR_OUTPUT_" + std::to_string(i), false,
-                                         modelResourceDecoder->getVkFormat(mrtIndex),
+            tensorResources.emplace_back(uid, "TEMPLATE_PATH_TENSOR_OUTPUT_" + std::to_string(tensorOutputIndex++),
+                                         false, modelResourceDecoder->getVkFormat(mrtIndex),
                                          modelResourceDecoder->getTensorShape(mrtIndex));
         } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
                    descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
-            bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_OUTPUT_" + std::to_string(i), false,
-                                         modelResourceDecoder->getTensorShape(mrtIndex),
+            bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_OUTPUT_" + std::to_string(bufferOutputIndex++),
+                                         false, modelResourceDecoder->getTensorShape(mrtIndex),
                                          modelResourceDecoder->getVkFormat(mrtIndex));
         } else {
             std::stringstream ss;
