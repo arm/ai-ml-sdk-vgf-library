@@ -23,7 +23,10 @@ def build_native(extension_output_path, install_dir=None):
 
 def _configure_and_build(extension_output_path, install_dir=None):
     build_dir = pathlib.Path(
-        os.environ.get("VGF_PIP_BUILD_DIR", ROOT_DIR / "build" / "pip")
+        os.environ.get(
+            "VGF_PIP_BUILD_DIR",
+            ROOT_DIR / "build" / "pip" / sys.implementation.cache_tag,
+        )
     ).resolve()
     setuptools_build_dir = extension_output_path.parent
     if install_dir is None:
