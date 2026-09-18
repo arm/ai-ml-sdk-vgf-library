@@ -9,6 +9,8 @@
 - Moved pip package builds from pip_package to the repository root and made them compile the VGF C/C++ library and `vgfpy` Python extension automatically.
 - Updated vgf_dump and vgf_updater `--version` output to report the package version and include git revision and dependency revision information
 - Added support for Android™ devices using 16KiB pages.
+- Added a complete `vgfpy` API reference with usage examples and generated
+  binding signatures.
 
 ### Bug Fixes
 

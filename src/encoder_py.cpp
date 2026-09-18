@@ -124,40 +124,45 @@ class PyEncoder final : public Encoder {
 
 void pyInitEncoder(py::module_ &m) {
 
-    py::class_<ModuleRef>(m, "ModuleRef").def(py::init<uint32_t>()).def_readonly("reference", &ModuleRef::reference);
-    py::class_<ResourceRef>(m, "ResourceRef")
+    py::class_<ModuleRef>(m, "ModuleRef", "Reference to an encoded module.")
         .def(py::init<uint32_t>())
-        .def_readonly("reference", &ResourceRef::reference);
-    py::class_<ConstantRef>(m, "ConstantRef")
+        .def_readonly("reference", &ModuleRef::reference, "Module-table index.");
+    py::class_<ResourceRef>(m, "ResourceRef", "Reference to an encoded model resource.")
         .def(py::init<uint32_t>())
-        .def_readonly("reference", &ConstantRef::reference);
-    py::class_<GraphConstantBindingRef>(m, "GraphConstantBindingRef")
+        .def_readonly("reference", &ResourceRef::reference, "Model-resource-table index.");
+    py::class_<ConstantRef>(m, "ConstantRef", "Reference to encoded constant data.")
+        .def(py::init<uint32_t>())
+        .def_readonly("reference", &ConstantRef::reference, "Constant-table index.");
+    py::class_<GraphConstantBindingRef>(m, "GraphConstantBindingRef",
+                                        "Map a graph constant ID to encoded constant data.")
         .def(py::init<uint32_t, ConstantRef>())
-        .def_readwrite("graphConstantId", &GraphConstantBindingRef::graphConstantId)
-        .def_readonly("constant", &GraphConstantBindingRef::constant);
-    py::class_<BindingSlotRef>(m, "BindingSlotRef")
+        .def_readwrite("graphConstantId", &GraphConstantBindingRef::graphConstantId, "SPIR-V graph constant ID.")
+        .def_readonly("constant", &GraphConstantBindingRef::constant, "Encoded constant reference.");
+    py::class_<BindingSlotRef>(m, "BindingSlotRef", "Reference to an encoded binding slot.")
         .def(py::init<uint32_t>())
-        .def_readonly("reference", &BindingSlotRef::reference);
-    py::class_<DescriptorSetInfoRef>(m, "DescriptorSetInfoRef")
+        .def_readonly("reference", &BindingSlotRef::reference, "Binding-slot index.");
+    py::class_<DescriptorSetInfoRef>(m, "DescriptorSetInfoRef", "Reference to encoded descriptor-set information.")
         .def(py::init<uint32_t>())
-        .def_readonly("reference", &DescriptorSetInfoRef::reference);
-    py::class_<SegmentInfoRef>(m, "SegmentInfoRef")
+        .def_readonly("reference", &DescriptorSetInfoRef::reference, "Descriptor-set information index.");
+    py::class_<SegmentInfoRef>(m, "SegmentInfoRef", "Reference to an encoded model segment.")
         .def(py::init<uint32_t>())
-        .def_readonly("reference", &SegmentInfoRef::reference);
-    py::class_<PushConstRangeRef>(m, "PushConstRangeRef")
+        .def_readonly("reference", &SegmentInfoRef::reference, "Model-segment index.");
+    py::class_<PushConstRangeRef>(m, "PushConstRangeRef", "Reference to an encoded push-constant range.")
         .def(py::init<uint32_t>())
-        .def_readonly("reference", &PushConstRangeRef::reference);
+        .def_readonly("reference", &PushConstRangeRef::reference, "Push-constant-range index.");
 
-    py::class_<Encoder, PyEncoder>(m, "Encoder")
+    py::class_<Encoder, PyEncoder>(m, "Encoder", "Construct and serialize a VGF file.")
         .def(py::init<>())
         .def("AddModule",
              py::overload_cast<ModuleType, const std::string &, const std::string &, const std::vector<uint32_t> &>(
                  &Encoder::AddModule),
-             py::arg("type"), py::arg("name"), py::arg("entryPoint"), py::arg("code") = py::list())
+             "Add a SPIR-V module and return its reference.", py::arg("type"), py::arg("name"), py::arg("entryPoint"),
+             py::arg("code") = py::list())
         .def("AddModule",
              py::overload_cast<ModuleType, const std::string &, const std::string &, ShaderType, const std::string &>(
                  &Encoder::AddModule),
-             py::arg("type"), py::arg("name"), py::arg("entryPoint"), py::arg("shaderType"), py::arg("code") = "")
+             "Add a source-language shader module and return its reference.", py::arg("type"), py::arg("name"),
+             py::arg("entryPoint"), py::arg("shaderType"), py::arg("code") = "")
         .def(
             "AddPlaceholderModule",
             [](Encoder &encoder, ModuleType type, const std::string &name, const std::string &entryPoint) {
@@ -167,12 +172,15 @@ void pyInitEncoder(py::module_ &m) {
                                       deprecationWarning);
                 return encoder.AddModule(type, name, entryPoint);
             },
-            py::arg("type"), py::arg("name"), py::arg("entryPoint"))
-        .def("AddBindingSlot", &Encoder::AddBindingSlot, py::arg("binding"), py::arg("resource"))
-        .def("AddDescriptorSetInfo", &Encoder::AddDescriptorSetInfo, py::arg("bindings") = py::list(),
+            "Deprecated: add a module without code. Use :meth:`AddModule`.", py::arg("type"), py::arg("name"),
+            py::arg("entryPoint"))
+        .def("AddBindingSlot", &Encoder::AddBindingSlot, "Add a binding slot associated with a model resource.",
+             py::arg("binding"), py::arg("resource"))
+        .def("AddDescriptorSetInfo", &Encoder::AddDescriptorSetInfo,
+             "Add descriptor-set information for binding slots.", py::arg("bindings") = py::list(),
              py::arg("setIndex") = std::numeric_limits<uint32_t>::max())
-        .def("AddPushConstRange", &Encoder::AddPushConstRange, py::arg("stageFlags"), py::arg("offset"),
-             py::arg("size"))
+        .def("AddPushConstRange", &Encoder::AddPushConstRange, "Add a push-constant range to a segment.",
+             py::arg("stageFlags"), py::arg("offset"), py::arg("size"))
         .def(
             "AddSegmentInfo",
             [](Encoder &encoder, ModuleRef module, const std::string &name,
@@ -185,31 +193,38 @@ void pyInitEncoder(py::module_ &m) {
                 return encoder.AddSegmentInfo(module, name, descriptors, inputs, outputs, constantBindings,
                                               dispatchShape, pushConstRanges);
             },
-            py::arg("module"), py::arg("name"), py::arg("descriptors") = py::list(), py::arg("inputs") = py::list(),
-            py::arg("outputs") = py::list(), py::arg("constants") = py::list(),
-            py::arg("dispatchShape") = std::array<uint32_t, 3>(), py::arg("pushConstRanges") = py::list())
+            "Add a segment using legacy constant references.", py::arg("module"), py::arg("name"),
+            py::arg("descriptors") = py::list(), py::arg("inputs") = py::list(), py::arg("outputs") = py::list(),
+            py::arg("constants") = py::list(), py::arg("dispatchShape") = std::array<uint32_t, 3>(),
+            py::arg("pushConstRanges") = py::list())
         .def("AddSegmentInfo",
              py::overload_cast<ModuleRef, const std::string &, const std::vector<DescriptorSetInfoRef> &,
                                const std::vector<BindingSlotRef> &, const std::vector<BindingSlotRef> &,
                                const std::vector<GraphConstantBindingRef> &, const std::array<uint32_t, 3> &,
                                const std::vector<PushConstRangeRef> &>(&Encoder::AddSegmentInfo),
-             py::arg("module"), py::arg("name"), py::arg("descriptors"), py::arg("inputs"), py::arg("outputs"),
-             py::arg("constantBindings"), py::arg("dispatchShape") = std::array<uint32_t, 3>(),
-             py::arg("pushConstRanges") = py::list())
-        .def("AddModelSequenceInputsOutputs", &Encoder::AddModelSequenceInputsOutputs, py::arg("inputs") = py::list(),
+             "Add a segment using explicit graph constant bindings.", py::arg("module"), py::arg("name"),
+             py::arg("descriptors"), py::arg("inputs"), py::arg("outputs"), py::arg("constantBindings"),
+             py::arg("dispatchShape") = std::array<uint32_t, 3>(), py::arg("pushConstRanges") = py::list())
+        .def("AddModelSequenceInputsOutputs", &Encoder::AddModelSequenceInputsOutputs,
+             "Set the model-level input and output binding slots and optional names.", py::arg("inputs") = py::list(),
              py::arg("inputNames") = py::list(), py::arg("outputs") = py::list(), py::arg("outputNames") = py::list())
-        .def("AddInputResource", &Encoder::AddInputResource, py::arg("vkDescriptorType"), py::arg("vkFormat"),
+        .def("AddInputResource", &Encoder::AddInputResource, "Add an input to the model resource table.",
+             py::arg("vkDescriptorType"), py::arg("vkFormat"), py::arg("shape"), py::arg("strides"),
+             py::arg("aliasGroupId") = py::none())
+        .def("AddOutputResource", &Encoder::AddOutputResource, "Add an output to the model resource table.",
+             py::arg("vkDescriptorType"), py::arg("vkFormat"), py::arg("shape"), py::arg("strides"),
+             py::arg("aliasGroupId") = py::none())
+        .def("AddIntermediateResource", &Encoder::AddIntermediateResource,
+             "Add an intermediate value to the model resource table.", py::arg("vkDescriptorType"), py::arg("vkFormat"),
              py::arg("shape"), py::arg("strides"), py::arg("aliasGroupId") = py::none())
-        .def("AddOutputResource", &Encoder::AddOutputResource, py::arg("vkDescriptorType"), py::arg("vkFormat"),
-             py::arg("shape"), py::arg("strides"), py::arg("aliasGroupId") = py::none())
-        .def("AddIntermediateResource", &Encoder::AddIntermediateResource, py::arg("vkDescriptorType"),
-             py::arg("vkFormat"), py::arg("shape"), py::arg("strides"), py::arg("aliasGroupId") = py::none())
-        .def("AddConstantResource", &Encoder::AddConstantResource, py::arg("vkFormat"), py::arg("shape"),
+        .def("AddConstantResource", &Encoder::AddConstantResource,
+             "Add a constant resource to the model resource table.", py::arg("vkFormat"), py::arg("shape"),
              py::arg("strides"))
-        .def("AddSamplerConfig", &Encoder::AddSamplerConfig, py::arg("resource"), py::arg("samplerMinFilter"),
-             py::arg("samplerMagFilter"), py::arg("samplerAddressModeU"), py::arg("samplerAddressModeV"),
-             py::arg("samplerBorderColor"))
-        .def("SetAliasGroup", &Encoder::SetAliasGroup, py::arg("resource"), py::arg("aliasGroupId"))
+        .def("AddSamplerConfig", &Encoder::AddSamplerConfig, "Set sampler metadata for a model resource.",
+             py::arg("resource"), py::arg("samplerMinFilter"), py::arg("samplerMagFilter"),
+             py::arg("samplerAddressModeU"), py::arg("samplerAddressModeV"), py::arg("samplerBorderColor"))
+        .def("SetAliasGroup", &Encoder::SetAliasGroup, "Assign an alias group to a non-constant model resource.",
+             py::arg("resource"), py::arg("aliasGroupId"))
         .def(
             "AddConstant",
             [](Encoder &encoder, ResourceRef resRef, const py::buffer &buffer, int64_t sparsityDimension) {
@@ -217,8 +232,9 @@ void pyInitEncoder(py::module_ &m) {
                                            size_t(buffer.request().itemsize) * size_t(buffer.request().size),
                                            sparsityDimension);
             },
-            py::arg("resourceRef"), py::arg("buffer"), py::arg("sparsityDimension") = CONSTANT_NOT_SPARSE_DIMENSION)
-        .def("Finish", &Encoder::Finish)
+            "Add buffer-protocol data for a constant model resource.", py::arg("resourceRef"), py::arg("buffer"),
+            py::arg("sparsityDimension") = CONSTANT_NOT_SPARSE_DIMENSION)
+        .def("Finish", &Encoder::Finish, "Finish encoding the VGF file before writing it.")
         .def(
             "WriteTo",
             [](Encoder &encoder, py::object &pyIOStream) {
@@ -234,7 +250,8 @@ void pyInitEncoder(py::module_ &m) {
 
                 return false;
             },
-            py::arg("output"));
+            "Write the finished VGF file to a binary Python IO stream.", py::arg("output"));
 
-    m.def("CreateEncoder", &CreateEncoder, py::arg("vkHeaderVersion"));
+    m.def("CreateEncoder", &CreateEncoder, "Create an encoder using the supplied Vulkan header version.",
+          py::arg("vkHeaderVersion"));
 }

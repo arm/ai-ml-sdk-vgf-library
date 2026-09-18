@@ -15,6 +15,10 @@ if(CMAKE_CROSSCOMPILING)
     return()
 endif()
 
+if(NOT TARGET vgfpy)
+    message(FATAL_ERROR "Python API documentation requires ML_SDK_VGF_LIB_BUILD_PYLIB.")
+endif()
+
 file(MAKE_DIRECTORY ${SPHINX_GEN_DIR})
 
 configure_file(
@@ -50,8 +54,9 @@ endforeach()
 
 add_custom_command(
     OUTPUT ${SPHINX_INDEX_HTML}
-    DEPENDS ${DOC_SRC_FILES_FULL_PATHS}
-    COMMAND ${SPHINX_EXECUTABLE} -b html -W -Dbreathe_projects.MLSDK=${DOXYGEN_XML_GEN} ${SPHINX_SRC_DIR} ${SPHINX_BLD_DIR}
+    DEPENDS ${DOC_SRC_FILES_FULL_PATHS} vgfpy
+    COMMAND ${CMAKE_COMMAND} -E env "PYTHONPATH=$<TARGET_FILE_DIR:vgfpy>"
+        ${SPHINX_EXECUTABLE} -E -b html -W -Dbreathe_projects.MLSDK=${DOXYGEN_XML_GEN} ${SPHINX_SRC_DIR} ${SPHINX_BLD_DIR}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating API documentation with Sphinx"
     VERBATIM

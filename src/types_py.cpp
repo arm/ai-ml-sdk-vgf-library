@@ -14,25 +14,30 @@ using namespace mlsdk::vgflib;
 
 void pyInitTypes(py::module_ &m) {
 
-    py::enum_<ModuleType>(m, "ModuleType").value("Compute", ModuleType::COMPUTE).value("Graph", ModuleType::GRAPH);
+    py::enum_<ModuleType>(m, "ModuleType", "Type of module stored in a VGF file.")
+        .value("Compute", ModuleType::COMPUTE)
+        .value("Graph", ModuleType::GRAPH);
 
-    py::enum_<ShaderType>(m, "ShaderType").value("Glsl", ShaderType::GLSL).value("Hlsl", ShaderType::HLSL);
+    py::enum_<ShaderType>(m, "ShaderType", "Source language used by a shader module.")
+        .value("Glsl", ShaderType::GLSL)
+        .value("Hlsl", ShaderType::HLSL);
 
-    py::enum_<ResourceCategory>(m, "ResourceCategory")
+    py::enum_<ResourceCategory>(m, "ResourceCategory", "Usage category of a model resource.")
         .value("Input", ResourceCategory::INPUT)
         .value("Output", ResourceCategory::OUTPUT)
         .value("Intermediate", ResourceCategory::INTERMEDIATE)
         .value("Constant", ResourceCategory::CONSTANT);
 
-    py::class_<FourCCValue>(m, "FourCCValue")
+    py::class_<FourCCValue>(m, "FourCCValue", "A four-character code value.")
         .def(py::init<char, char, char, char>())
         .def(py::self == py::self) // NOLINT(misc-redundant-expression)
-        .def_readwrite("a", &FourCCValue::a)
-        .def_readwrite("b", &FourCCValue::b)
-        .def_readwrite("c", &FourCCValue::c)
-        .def_readwrite("d", &FourCCValue::d);
+        .def_readwrite("a", &FourCCValue::a, "First character.")
+        .def_readwrite("b", &FourCCValue::b, "Second character.")
+        .def_readwrite("c", &FourCCValue::c, "Third character.")
+        .def_readwrite("d", &FourCCValue::d, "Fourth character.");
 
-    m.def("FourCC", &FourCC, py::arg("a"), py::arg("b"), py::arg("c"), py::arg("d"));
+    m.def("FourCC", &FourCC, "Create a four-character code value.", py::arg("a"), py::arg("b"), py::arg("c"),
+          py::arg("d"));
 
-    m.def("UndefinedFormat", &UndefinedFormat);
+    m.def("UndefinedFormat", &UndefinedFormat, "Return the value representing an undefined Vulkan format.");
 }
