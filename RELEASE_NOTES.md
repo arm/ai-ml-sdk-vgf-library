@@ -11,6 +11,12 @@
 
 ### Bug Fixes
 
+- Fixed compiler PDB contention in standalone MSVC Debug builds with sccache.
+  The toolchain already requested embedded debug information (`/Z7`), but CMake
+  3.22 policy compatibility silently ignored `CMAKE_MSVC_DEBUG_INFORMATION_FORMAT`
+  and retained `/Zi`, causing C1041 errors despite the existing fix. Raising the
+  minimum CMake version to 3.25 enables policy `CMP0141`, making the existing
+  `/Z7` setting take effect and avoiding shared compiler PDB files.
 - Hardened header decoding.
 - Rejected misaligned section offsets in VGF 0.4.3 and newer during header decoding.
 - Fixed `DataView` equality operator.
