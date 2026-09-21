@@ -101,7 +101,7 @@ required by the ML SDK VGF Library in `<repo_root>/dependencies/`.
 The build system must have:
 
 - C/C++ 17 compiler: GCC, or optionally Clang on Linux and MSVC on Windows®.
-- CMake 3.22 or later.
+- CMake 3.25 or later.
 - Ninja 1.8.2 or later.
 - Python 3.10 or later. Required python libraries for building are listed in
   `tooling-requirements.txt`.
