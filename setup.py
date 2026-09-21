@@ -3,14 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import pathlib
-import platform
 import sys
 
 from setuptools import Extension
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
-from wheel.bdist_wheel import bdist_wheel
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR / "pip_package"))
@@ -47,34 +45,7 @@ class BuildExt(build_ext):
         super().build_extension(ext)
 
 
-class BDistWheel(bdist_wheel):
-    def finalize_options(self):
-        super().finalize_options()
-        self.root_is_pure = False
-
-    def get_tag(self):
-        system = platform.system()
-        machine = platform.machine()
-        if system == "Windows":
-            assert machine == "AMD64"
-            platform_name = "win_amd64"
-        elif system == "Linux":
-            if machine == "aarch64":
-                platform_name = "manylinux2014_aarch64"
-            else:
-                assert machine == "x86_64"
-                platform_name = "manylinux2014_x86_64"
-        elif system == "Darwin":
-            assert machine == "arm64"
-            platform_name = "macosx_11_0_arm64"
-        else:
-            raise RuntimeError(f"Unsupported platform: {system} {machine}")
-
-        python_tag, abi_tag, _ = super().get_tag()
-        return (python_tag, abi_tag, platform_name)
-
-
 setup(
-    cmdclass={"bdist_wheel": BDistWheel, "build_ext": BuildExt, "build_py": BuildPy},
+    cmdclass={"build_ext": BuildExt, "build_py": BuildPy},
     ext_modules=[CMakeExtension("vgfpy")],
 )
