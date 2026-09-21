@@ -66,6 +66,13 @@ option(ML_SDK_VGF_LIB_BUILD_TOOLS "Build VGF tools" ON)
 option(ML_SDK_VGF_LIB_BUILD_SHARED "Build VGF as a shared library" OFF)
 option(ML_SDK_VGF_LIB_ENABLE_FUZZER  "Enable vgf_fuzzer, it requires clang/LLVM libFuzzer." OFF)
 
+if(ANDROID)
+    add_link_options(
+        "-Wl,-z,max-page-size=16384"
+        "-Wl,-z,common-page-size=16384"
+    )
+endif()
+
 add_subdirectory(schema)
 add_subdirectory(utils)
 add_subdirectory(src)
