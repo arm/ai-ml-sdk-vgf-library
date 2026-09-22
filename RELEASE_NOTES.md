@@ -2,12 +2,16 @@
 
 ---
 
-## Unreleased
+## Version 0.11.0 – *VGF 0.5.0, Constant Bindings & Decoder Hardening*
 
 ### Build, Packaging & Developer Experience
 
-- Moved pip package builds from pip_package to the repository root and made them compile the VGF C/C++ library and `vgfpy` Python extension automatically.
-- Updated vgf_dump and vgf_updater `--version` output to report the package version and include git revision and dependency revision information
+- Raised the minimum supported Python version for the pip package from 3.8 to
+  3.10.
+- Moved pip package builds from pip_package to the repository root and made them
+  compile the VGF C/C++ library and `vgfpy` Python extension automatically.
+- Updated vgf_dump and vgf_updater `--version` output to report the package
+  version and include git revision and dependency revision information
 - Added support for Android™ devices using 16KiB pages.
 - Added a complete `vgfpy` API reference with usage examples and generated
   binding signatures.
@@ -16,22 +20,30 @@
 
 - Fixed compiler PDB contention in standalone MSVC Debug builds with sccache.
   The toolchain already requested embedded debug information (`/Z7`), but CMake
-  3.22 policy compatibility silently ignored `CMAKE_MSVC_DEBUG_INFORMATION_FORMAT`
-  and retained `/Zi`, causing C1041 errors despite the existing fix. Raising the
-  minimum CMake version to 3.25 enables policy `CMP0141`, making the existing
-  `/Z7` setting take effect and avoiding shared compiler PDB files.
+  3.22 policy compatibility silently ignored
+  `CMAKE_MSVC_DEBUG_INFORMATION_FORMAT` and retained `/Zi`, causing C1041 errors
+  despite the existing fix. Raising the minimum CMake version to 3.25 enables
+  policy `CMP0141`, making the existing `/Z7` setting take effect and avoiding
+  shared compiler PDB files.
 - Hardened header decoding.
-- Rejected misaligned section offsets in VGF 0.4.3 and newer during header decoding.
+- Rejected misaligned section offsets in VGF 0.4.3 and newer during header
+  decoding.
 - Fixed `DataView` equality operator.
 - Aligned VGF public version header to release component version.
-- Fixed `vgf_dump` scenario templates to emit storage and uniform buffer sizes in bytes.
+- Fixed `vgf_dump` scenario templates to emit storage and uniform buffer sizes
+  in bytes.
 
 ### Highlights
 
-- Added optional zero-copy alignment validation and move support to the `MemoryMap` utility.
-- Added per-segment graph constant bindings to map SPIR-V™ graph constant IDs to VGF constant table entries.
-- Added C++, C, and Python APIs for encoding and decoding explicit graph constant bindings.
-- Preserved legacy segment constant lists as identity bindings for older VGF files and callers.
+- Updated the VGF file format from 0.4.3 to 0.5.0.
+- Added optional zero-copy alignment validation and move support to the
+  `MemoryMap` utility.
+- Added per-segment graph constant bindings to map SPIR-V™ graph constant IDs to
+  VGF constant table entries.
+- Added C++, C, and Python APIs for encoding and decoding explicit graph
+  constant bindings.
+- Preserved legacy segment constant lists as identity bindings for older VGF
+  files and callers.
 
 ## Version 0.10.0 – *Resource Metadata & C API Expansion*
 
