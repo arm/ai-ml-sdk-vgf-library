@@ -679,7 +679,7 @@
         {
             "spdxElementId": "SPDXRef-package-edd58207-4b2b-4095-b0a5-cf41f1d9d6dd",
             "relationshipType": "DEPENDS_ON",
-            "relatedSpdxElement": "SPDXRef-package-18e36ba3-5553-495c-afa3-ef67a7b417c"
+            "relatedSpdxElement": "SPDXRef-package-18e36ba3-5553-495c-afa3-ef67a7b417c1"
         }
     ]
 }
