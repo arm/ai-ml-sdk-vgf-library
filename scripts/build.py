@@ -66,7 +66,7 @@ class Builder:
         self.package_source_tgz = "source-tgz" in args.package_type
         self.package_source_zip = "source-zip" in args.package_type
 
-        self.build_pylib = args.build_pylib or args.test
+        self.build_pylib = args.build_pylib or args.test or self.doc
 
         if self.package_release_pip:
             self.package_pip = True

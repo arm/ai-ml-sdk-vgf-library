@@ -73,6 +73,11 @@ if(ANDROID)
     )
 endif()
 
+if((ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS) AND NOT CMAKE_CROSSCOMPILING)
+    # Sphinx autodoc imports vgfpy to generate the Python API reference.
+    set(ML_SDK_VGF_LIB_BUILD_PYLIB ON CACHE BOOL "Build VGF Python Lib" FORCE)
+endif()
+
 add_subdirectory(schema)
 add_subdirectory(utils)
 add_subdirectory(src)

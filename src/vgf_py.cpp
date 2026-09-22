@@ -12,6 +12,7 @@ extern void pyInitEncoder(py::module_ &m);
 extern void pyInitDecoder(py::module_ &m);
 
 PYBIND11_MODULE(vgfpy, m) {
+    m.doc() = "Python bindings for encoding and decoding VGF files.";
     pyInitTypes(m);
     pyInitEncoder(m);
     pyInitDecoder(m);
