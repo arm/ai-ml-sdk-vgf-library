@@ -8,7 +8,7 @@ the C++ layout constants in ``src/header.hpp`` and ``src/constant.hpp``.
 VGF File Structure
 ------------------
 
-The file starts with a fixed 128-byte header. The header records the file format version, the Vulkan header version
+The file starts with a fixed 128-byte header. The header records the file format version, the Vulkan® header version
 used by the encoder, and four file-relative section entries. Each section entry contains a ``uint64`` offset and a
 ``uint64`` size.
 
@@ -47,7 +47,7 @@ pre-FourCC magic value for backward compatibility.
    * - 4
      - 2
      - ``vk_header_version``
-     - ``VK_HEADER_VERSION`` value used by the encoder. Consumers use this to interpret stored Vulkan enum values.
+     - ``VK_HEADER_VERSION`` value used by the encoder. Consumers use this to interpret stored Vulkan® enum values.
    * - 6
      - 2
      - ``reserved0``
@@ -105,7 +105,7 @@ The Module Table stores ``Module`` entries:
 
 * ``type`` is ``COMPUTE`` or ``GRAPH``.
 * ``name`` and ``entry_point`` are strings.
-* ``code`` is a ``ModuleCode`` union. Current code variants are SPIR-V ``uint32`` words, GLSL source, and HLSL source.
+* ``code`` is a ``ModuleCode`` union. Current code variants are SPIR-V™ ``uint32`` words, GLSL source, and HLSL source.
 
 The Model Sequence Table stores model-level inputs and outputs plus ordered ``SegmentInfo`` entries. Segment metadata
 links runtime execution state together:
@@ -117,11 +117,11 @@ links runtime execution state together:
   ``mrt_index`` into the Model Resource Table.
 * ``constants`` stores indexes into the Model Constants metadata records.
 * ``dispatch_shape`` is expected to contain three elements when present.
-* ``push_constant_ranges`` stores Vulkan stage flags, byte offsets, and byte sizes.
+* ``push_constant_ranges`` stores Vulkan® stage flags, byte offsets, and byte sizes.
 
 The Model Resource Table stores ``ModelResourceTableEntry`` records:
 
-* ``vk_descriptor_type`` and ``vk_format`` are stored as opaque Vulkan enum values. ``vk_descriptor_type`` uses
+* ``vk_descriptor_type`` and ``vk_format`` are stored as opaque Vulkan® enum values. ``vk_descriptor_type`` uses
   ``UINT32_MAX`` as the on-disk "not present" sentinel for resources such as constants.
 * ``category`` is ``INPUT``, ``OUTPUT``, ``INTERMEDIATE``, or ``CONSTANT``.
 * ``description`` stores tensor ``shape`` and ``strides`` arrays.

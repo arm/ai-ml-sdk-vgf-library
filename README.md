@@ -192,8 +192,8 @@ LICENSES directory.
 
 ## Trademark notice
 
-Arm® is a registered trademarks of Arm Limited (or its subsidiaries) in the US
+Arm® is a registered trademark of Arm Limited (or its subsidiaries) in the US
 and/or elsewhere.
 
-Khronos®, Vulkan® and SPIR-V™ are registered trademarks of the
-[Khronos® Group](https://www.khronos.org/legal/trademarks).
+Khronos® and Vulkan® are registered trademarks, and SPIR-V™ is a trademark of
+[The Khronos Group Inc.](https://www.khronos.org/legal/trademarks/).
