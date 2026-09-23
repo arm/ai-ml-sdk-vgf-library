@@ -285,6 +285,7 @@ class Builder:
                     "cppcheck",
                     f"-j{str(self.threads)}",
                     "--std=c++17",
+                    "--library=googletest",
                     "--error-exitcode=1",
                     "--inline-suppr",
                     f"--cppcheck-build-dir={self.build_dir}/cppcheck",
