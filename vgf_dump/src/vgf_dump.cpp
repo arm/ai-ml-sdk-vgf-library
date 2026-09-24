@@ -222,14 +222,14 @@ struct ScenarioTensorResource {
         // dynamic dimensions are represented as the lowest int64_t value in LLVM
         mDims.reserve(dims.size());
         std::transform(dims.begin(), dims.end(), std::back_inserter(mDims),
-                       [](int64_t v) { return v == std::numeric_limits<int64_t>::lowest() ? int64_t{-1} : v; });
+                       [](int64_t v) { return v == std::numeric_limits<int64_t>::lowest() ? json("?") : json(v); });
     }
 
     std::string mUid;
     std::string mPath;
     bool mIsSrc;
     VkFormat mFormat;
-    std::vector<int64_t> mDims;
+    std::vector<json> mDims;
 };
 
 void to_json(json &j, const ScenarioTensorResource &tensor) {
