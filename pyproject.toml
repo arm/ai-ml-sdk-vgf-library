@@ -22,6 +22,7 @@ requires-python = ">=3.10"
 vgf_dump = "vgf_lib.cli:main"
 
 [tool.setuptools]
+license-files = ["LICENSES/*.txt"]
 include-package-data = true
 package-dir = {"" = "pip_package"}
 
