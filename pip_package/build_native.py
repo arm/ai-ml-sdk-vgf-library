@@ -44,6 +44,7 @@ def _configure_and_build(extension_output_path, install_dir=None):
         "-B",
         str(build_dir),
         f"-DCMAKE_BUILD_TYPE={build_type}",
+        "-DCMAKE_INSTALL_LIBDIR=lib",
         "-G",
         generator,
         "-DML_SDK_VGF_LIB_BUILD_PYLIB=ON",
