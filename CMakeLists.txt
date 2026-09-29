@@ -64,7 +64,29 @@ option(ML_SDK_VGF_LIB_BUILD_PYLIB "Build VGF Python Lib" OFF)
 option(ML_SDK_VGF_LIB_BUILD_TESTS "Build Format unit tests" OFF)
 option(ML_SDK_VGF_LIB_BUILD_TOOLS "Build VGF tools" ON)
 option(ML_SDK_VGF_LIB_BUILD_SHARED "Build VGF as a shared library" OFF)
+option(ML_SDK_VGF_LIB_ENABLE_COVERAGE "Enable GCC code coverage instrumentation" OFF)
 option(ML_SDK_VGF_LIB_ENABLE_FUZZER  "Enable vgf_fuzzer, it requires clang/LLVM libFuzzer." OFF)
+
+if(ML_SDK_VGF_LIB_ENABLE_COVERAGE)
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        message(FATAL_ERROR "ML_SDK_VGF_LIB_ENABLE_COVERAGE requires GCC")
+    endif()
+    if(CMAKE_CROSSCOMPILING)
+        message(FATAL_ERROR "ML_SDK_VGF_LIB_ENABLE_COVERAGE is only supported for native builds")
+    endif()
+
+    add_library(vgf_coverage_options INTERFACE)
+    target_compile_options(vgf_coverage_options INTERFACE --coverage -O0 -g)
+    target_link_options(vgf_coverage_options INTERFACE --coverage)
+endif()
+
+function(vgf_enable_coverage target_name)
+    if(NOT ML_SDK_VGF_LIB_ENABLE_COVERAGE)
+        return()
+    endif()
+
+    target_link_libraries(${target_name} PRIVATE $<BUILD_INTERFACE:vgf_coverage_options>)
+endfunction()
 
 if(ANDROID)
     add_link_options(

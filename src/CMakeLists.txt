@@ -21,6 +21,7 @@ function(vgf_configure_target target_name)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     target_compile_options(${target_name} PRIVATE ${ML_SDK_VGF_LIB_COMPILE_OPTIONS})
+    vgf_enable_coverage(${target_name})
 endfunction()
 
 add_library(vgf STATIC ${VGF_SOURCES})
@@ -41,6 +42,7 @@ if(ML_SDK_VGF_LIB_BUILD_PYLIB)
         encoder_py.cpp
         decoder_py.cpp)
     target_compile_options(vgfpy PRIVATE ${ML_SDK_VGF_LIB_COMPILE_OPTIONS})
+    vgf_enable_coverage(vgfpy)
     target_link_libraries(vgfpy PRIVATE
         vgf
         vgf_schema

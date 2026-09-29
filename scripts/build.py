@@ -40,7 +40,8 @@ class Builder:
         self.prefix_path = args.prefix_path
 
         self.threads = args.threads
-        self.run_tests = args.test
+        self.coverage = args.coverage
+        self.run_tests = args.test or self.coverage
         self.lint = args.lint
         self.build_type = args.build_type
         self.doc_only = args.doc_only
@@ -66,7 +67,7 @@ class Builder:
         self.package_source_tgz = "source-tgz" in args.package_type
         self.package_source_zip = "source-zip" in args.package_type
 
-        self.build_pylib = args.build_pylib or args.test or self.doc
+        self.build_pylib = args.build_pylib or self.run_tests or self.doc
 
         if self.package_release_pip:
             self.package_pip = True
@@ -197,6 +198,15 @@ class Builder:
 
         if self.run_tests:
             cmake_setup_cmd.append("-DML_SDK_VGF_LIB_BUILD_TESTS=ON")
+
+        if self.coverage:
+            if self.target_platform != "host" or platform.system() != "Linux":
+                print(
+                    "ERROR: Coverage requires a native Linux GCC build",
+                    file=sys.stderr,
+                )
+                return 1
+            cmake_setup_cmd.append("-DML_SDK_VGF_LIB_ENABLE_COVERAGE=ON")
 
         if self.lint:
             cmake_setup_cmd.append("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
@@ -334,6 +344,10 @@ class Builder:
                 subprocess.run(cmake_install_cmd, check=True)
 
             if self.run_tests:
+                if self.coverage:
+                    for coverage_data in pathlib.Path(self.build_dir).rglob("*.gcda"):
+                        coverage_data.unlink()
+
                 test_cmd = [
                     "ctest",
                     "--test-dir",
@@ -357,6 +371,33 @@ class Builder:
                 if self.enable_sanitizers:
                     pytest_cmd.append("--sanitizers")
                 subprocess.run(pytest_cmd, cwd=VGF_LIB_DIR, check=True)
+
+            if self.coverage:
+                coverage_dir = pathlib.Path(self.build_dir, "coverage")
+                coverage_dir.mkdir(parents=True, exist_ok=True)
+                coverage_cmd = [
+                    "gcovr",
+                    "--root",
+                    str(VGF_LIB_DIR),
+                    "--filter",
+                    str(VGF_LIB_DIR / "src"),
+                    "--filter",
+                    str(VGF_LIB_DIR / "include"),
+                    "--filter",
+                    str(VGF_LIB_DIR / "include-c"),
+                    "--filter",
+                    str(VGF_LIB_DIR / "utils"),
+                    "--object-directory",
+                    self.build_dir,
+                    "--html-details",
+                    str(coverage_dir / "index.html"),
+                    "--json-summary-pretty",
+                    "--json-summary",
+                    str(coverage_dir / "summary.json"),
+                    "--print-summary",
+                    self.build_dir,
+                ]
+                subprocess.run(coverage_cmd, check=True)
 
             if self.package_tgz:
                 self.generate_cmake_package("TGZ")
@@ -464,6 +505,12 @@ def parse_arguments():
         "-l",
         "--lint",
         help="Run linter. Default: %(default)s",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--coverage",
+        help="Run unit tests with GCC coverage and generate reports. Default: %(default)s",
         action="store_true",
         default=False,
     )

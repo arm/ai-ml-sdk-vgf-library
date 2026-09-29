@@ -13,6 +13,7 @@ target_sources(vgf-utils PRIVATE
 target_include_directories(vgf-utils PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+vgf_enable_coverage(vgf-utils)
 add_library(${VGF_NAMESPACE}::vgf-utils ALIAS vgf-utils)
 
 install(TARGETS vgf-utils EXPORT ${VGF_PACKAGE_NAME}Config)

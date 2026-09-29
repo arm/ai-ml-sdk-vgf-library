@@ -162,6 +162,22 @@ For more command line options, see the help output:
 python3 $SDK_PATH/sw/vgf-lib/scripts/build.py --help
 ```
 
+## Code coverage
+
+Sync the locked test and tooling dependencies, then run the C++ and Python unit tests on
+Linux with GCC coverage instrumentation:
+
+```bash
+uv sync --locked --no-install-project --no-default-groups --group test --group tooling
+uv run --no-sync python scripts/build.py --coverage --build-dir build-coverage
+```
+
+The command writes a detailed HTML report to
+`build-coverage/coverage/index.html` and a machine-readable JSON summary to
+`build-coverage/coverage/summary.json`. Coverage is collected for the native
+library and Python binding sources, including native code exercised through
+pytest. Python source-line coverage is not collected.
+
 ## PyPI
 
 The ML SDK VGF Library is available on PyPI as the [ai-ml-sdk-vgf-library](https://pypi.org/project/ai-ml-sdk-vgf-library/) package.

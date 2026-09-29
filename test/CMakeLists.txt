@@ -23,6 +23,7 @@ target_link_libraries(VGFLibTests PRIVATE
     $<$<PLATFORM_ID:Android>:log>)
 target_include_directories(VGFLibTests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 target_compile_options(VGFLibTests PRIVATE ${ML_SDK_VGF_LIB_COMPILE_OPTIONS})
+vgf_enable_coverage(VGFLibTests)
 
 gtest_discover_tests(VGFLibTests PROPERTIES LABELS VGFLibTests)
 
