@@ -35,6 +35,9 @@ vgf_lib = ["binaries/**"]
 [tool.setuptools_scm]
 fallback_version = "0.11.0"
 
+[tool.cibuildwheel.windows]
+repair-wheel-command = "delvewheel repair --exclude msvcp140.dll -w {dest_dir} -v {wheel}"
+
 [tool.black]
 target-version = ['py310']
 

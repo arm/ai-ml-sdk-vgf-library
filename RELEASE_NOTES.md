@@ -2,6 +2,13 @@
 
 ---
 
+## Unreleased
+
+### Build, Packaging & Dependencies
+
+- Windows® wheels no longer bundle `MSVCP140.dll`; they use the C++ runtime
+  installed on the target system.
+
 ## Version 0.11.0 – *VGF 0.5.0, Constant Bindings & Decoder Hardening*
 
 ### Build, Packaging & Developer Experience
