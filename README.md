@@ -103,8 +103,8 @@ The build system must have:
 - C/C++ 17 compiler: GCC, or optionally Clang on Linux and MSVC on Windows®.
 - CMake 3.25 or later.
 - Ninja 1.8.2 or later.
-- Python 3.10 or later. Required python libraries for building are listed in
-  `tooling-requirements.txt`.
+- Python 3.10 or later and `uv` 0.9.26. Test and tooling dependencies are
+  declared in `pyproject.toml` and locked in `uv.lock`.
 
 The following dependencies are also needed:
 
@@ -140,12 +140,12 @@ To enable and run tests, use the `--test` option. To lint the tests, use the
 must be installed:
 
 ```bash
-pip install -r requirements.txt
-pip install -r tooling-requirements.txt
+uv sync --locked --no-install-project --no-default-groups --group test --group tooling
 ```
 
-To build the documentation, use the `--doc` option. To build the documentation,
-you must have `sphinx` and `doxygen` installed on your machine.
+Run build commands with `uv run --no-sync python scripts/build.py` to use the
+locked environment. To build documentation, pass `--doc`; Doxygen must also be
+installed on your machine.
 
 You can install the build artifacts for this project into a specified location.
 To install the build artifacts, pass the `--install` option with the required
