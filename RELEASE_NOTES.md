@@ -8,6 +8,8 @@
 
 - Windows® wheels no longer bundle `MSVCP140.dll`; they use the C++ runtime
   installed on the target system.
+- Locked development and test dependencies with `uv.lock` in place of the
+  requirements files.
 
 ## Version 0.11.0 – *VGF 0.5.0, Constant Bindings & Decoder Hardening*
 
