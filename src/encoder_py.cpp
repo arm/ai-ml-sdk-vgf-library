@@ -15,113 +15,6 @@ namespace py = pybind11;
 
 using namespace mlsdk::vgflib;
 
-class PyEncoder final : public Encoder {
-  public:
-    using Encoder::Encoder;
-
-    ModuleRef AddModule(ModuleType type, const std::string &name, const std::string &entryPoint,
-                        const std::vector<uint32_t> &code) override {
-        PYBIND11_OVERRIDE_PURE(ModuleRef, Encoder, AddModule, type, name, entryPoint, code);
-    }
-
-    ModuleRef AddModule(ModuleType moduleType, const std::string &name, const std::string &entryPoint,
-                        ShaderType shaderType, const std::string &code) override {
-        PYBIND11_OVERRIDE_PURE(ModuleRef, Encoder, AddModule, moduleType, name, entryPoint, shaderType, code);
-    }
-
-    ModuleRef AddPlaceholderModule(ModuleType type, const std::string &name, const std::string &entryPoint) override {
-        PYBIND11_OVERRIDE_PURE(ModuleRef, Encoder, AddPlaceholderModule, type, name, entryPoint);
-    }
-
-    BindingSlotRef AddBindingSlot(uint32_t binding, ResourceRef resource) override {
-        PYBIND11_OVERRIDE_PURE(BindingSlotRef, Encoder, AddBindingSlot, binding, resource);
-    }
-
-    DescriptorSetInfoRef AddDescriptorSetInfo(const std::vector<BindingSlotRef> &bindings, uint32_t setIndex) override {
-        PYBIND11_OVERRIDE_PURE(DescriptorSetInfoRef, Encoder, AddDescriptorSetInfo, bindings, setIndex);
-    }
-
-    PushConstRangeRef AddPushConstRange(uint32_t stageFlags, uint32_t offset, uint32_t size) override {
-        PYBIND11_OVERRIDE_PURE(PushConstRangeRef, Encoder, AddPushConstRange, stageFlags, offset, size);
-    }
-
-    SegmentInfoRef AddSegmentInfo(ModuleRef module, const std::string &name,
-                                  const std::vector<DescriptorSetInfoRef> &descriptors,
-                                  const std::vector<BindingSlotRef> &inputs, const std::vector<BindingSlotRef> &outputs,
-                                  const std::vector<ConstantRef> &constants,
-                                  const std::array<uint32_t, 3> &dispatchShape,
-                                  const std::vector<PushConstRangeRef> &pushConstRanges) override {
-
-        PYBIND11_OVERRIDE_PURE(SegmentInfoRef, Encoder, AddSegmentInfo, module, name, descriptors, inputs, outputs,
-                               constants, dispatchShape, pushConstRanges);
-    }
-
-    SegmentInfoRef AddSegmentInfo(ModuleRef module, const std::string &name,
-                                  const std::vector<DescriptorSetInfoRef> &descriptors,
-                                  const std::vector<BindingSlotRef> &inputs, const std::vector<BindingSlotRef> &outputs,
-                                  const std::vector<GraphConstantBindingRef> &constantBindings,
-                                  const std::array<uint32_t, 3> &dispatchShape,
-                                  const std::vector<PushConstRangeRef> &pushConstRanges) override {
-
-        PYBIND11_OVERRIDE_PURE(SegmentInfoRef, Encoder, AddSegmentInfo, module, name, descriptors, inputs, outputs,
-                               constantBindings, dispatchShape, pushConstRanges);
-    }
-
-    void AddModelSequenceInputsOutputs(const std::vector<BindingSlotRef> &inputs,
-                                       const std::vector<std::string> &inputNames,
-                                       const std::vector<BindingSlotRef> &outputs,
-                                       const std::vector<std::string> &outputNames) override {
-
-        PYBIND11_OVERRIDE_PURE(void, Encoder, AddModelSequenceInputsOutputs, inputs, inputNames, outputs, outputNames);
-    }
-
-    ResourceRef AddInputResource(DescriptorType vkDescriptorType, FormatType vkFormat,
-                                 const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
-                                 std::optional<AliasGroupId> aliasGroupId) override {
-        PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddInputResource, vkDescriptorType, vkFormat, shape, strides,
-                               aliasGroupId);
-    }
-
-    ResourceRef AddOutputResource(DescriptorType vkDescriptorType, FormatType vkFormat,
-                                  const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
-                                  std::optional<AliasGroupId> aliasGroupId) override {
-        PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddOutputResource, vkDescriptorType, vkFormat, shape, strides,
-                               aliasGroupId);
-    }
-
-    ResourceRef AddIntermediateResource(DescriptorType vkDescriptorType, FormatType vkFormat,
-                                        const std::vector<int64_t> &shape, const std::vector<int64_t> &strides,
-                                        std::optional<AliasGroupId> aliasGroupId) override {
-        PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddIntermediateResource, vkDescriptorType, vkFormat, shape,
-                               strides, aliasGroupId);
-    }
-
-    ResourceRef AddConstantResource(FormatType vkFormat, const std::vector<int64_t> &shape,
-                                    const std::vector<int64_t> &strides) override {
-        PYBIND11_OVERRIDE_PURE(ResourceRef, Encoder, AddConstantResource, vkFormat, shape, strides);
-    }
-
-    void AddSamplerConfig(ResourceRef resource, uint32_t samplerMinFilter, uint32_t samplerMagFilter,
-                          uint32_t samplerAddressModeU, uint32_t samplerAddressModeV,
-                          uint32_t samplerBorderColor) override {
-        PYBIND11_OVERRIDE_PURE(void, Encoder, AddSamplerConfig, resource, samplerMinFilter, samplerMagFilter,
-                               samplerAddressModeU, samplerAddressModeV, samplerBorderColor);
-    }
-
-    void SetAliasGroup(ResourceRef resource, AliasGroupId aliasGroupId) override {
-        PYBIND11_OVERRIDE_PURE(void, Encoder, SetAliasGroup, resource, aliasGroupId);
-    }
-
-    ConstantRef AddConstant(ResourceRef resourceRef, const void *data, size_t sizeInBytes,
-                            int64_t sparsityDimension) override {
-        PYBIND11_OVERRIDE_PURE(ConstantRef, Encoder, AddConstant, resourceRef, data, sizeInBytes, sparsityDimension);
-    }
-
-    void Finish() override { PYBIND11_OVERRIDE_PURE(void, Encoder, Finish); }
-
-    bool WriteTo(std::ostream &output) override { PYBIND11_OVERRIDE_PURE(bool, Encoder, WriteTo, output); }
-};
-
 void pyInitEncoder(py::module_ &m) {
 
     py::class_<ModuleRef>(m, "ModuleRef", "Reference to an encoded module.")
@@ -151,8 +44,7 @@ void pyInitEncoder(py::module_ &m) {
         .def(py::init<uint32_t>())
         .def_readonly("reference", &PushConstRangeRef::reference, "Push-constant-range index.");
 
-    py::class_<Encoder, PyEncoder>(m, "Encoder", "Construct and serialize a VGF file.")
-        .def(py::init<>())
+    py::class_<Encoder>(m, "Encoder", py::is_final(), "Construct and serialize a VGF file.")
         .def("AddModule",
              py::overload_cast<ModuleType, const std::string &, const std::string &, const std::vector<uint32_t> &>(
                  &Encoder::AddModule),

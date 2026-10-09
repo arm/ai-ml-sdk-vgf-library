@@ -17,6 +17,25 @@ pretendVulkanHeaderVersion = 123
 pytestmark = pytest.mark.header_test
 
 
+@pytest.mark.parametrize(
+    "interface",
+    [
+        vgf.Encoder,
+        vgf.HeaderDecoder,
+        vgf.ModuleTableDecoder,
+        vgf.ModelSequenceTableDecoder,
+        vgf.ModelResourceTableDecoder,
+        vgf.ConstantDecoder,
+    ],
+)
+def test_abstract_python_interfaces_cannot_be_constructed_or_subclassed(interface):
+    with pytest.raises(TypeError):
+        interface()
+
+    with pytest.raises(TypeError):
+        type("Subclass", (interface,), {})
+
+
 def align_up(value, alignment=8):
     return ((value + alignment - 1) // alignment) * alignment
 
