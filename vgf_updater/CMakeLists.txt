@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -33,7 +33,7 @@ mlsdk_generate_version_header(
 
 add_executable(${VGF_NAMESPACE}::vgf_updater ALIAS vgf_updater)
 
-install(TARGETS vgf_updater EXPORT ${VGF_PACKAGE_NAME}Config)
+install(TARGETS vgf_updater EXPORT ${VGF_PACKAGE_NAME}Config COMPONENT ${VGF_INSTALL_COMPONENT})
 
 if(ML_SDK_VGF_LIB_BUILD_TESTS)
     add_subdirectory(test)

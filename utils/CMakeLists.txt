@@ -16,4 +16,4 @@ target_include_directories(vgf-utils PUBLIC
 vgf_enable_coverage(vgf-utils)
 add_library(${VGF_NAMESPACE}::vgf-utils ALIAS vgf-utils)
 
-install(TARGETS vgf-utils EXPORT ${VGF_PACKAGE_NAME}Config)
+install(TARGETS vgf-utils EXPORT ${VGF_PACKAGE_NAME}Config COMPONENT ${VGF_INSTALL_COMPONENT})
