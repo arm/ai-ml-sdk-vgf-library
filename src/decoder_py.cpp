@@ -25,59 +25,6 @@ template <typename T> py::object pyDataView(DataView<T> data) {
 
 // Header Decoder
 
-class PyHeaderDecoder final : public HeaderDecoder {
-  public:
-    using HeaderDecoder::HeaderDecoder;
-
-    bool IsLatestVersion() const override { PYBIND11_OVERRIDE_PURE(bool, HeaderDecoder, IsLatestVersion); }
-
-    bool IsValid() const override { PYBIND11_OVERRIDE_PURE(bool, HeaderDecoder, IsValid); }
-
-    uint16_t GetEncoderVulkanHeadersVersion() const override {
-        PYBIND11_OVERRIDE_PURE(uint16_t, HeaderDecoder, GetEncoderVulkanHeadersVersion);
-    }
-
-    FormatVersion GetVersion() const override { PYBIND11_OVERRIDE_PURE(FormatVersion, HeaderDecoder, GetVersion); }
-
-    bool CheckVersion() const override { PYBIND11_OVERRIDE_PURE(bool, HeaderDecoder, CheckVersion); }
-
-    uint8_t GetMajor() const override { PYBIND11_OVERRIDE_PURE(uint8_t, HeaderDecoder, GetMajor); }
-
-    uint8_t GetMinor() const override { PYBIND11_OVERRIDE_PURE(uint8_t, HeaderDecoder, GetMinor); }
-
-    uint8_t GetPatch() const override { PYBIND11_OVERRIDE_PURE(uint8_t, HeaderDecoder, GetPatch); }
-
-    uint64_t GetModuleTableSize() const override {
-        PYBIND11_OVERRIDE_PURE(uint64_t, HeaderDecoder, GetModuleTableSize);
-    }
-
-    uint64_t GetModuleTableOffset() const override {
-        PYBIND11_OVERRIDE_PURE(uint64_t, HeaderDecoder, GetModuleTableOffset);
-    }
-
-    uint64_t GetModelSequenceTableOffset() const override {
-        PYBIND11_OVERRIDE_PURE(uint64_t, HeaderDecoder, GetModelSequenceTableOffset);
-    }
-
-    uint64_t GetModelSequenceTableSize() const override {
-        PYBIND11_OVERRIDE_PURE(uint64_t, HeaderDecoder, GetModelSequenceTableSize);
-    }
-
-    uint64_t GetModelResourceTableOffset() const override {
-        PYBIND11_OVERRIDE_PURE(uint64_t, HeaderDecoder, GetModelResourceTableOffset);
-    }
-
-    uint64_t GetModelResourceTableSize() const override {
-        PYBIND11_OVERRIDE_PURE(uint64_t, HeaderDecoder, GetModelResourceTableSize);
-    }
-
-    uint64_t GetConstantsSize() const override { PYBIND11_OVERRIDE_PURE(uint64_t, HeaderDecoder, GetConstantsSize); }
-
-    uint64_t GetConstantsOffset() const override {
-        PYBIND11_OVERRIDE_PURE(uint64_t, HeaderDecoder, GetConstantsOffset);
-    }
-};
-
 void pyInitHeaderDecoder(py::module_ &m) {
 
     py::class_<FormatVersion>(m, "FormatVersion", "Semantic version stored in a VGF header.")
@@ -86,8 +33,7 @@ void pyInitHeaderDecoder(py::module_ &m) {
         .def_readwrite("minor", &FormatVersion::minor, "Minor version.")
         .def_readwrite("patch", &FormatVersion::patch, "Patch version.");
 
-    py::class_<HeaderDecoder, PyHeaderDecoder>(m, "HeaderDecoder", "Inspect and validate a VGF header.")
-        .def(py::init<>())
+    py::class_<HeaderDecoder>(m, "HeaderDecoder", py::is_final(), "Inspect and validate a VGF header.")
         .def("IsLatestVersion", &HeaderDecoder::IsLatestVersion, "Return whether the file uses the latest VGF version.")
         .def("IsValid", &HeaderDecoder::IsValid, "Return whether the VGF header magic value is valid.")
         .def("GetEncoderVulkanHeadersVersion", &HeaderDecoder::GetEncoderVulkanHeadersVersion,
@@ -155,64 +101,9 @@ void pyInitHeaderDecoder(py::module_ &m) {
 
 // Module Table Decoder
 
-class PyModuleTableDecoder final : public ModuleTableDecoder {
-  public:
-    using ModuleTableDecoder::ModuleTableDecoder;
-
-    size_t size() const override { PYBIND11_OVERRIDE_PURE(size_t, ModuleTableDecoder, size); }
-
-    ModuleType getModuleType(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(ModuleType, ModuleTableDecoder, getModuleType, idx);
-    }
-
-    bool hasSPIRV(uint32_t idx) const override { return isSPIRV(idx); }
-
-    bool isSPIRV(uint32_t idx) const override { PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, isSPIRV, idx); }
-
-    bool hasSPIRVCode(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, hasSPIRVCode, idx);
-    }
-
-    bool isGLSL(uint32_t idx) const override { PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, isGLSL, idx); }
-
-    bool hasGLSLCode(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, hasGLSLCode, idx);
-    }
-
-    bool isHLSL(uint32_t idx) const override { PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, isHLSL, idx); }
-
-    bool hasHLSLCode(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(bool, ModuleTableDecoder, hasHLSLCode, idx);
-    }
-
-    std::string_view getModuleName(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(std::string_view, ModuleTableDecoder, getModuleName, idx);
-    }
-
-    std::string_view getModuleEntryPoint(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(std::string_view, ModuleTableDecoder, getModuleEntryPoint, idx);
-    }
-
-    DataView<uint32_t> getModuleCode(uint32_t idx) const override { return getSPIRVModuleCode(idx); }
-
-    DataView<uint32_t> getSPIRVModuleCode(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(DataView<uint32_t>, ModuleTableDecoder, getSPIRVModuleCode, idx);
-    }
-
-    std::string_view getGLSLModuleCode(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(std::string_view, ModuleTableDecoder, getGLSLModuleCode, idx);
-    }
-
-    std::string_view getHLSLModuleCode(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(std::string_view, ModuleTableDecoder, getHLSLModuleCode, idx);
-    }
-};
-
 void pyInitModuleTableDecoder(py::module_ &m) {
 
-    py::class_<ModuleTableDecoder, PyModuleTableDecoder>(m, "ModuleTableDecoder",
-                                                         "Inspect modules in a VGF module table.")
-        .def(py::init<>())
+    py::class_<ModuleTableDecoder>(m, "ModuleTableDecoder", py::is_final(), "Inspect modules in a VGF module table.")
         .def("size", &ModuleTableDecoder::size, "Return the number of modules.")
         .def("getModuleType", &ModuleTableDecoder::getModuleType, "Return the module type.", py::arg("idx"))
         .def(
@@ -266,132 +157,6 @@ void pyInitModuleTableDecoder(py::module_ &m) {
 
 // Model Sequence Decoder
 
-class PyModelSequenceTableDecoder final : public ModelSequenceTableDecoder {
-  public:
-    using ModelSequenceTableDecoder::ModelSequenceTableDecoder;
-
-    size_t modelSequenceTableSize() const override {
-        PYBIND11_OVERRIDE_PURE(size_t, ModelSequenceTableDecoder, modelSequenceTableSize);
-    }
-
-    size_t getSegmentDescriptorSetInfosSize(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(size_t, ModelSequenceTableDecoder, getSegmentDescriptorSetInfosSize, segmentIdx);
-    }
-
-    uint32_t getSegmentDescriptorSetIndex(uint32_t segmentIdx, uint32_t descIdx) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelSequenceTableDecoder, getSegmentDescriptorSetIndex, segmentIdx, descIdx);
-    }
-
-    DataView<uint32_t> getSegmentConstantIndexes(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(DataView<uint32_t>, ModelSequenceTableDecoder, getSegmentConstantIndexes, segmentIdx);
-    }
-
-    GraphConstantBindingArrayHandle getSegmentConstantBindingsHandle(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(GraphConstantBindingArrayHandle, ModelSequenceTableDecoder,
-                               getSegmentConstantBindingsHandle, segmentIdx);
-    }
-
-    size_t getGraphConstantBindingsSize(GraphConstantBindingArrayHandle handle) const override {
-        PYBIND11_OVERRIDE_PURE(size_t, ModelSequenceTableDecoder, getGraphConstantBindingsSize, handle);
-    }
-
-    GraphConstantBinding getGraphConstantBinding(GraphConstantBindingArrayHandle handle,
-                                                 uint32_t bindingIdx) const override {
-        PYBIND11_OVERRIDE_PURE(GraphConstantBinding, ModelSequenceTableDecoder, getGraphConstantBinding, handle,
-                               bindingIdx);
-    }
-
-    ModuleType getSegmentType(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(ModuleType, ModelSequenceTableDecoder, getSegmentType, segmentIdx);
-    }
-
-    std::string_view getSegmentName(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(std::string_view, ModelSequenceTableDecoder, getSegmentName, segmentIdx);
-    }
-
-    uint32_t getSegmentModuleIndex(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelSequenceTableDecoder, getSegmentModuleIndex, segmentIdx);
-    }
-
-    DataView<uint32_t> getSegmentDispatchShape(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(DataView<uint32_t>, ModelSequenceTableDecoder, getSegmentDispatchShape, segmentIdx);
-    }
-
-    BindingSlotArrayHandle getDescriptorBindingSlotsHandle(uint32_t segmentIdx, uint32_t descIdx) const override {
-        PYBIND11_OVERRIDE_PURE(BindingSlotArrayHandle, ModelSequenceTableDecoder, getDescriptorBindingSlotsHandle,
-                               segmentIdx, descIdx);
-    }
-
-    BindingSlotArrayHandle getSegmentInputBindingSlotsHandle(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(BindingSlotArrayHandle, ModelSequenceTableDecoder, getSegmentInputBindingSlotsHandle,
-                               segmentIdx);
-    }
-
-    BindingSlotArrayHandle getSegmentOutputBindingSlotsHandle(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(BindingSlotArrayHandle, ModelSequenceTableDecoder, getSegmentOutputBindingSlotsHandle,
-                               segmentIdx);
-    }
-
-    BindingSlotArrayHandle getModelSequenceInputBindingSlotsHandle() const override {
-        PYBIND11_OVERRIDE_PURE(BindingSlotArrayHandle, ModelSequenceTableDecoder,
-                               getModelSequenceInputBindingSlotsHandle);
-    }
-
-    BindingSlotArrayHandle getModelSequenceOutputBindingSlotsHandle() const override {
-        PYBIND11_OVERRIDE_PURE(BindingSlotArrayHandle, ModelSequenceTableDecoder,
-                               getModelSequenceOutputBindingSlotsHandle);
-    }
-
-    NameArrayHandle getModelSequenceInputNamesHandle() const override {
-        PYBIND11_OVERRIDE_PURE(NameArrayHandle, ModelSequenceTableDecoder, getModelSequenceInputNamesHandle);
-    }
-
-    NameArrayHandle getModelSequenceOutputNamesHandle() const override {
-        PYBIND11_OVERRIDE_PURE(NameArrayHandle, ModelSequenceTableDecoder, getModelSequenceOutputNamesHandle);
-    }
-
-    size_t getNamesSize(NameArrayHandle handle) const override {
-        PYBIND11_OVERRIDE_PURE(size_t, ModelSequenceTableDecoder, getNamesSize, handle);
-    }
-
-    std::string_view getName(NameArrayHandle handle, uint32_t nameIdx) const override {
-        PYBIND11_OVERRIDE_PURE(std::string_view, ModelSequenceTableDecoder, getName, handle, nameIdx);
-    }
-
-    size_t getBindingsSize(BindingSlotArrayHandle handle) const override {
-        PYBIND11_OVERRIDE_PURE(size_t, ModelSequenceTableDecoder, getBindingsSize, handle);
-    }
-
-    uint32_t getBindingSlotBinding(BindingSlotArrayHandle handle, uint32_t slotIdx) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelSequenceTableDecoder, getBindingSlotBinding, handle, slotIdx);
-    }
-
-    uint32_t getBindingSlotMrtIndex(BindingSlotArrayHandle handle, uint32_t slotIdx) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelSequenceTableDecoder, getBindingSlotMrtIndex, handle, slotIdx);
-    }
-
-    PushConstantRangeHandle getSegmentPushConstRange(uint32_t segmentIdx) const override {
-        PYBIND11_OVERRIDE_PURE(PushConstantRangeHandle, ModelSequenceTableDecoder, getSegmentPushConstRange,
-                               segmentIdx);
-    }
-
-    size_t getPushConstRangesSize(PushConstantRangeHandle handle) const override {
-        PYBIND11_OVERRIDE_PURE(size_t, ModelSequenceTableDecoder, getPushConstRangesSize, handle);
-    }
-
-    uint32_t getPushConstRangeStageFlags(PushConstantRangeHandle handle, uint32_t rangeIdx) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelSequenceTableDecoder, getPushConstRangeStageFlags, handle, rangeIdx);
-    }
-
-    uint32_t getPushConstRangeOffset(PushConstantRangeHandle handle, uint32_t rangeIdx) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelSequenceTableDecoder, getPushConstRangeOffset, handle, rangeIdx);
-    }
-
-    uint32_t getPushConstRangeSize(PushConstantRangeHandle handle, uint32_t rangeIdx) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelSequenceTableDecoder, getPushConstRangeSize, handle, rangeIdx);
-    }
-};
-
 void pyInitModelSequenceTableDecoder(py::module_ &m) {
 
     py::class_<GraphConstantBinding>(m, "GraphConstantBinding",
@@ -400,9 +165,8 @@ void pyInitModelSequenceTableDecoder(py::module_ &m) {
         .def_readwrite("graphConstantId", &GraphConstantBinding::graphConstantId, "SPIR-V graph constant ID.")
         .def_readwrite("constantIndex", &GraphConstantBinding::constantIndex, "Constant-table index.");
 
-    py::class_<ModelSequenceTableDecoder, PyModelSequenceTableDecoder>(
-        m, "ModelSequenceTableDecoder", "Inspect segments and bindings in a VGF model-sequence table.")
-        .def(py::init<>())
+    py::class_<ModelSequenceTableDecoder>(m, "ModelSequenceTableDecoder", py::is_final(),
+                                          "Inspect segments and bindings in a VGF model-sequence table.")
         .def("modelSequenceTableSize", &ModelSequenceTableDecoder::modelSequenceTableSize,
              "Return the number of model segments.")
         .def("getSegmentDescriptorSetInfosSize", &ModelSequenceTableDecoder::getSegmentDescriptorSetInfosSize,
@@ -493,65 +257,9 @@ void pyInitModelSequenceTableDecoder(py::module_ &m) {
 
 // Model Resource Table Decoder
 
-class PyModelResourceTableDecoder final : public ModelResourceTableDecoder {
-  public:
-    using ModelResourceTableDecoder::ModelResourceTableDecoder;
-
-    size_t size() const override { PYBIND11_OVERRIDE_PURE(size_t, ModelResourceTableDecoder, size); }
-
-    std::optional<DescriptorType> getDescriptorType(uint32_t id) const override {
-        PYBIND11_OVERRIDE_PURE(std::optional<DescriptorType>, ModelResourceTableDecoder, getDescriptorType, id);
-    }
-
-    std::optional<AliasGroupId> getAliasGroupId(uint32_t id) const override {
-        PYBIND11_OVERRIDE_PURE(std::optional<AliasGroupId>, ModelResourceTableDecoder, getAliasGroupId, id);
-    }
-
-    FormatType getVkFormat(uint32_t id) const override {
-        PYBIND11_OVERRIDE_PURE(FormatType, ModelResourceTableDecoder, getVkFormat, id);
-    }
-
-    ResourceCategory getCategory(uint32_t id) const override {
-        PYBIND11_OVERRIDE_PURE(ResourceCategory, ModelResourceTableDecoder, getCategory, id);
-    }
-
-    DataView<int64_t> getTensorShape(uint32_t id) const override {
-        PYBIND11_OVERRIDE_PURE(DataView<int64_t>, ModelResourceTableDecoder, getTensorShape, id);
-    }
-
-    DataView<int64_t> getTensorStride(uint32_t id) const override {
-        PYBIND11_OVERRIDE_PURE(DataView<int64_t>, ModelResourceTableDecoder, getTensorStride, id);
-    }
-
-    SamplerConfigHandle getSamplerConfigHandle(uint32_t id) const override {
-        PYBIND11_OVERRIDE_PURE(SamplerConfigHandle, ModelResourceTableDecoder, getSamplerConfigHandle, id);
-    }
-
-    uint32_t getSamplerConfigMinFilter(SamplerConfigHandle handle) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigMinFilter, handle);
-    }
-
-    uint32_t getSamplerConfigMagFilter(SamplerConfigHandle handle) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigMagFilter, handle);
-    }
-
-    uint32_t getSamplerConfigAddressModeU(SamplerConfigHandle handle) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigAddressModeU, handle);
-    }
-
-    uint32_t getSamplerConfigAddressModeV(SamplerConfigHandle handle) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigAddressModeV, handle);
-    }
-
-    uint32_t getSamplerConfigBorderColor(SamplerConfigHandle handle) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ModelResourceTableDecoder, getSamplerConfigBorderColor, handle);
-    }
-};
-
 void pyInitModelResourceTableDecoder(py::module_ &m) {
-    py::class_<ModelResourceTableDecoder, PyModelResourceTableDecoder>(
-        m, "ModelResourceTableDecoder", "Inspect resources and tensor metadata in a VGF model-resource table.")
-        .def(py::init<>())
+    py::class_<ModelResourceTableDecoder>(m, "ModelResourceTableDecoder", py::is_final(),
+                                          "Inspect resources and tensor metadata in a VGF model-resource table.")
         .def("size", &ModelResourceTableDecoder::size, "Return the number of model resources.")
         .def("getDescriptorType", &ModelResourceTableDecoder::getDescriptorType,
              "Return the Vulkan descriptor type, or None when absent.", py::arg("id"))
@@ -599,34 +307,10 @@ void pyInitModelResourceTableDecoder(py::module_ &m) {
 
 // Constant Decoder
 
-class PyConstantDecoder final : public ConstantDecoder {
-  public:
-    using ConstantDecoder::ConstantDecoder;
-
-    size_t size() const override { PYBIND11_OVERRIDE_PURE(size_t, ConstantDecoder, size); }
-
-    uint32_t getConstantMrtIndex(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(uint32_t, ConstantDecoder, getConstantMrtIndex, idx);
-    }
-
-    bool isSparseConstant(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(bool, ConstantDecoder, isSparseConstant, idx);
-    }
-
-    int64_t getConstantSparsityDimension(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(int64_t, ConstantDecoder, getConstantSparsityDimension, idx);
-    }
-
-    DataView<uint8_t> getConstant(uint32_t idx) const override {
-        PYBIND11_OVERRIDE_PURE(DataView<uint8_t>, ConstantDecoder, getConstant, idx);
-    }
-};
-
 void pyInitConstantDecoder(py::module_ &m) {
 
-    py::class_<ConstantDecoder, PyConstantDecoder>(m, "ConstantDecoder",
-                                                   "Inspect constant metadata and data in a VGF constant section.")
-        .def(py::init<>())
+    py::class_<ConstantDecoder>(m, "ConstantDecoder", py::is_final(),
+                                "Inspect constant metadata and data in a VGF constant section.")
         .def("size", &ConstantDecoder::size, "Return the number of constants.")
         .def("getConstantMrtIndex", &ConstantDecoder::getConstantMrtIndex,
              "Return the model-resource-table index associated with a constant.", py::arg("idx"))

@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Breaking Changes
+
+- Removed support for directly constructing or subclassing the abstract Python
+  encoder and decoder classes. Create instances with `CreateEncoder()` and the
+  corresponding `Create*Decoder()` factory functions instead.
+
 ### Build, Packaging & Dependencies
 
 - Windows® wheels no longer bundle `MSVCP140.dll`; they use the C++ runtime
