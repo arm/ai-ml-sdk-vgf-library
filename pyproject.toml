@@ -20,6 +20,7 @@ requires-python = ">=3.10"
 
 [project.scripts]
 vgf_dump = "vgf_lib.cli:main"
+vgf_updater = "vgf_lib.updater_cli:main"
 
 [tool.setuptools]
 license-files = ["LICENSES/*.txt"]
@@ -28,6 +29,7 @@ package-dir = {"" = "pip_package"}
 
 [tool.setuptools.packages.find]
 where = ["pip_package"]
+exclude = ["tests*"]
 
 [tool.setuptools.package-data]
 vgf_lib = ["binaries/**"]

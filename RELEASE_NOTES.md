@@ -18,6 +18,9 @@
   requirements files.
 - Added GCC code coverage reporting for native Linux C++ and Python unit-test
   builds.
+- Added `vgf_updater` as a pip-installed command alongside `vgf_dump`.
+- Limited wheel-native builds to the targets required by the Python extension
+  and packaged install payload instead of building every default CMake target.
 
 ## Version 0.11.0 – *VGF 0.5.0, Constant Bindings & Decoder Hardening*
 

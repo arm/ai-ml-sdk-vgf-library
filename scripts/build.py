@@ -10,6 +10,7 @@ import platform
 import re
 import subprocess
 import sys
+import sysconfig
 from datetime import datetime
 from datetime import timezone
 
@@ -23,6 +24,7 @@ VGF_LIB_DIR = VGF_LIB_DIR.resolve()
 DEPENDENCY_DIR = VGF_LIB_DIR / ".." / ".." / "dependencies"
 DEPENDENCY_DIR = DEPENDENCY_DIR.resolve()
 CMAKE_TOOLCHAIN_PATH = VGF_LIB_DIR / "cmake" / "toolchain"
+PYTHON_ABI_TAG = sysconfig.get_config_var("SOABI") or sys.implementation.cache_tag
 
 
 def _resolve_preload_library(compiler: str, library: str) -> str:
@@ -397,6 +399,7 @@ class Builder:
                     "-n",
                     str(self.threads),
                     "test",
+                    "pip_package/tests",
                     "--vgf-pylib-dir",
                     f"{self.build_dir}/src/",
                 ]
@@ -472,9 +475,10 @@ class Builder:
                 if package_version:
                     build_env["ML_SDK_PACKAGE_VERSION"] = package_version
                 build_env["VGF_PIP_BUILD_DIR"] = str(
-                    pathlib.Path(self.build_dir) / "pip"
+                    pathlib.Path(self.build_dir) / "pip" / PYTHON_ABI_TAG
                 )
                 build_env["VGF_PIP_BUILD_TYPE"] = self.build_type
+                build_env["MLSDK_WHEEL_BUILD_MODE"] = "source"
                 build_env["ARGPARSE_PATH"] = self.argparse_path
                 build_env["JSON_PATH"] = self.json_path
                 build_env["FLATBUFFERS_PATH"] = self.flatbuffers_path

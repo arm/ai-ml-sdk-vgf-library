@@ -8,13 +8,22 @@ import platform
 import shutil
 import subprocess
 import sys
+import sysconfig
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parents[1]
 DEPENDENCY_DIR = (ROOT_DIR / ".." / ".." / "dependencies").resolve()
 CMAKE_TOOLCHAIN_PATH = ROOT_DIR / "cmake" / "toolchain"
+WHEEL_BUILD_MODE_ENV = "MLSDK_WHEEL_BUILD_MODE"
+WHEEL_INSTALL_COMPONENT = "mlsdk_wheel"
+PYTHON_ABI_TAG = sysconfig.get_config_var("SOABI") or sys.implementation.cache_tag
 
 
 def build_native(extension_output_path, install_dir=None):
+    build_mode = os.environ.get(WHEEL_BUILD_MODE_ENV, "source")
+    if build_mode != "source":
+        raise RuntimeError(
+            f"VGF Python extension wheels require source mode, got '{build_mode}'"
+        )
     extension_output_path = pathlib.Path(extension_output_path).resolve()
     if install_dir is not None:
         install_dir = pathlib.Path(install_dir).resolve()
@@ -25,7 +34,7 @@ def _configure_and_build(extension_output_path, install_dir=None):
     build_dir = pathlib.Path(
         os.environ.get(
             "VGF_PIP_BUILD_DIR",
-            ROOT_DIR / "build" / "pip" / sys.implementation.cache_tag,
+            ROOT_DIR / "build" / "pip" / PYTHON_ABI_TAG,
         )
     ).resolve()
     setuptools_build_dir = extension_output_path.parent
@@ -56,6 +65,11 @@ def _configure_and_build(extension_output_path, install_dir=None):
         f"-DJSON_PATH={_env_path('JSON_PATH', DEPENDENCY_DIR / 'json')}",
         f"-DFLATBUFFERS_PATH={_env_path('FLATBUFFERS_PATH', DEPENDENCY_DIR / 'flatbuffers')}",
     ]
+    if generator.startswith("Ninja"):
+        ninja = shutil.which("ninja")
+        if ninja is None:
+            raise RuntimeError("Ninja is required for the selected CMake generator")
+        cmake_setup_cmd.append(f"-DCMAKE_MAKE_PROGRAM={ninja}")
     cmake_setup_cmd.extend(_pybind11_args())
     cmake_setup_cmd.extend(_host_toolchain_args())
     cmake_prefix_path = os.environ.get("CMAKE_PREFIX_PATH")
@@ -71,6 +85,10 @@ def _configure_and_build(extension_output_path, install_dir=None):
         str(build_dir),
         "--config",
         build_type,
+        "--target",
+        "vgfpy",
+        "vgf_dump",
+        "vgf_updater",
         "--parallel",
         os.environ.get("CMAKE_BUILD_PARALLEL_LEVEL", str(os.cpu_count() or 1)),
     ]
@@ -82,6 +100,8 @@ def _configure_and_build(extension_output_path, install_dir=None):
         str(install_dir),
         "--config",
         build_type,
+        "--component",
+        WHEEL_INSTALL_COMPONENT,
     ]
 
     subprocess.run(cmake_setup_cmd, check=True)

@@ -39,4 +39,4 @@ mlsdk_generate_version_header(
 
 add_executable(${VGF_NAMESPACE}::vgf_dump ALIAS vgf_dump)
 
-install(TARGETS vgf_dump EXPORT ${VGF_PACKAGE_NAME}Config)
+install(TARGETS vgf_dump EXPORT ${VGF_PACKAGE_NAME}Config COMPONENT ${VGF_INSTALL_COMPONENT})
