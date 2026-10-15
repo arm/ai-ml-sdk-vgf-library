@@ -35,18 +35,12 @@ endif()
 
 if(ML_SDK_VGF_LIB_BUILD_PYLIB)
     message(STATUS "Python library build enabled")
-    include(pybind11)
-    pybind11_add_module(vgfpy
-        vgf_py.cpp
-        types_py.cpp
-        encoder_py.cpp
-        decoder_py.cpp)
-    target_compile_options(vgfpy PRIVATE ${ML_SDK_VGF_LIB_COMPILE_OPTIONS})
-    vgf_enable_coverage(vgfpy)
-    target_link_libraries(vgfpy PRIVATE
-        vgf
-        vgf_schema
-        pybind11::module)
+    if(MLSDK_WHEEL_PYTHON_ABI)
+        add_subdirectory(python "python/${MLSDK_WHEEL_PYTHON_ABI}")
+    else()
+        # Preserve native coverage paths, including those embedded in cached objects.
+        include("${CMAKE_CURRENT_LIST_DIR}/python/bindings.cmake")
+    endif()
 endif()
 unset(ML_SDK_VGF_LIB_BUILD_PYLIB CACHE)
 

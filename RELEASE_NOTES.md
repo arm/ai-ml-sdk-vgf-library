@@ -21,6 +21,9 @@
 - Added `vgf_updater` as a pip-installed command alongside `vgf_dump`.
 - Limited wheel-native builds to the targets required by the Python extension
   and packaged install payload instead of building every default CMake target.
+- Reused native libraries and tools across Python wheel builds in the same
+  platform and build configuration, keeping binding objects separate per ABI.
+  Preserved the object paths used by ordinary source and coverage builds.
 
 ## Version 0.11.0 – *VGF 0.5.0, Constant Bindings & Decoder Hardening*
 

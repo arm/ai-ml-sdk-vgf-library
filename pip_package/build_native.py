@@ -31,16 +31,18 @@ def build_native(extension_output_path, install_dir=None):
 
 
 def _configure_and_build(extension_output_path, install_dir=None):
-    build_dir = pathlib.Path(
-        os.environ.get(
-            "VGF_PIP_BUILD_DIR",
-            ROOT_DIR / "build" / "pip" / PYTHON_ABI_TAG,
-        )
+    build_type = os.environ.get("VGF_PIP_BUILD_TYPE", "Release")
+    platform_tag = os.environ.get(
+        "AUDITWHEEL_PLAT", f"{platform.system().lower()}-{platform.machine().lower()}"
+    )
+    build_dir = (
+        pathlib.Path(os.environ.get("VGF_PIP_BUILD_DIR", ROOT_DIR / "build" / "pip"))
+        / platform_tag
+        / build_type.lower()
     ).resolve()
     setuptools_build_dir = extension_output_path.parent
     if install_dir is None:
         install_dir = setuptools_build_dir / "vgf_lib" / "binaries"
-    build_type = os.environ.get("VGF_PIP_BUILD_TYPE", "Release")
     generator = os.environ.get("CMAKE_GENERATOR", "Ninja")
 
     shutil.rmtree(install_dir, ignore_errors=True)
@@ -56,8 +58,13 @@ def _configure_and_build(extension_output_path, install_dir=None):
         "-DCMAKE_INSTALL_LIBDIR=lib",
         "-G",
         generator,
+        # Refresh interpreter discovery without discarding native build objects.
+        "-UPython_*",
+        "-U_Python_*",
+        "-UPYTHON_*",
+        "-DPYBIND11_FINDPYTHON=ON",
+        f"-DMLSDK_WHEEL_PYTHON_ABI={PYTHON_ABI_TAG}",
         "-DML_SDK_VGF_LIB_BUILD_PYLIB=ON",
-        f"-DPYTHON_EXECUTABLE={sys.executable}",
         f"-DPython_EXECUTABLE={sys.executable}",
         f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={setuptools_build_dir}",
         f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{build_type.upper()}={setuptools_build_dir}",
