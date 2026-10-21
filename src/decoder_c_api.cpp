@@ -9,6 +9,7 @@
 #include "header.hpp"
 
 #include <cassert>
+#include <cstdlib>
 
 using namespace mlsdk::vgflib;
 
@@ -129,8 +130,18 @@ mlsdk_decoder_module_type convert_module_type(ModuleType type) {
     case ModuleType::GRAPH:
         return mlsdk_decoder_module_type_graph;
     default:
-        assert(false && "unknow type");
+        assert(false && "unknown type");
         return mlsdk_decoder_module_type_compute;
+    }
+}
+
+mlsdk_decoder_scale_format convert_scale_format(ScaleFormat format) {
+    switch (format) {
+    case ScaleFormat::E8M0:
+        return mlsdk_decoder_scale_format_e8m0;
+    default:
+        assert(false && "unsupported scale format");
+        std::abort();
     }
 }
 
@@ -147,6 +158,15 @@ mlsdk_decoder_sampler_config_handle to_c_handle(SamplerConfigHandle handleIn) {
 SamplerConfigHandle from_c_handle(mlsdk_decoder_sampler_config_handle handleIn) {
     return reinterpret_cast<SamplerConfigHandle>(handleIn);
 }
+
+mlsdk_decoder_scaled_tensor_config_handle to_c_handle(ScaledTensorConfigHandle handleIn) {
+    return reinterpret_cast<mlsdk_decoder_scaled_tensor_config_handle>(handleIn);
+}
+
+ScaledTensorConfigHandle from_c_handle(mlsdk_decoder_scaled_tensor_config_handle handleIn) {
+    return reinterpret_cast<ScaledTensorConfigHandle>(handleIn);
+}
+
 } // namespace
 
 mlsdk_decoder_module_type mlsdk_decoder_get_module_type(const mlsdk_decoder_module_table_decoder *const decoder,
@@ -701,4 +721,32 @@ uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_border_color(
     assert(handle != nullptr && "sampler config handle is null");
     return reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)
         ->getSamplerConfigBorderColor(from_c_handle(handle));
+}
+
+mlsdk_decoder_scaled_tensor_config_handle mlsdk_decoder_model_resource_table_get_scaled_tensor_config_handle(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder, uint32_t mrtIdx) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    return to_c_handle(reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)
+                           ->getScaledTensorConfigHandle(mrtIdx));
+}
+
+void mlsdk_decoder_model_resource_table_scaled_tensor_config_get_block_shape(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_scaled_tensor_config_handle handle, mlsdk_decoder_block_shape *blockShape) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    assert(handle != nullptr && "scaled tensor config handle is null");
+    assert(blockShape != nullptr && "blockShape is null");
+    const auto shape = reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)
+                           ->getScaledTensorConfigBlockShape(from_c_handle(handle));
+    blockShape->data = shape.data();
+    blockShape->size = shape.size();
+}
+
+mlsdk_decoder_scale_format mlsdk_decoder_model_resource_table_scaled_tensor_config_get_scale_format(
+    const mlsdk_decoder_model_resource_table_decoder *const modelResourceTableDecoder,
+    mlsdk_decoder_scaled_tensor_config_handle handle) {
+    assert(modelResourceTableDecoder != nullptr && "modelResourceTableDecoder is null");
+    assert(handle != nullptr && "scaled tensor config handle is null");
+    return convert_scale_format(reinterpret_cast<const ModelResourceTableDecoder *>(modelResourceTableDecoder)
+                                    ->getScaledTensorConfigScaleFormat(from_c_handle(handle)));
 }

@@ -164,6 +164,15 @@ class Encoder {
                                   uint32_t samplerAddressModeU, uint32_t samplerAddressModeV,
                                   uint32_t samplerBorderColor) = 0;
 
+    /// \brief Set block scaling metadata for an existing tensor resource.
+    ///
+    /// \param resource Tensor resource reference in the model resource table.
+    /// \param blockShape Nonempty positive block dimensions that divide the corresponding
+    ///                   innermost tensor dimensions when their sizes are known.
+    /// \param scaleFormat Format of the block scale values.
+    virtual void AddScaledTensorConfig(ResourceRef resource, const std::vector<uint32_t> &blockShape,
+                                       ScaleFormat scaleFormat) = 0;
+
     /// \brief Assign an alias group to an existing non-constant MRT entry
     ///
     /// \param resource Resource reference used in model resource table

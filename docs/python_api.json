@@ -20,6 +20,7 @@
     "PushConstantRangeHandle_s",
     "ModelResourceTableDecoder",
     "SamplerConfigHandle_s",
+    "ScaledTensorConfigHandle_s",
     "ConstantDecoder",
     "FourCCValue"
   ],
@@ -42,7 +43,8 @@
   "enums": [
     "ModuleType",
     "ShaderType",
-    "ResourceCategory"
+    "ResourceCategory",
+    "ScaleFormat"
   ],
   "constants": [
     "HEADER_MAGIC_VALUE_OLD",

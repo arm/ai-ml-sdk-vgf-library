@@ -331,6 +331,8 @@ ModuleTableDecoder *CreateModuleTableDecoderInPlace(const void *data, uint64_t s
 // ModelResourceTableDecoder
 struct SamplerConfigHandle_s {};
 using SamplerConfigHandle = const SamplerConfigHandle_s *;
+struct ScaledTensorConfigHandle_s {};
+using ScaledTensorConfigHandle = const ScaledTensorConfigHandle_s *;
 
 class ModelResourceTableDecoder {
   public:
@@ -425,6 +427,27 @@ class ModelResourceTableDecoder {
      * @param handle
      */
     virtual uint32_t getSamplerConfigBorderColor(SamplerConfigHandle handle) const = 0;
+
+    /**
+     * @brief Returns a handle to block scaling metadata for MRT entry 'id'.
+     *
+     * @param id Index of the MRT entry.
+     */
+    virtual ScaledTensorConfigHandle getScaledTensorConfigHandle(uint32_t id) const = 0;
+
+    /**
+     * @brief Returns the block shape from a scaled tensor config handle.
+     *
+     * @param handle Scaled tensor config handle.
+     */
+    virtual DataView<uint32_t> getScaledTensorConfigBlockShape(ScaledTensorConfigHandle handle) const = 0;
+
+    /**
+     * @brief Returns the symbolic scale format from a scaled tensor config handle.
+     *
+     * @param handle Scaled tensor config handle.
+     */
+    virtual ScaleFormat getScaledTensorConfigScaleFormat(ScaledTensorConfigHandle handle) const = 0;
 };
 
 /**

@@ -206,6 +206,43 @@ def test_encode_decode_model_resource_table_sampler_fields():
     assert default_handle is None
 
 
+def test_encode_decode_model_resource_table_scaled_tensor_fields():
+    encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)
+    shape = np.array([2, 32], dtype=np.int64)
+    block16 = np.array([16], dtype=np.uint32)
+    block32 = np.array([32], dtype=np.uint32)
+    tensor_descriptor = 1000460000  # VK_DESCRIPTOR_TYPE_TENSOR_ARM
+    float8_format = 1000460002  # VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM
+
+    scaled16 = encoder.AddInputResource(tensor_descriptor, float8_format, shape, [])
+    scaled32 = encoder.AddOutputResource(tensor_descriptor, float8_format, shape, [])
+    ordinary = encoder.AddInputResource(tensor_descriptor, float8_format, shape, [])
+    encoder.AddScaledTensorConfig(scaled16, block16, vgf.ScaleFormat.E8M0)
+    encoder.AddScaledTensorConfig(scaled32, block32, vgf.ScaleFormat.E8M0)
+    encoder.Finish()
+
+    stream = io.BytesIO()
+    assert encoder.WriteTo(stream)
+    buffer = stream.getbuffer()
+    header_decoder = vgf.CreateHeaderDecoder(buffer, vgf.HeaderSize(), buffer.nbytes)
+    assert header_decoder is not None
+    decoder = vgf.CreateModelResourceTableDecoder(
+        buffer[header_decoder.GetModelResourceTableOffset() :],
+        header_decoder.GetModelResourceTableSize(),
+    )
+    assert decoder is not None
+
+    handle16 = decoder.getScaledTensorConfigHandle(scaled16.reference)
+    handle32 = decoder.getScaledTensorConfigHandle(scaled32.reference)
+    assert handle16 is not None
+    assert handle32 is not None
+    assert decoder.getScaledTensorConfigBlockShape(handle16) == memoryview(block16)
+    assert decoder.getScaledTensorConfigBlockShape(handle32) == memoryview(block32)
+    assert decoder.getScaledTensorConfigScaleFormat(handle16) == vgf.ScaleFormat.E8M0
+    assert decoder.getScaledTensorConfigScaleFormat(handle32) == vgf.ScaleFormat.E8M0
+    assert decoder.getScaledTensorConfigHandle(ordinary.reference) is None
+
+
 def test_encode_decode_model_resource_table_alias_group_fields():
 
     encoder = vgf.CreateEncoder(pretendVulkanHeaderVersion)

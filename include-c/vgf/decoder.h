@@ -52,6 +52,7 @@ typedef struct mlsdk_decoder_model_resource_table_decoder_s *mlsdk_decoder_model
 typedef struct mlsdk_decoder_constant_table_decoder_s *mlsdk_decoder_constant_table_decoder;
 typedef struct mlsdk_decoder_names_handle_s const *mlsdk_decoder_names_handle;
 typedef struct mlsdk_decoder_sampler_config_handle_s const *mlsdk_decoder_sampler_config_handle;
+typedef struct mlsdk_decoder_scaled_tensor_config_handle_s const *mlsdk_decoder_scaled_tensor_config_handle;
 
 /**
  * \defgroup VGFCAPI Decoder C API
@@ -120,6 +121,13 @@ typedef enum {
 } mlsdk_decoder_mrt_category;
 
 /**
+ * @brief Format of block scale values for a scaled tensor.
+ */
+typedef enum {
+    mlsdk_decoder_scale_format_e8m0 = 0,
+} mlsdk_decoder_scale_format;
+
+/**
  * @brief Semantic version of the VGF format.
  * Compatibility is ensured if the file uses the same major version wrt to this library and
  * a minor version which is lesser or equal wrt this library.
@@ -178,6 +186,14 @@ typedef struct {
     const int64_t *data;
     size_t size;
 } mlsdk_decoder_tensor_dimensions;
+
+/**
+ * @brief Scaled tensor's block shape view.
+ */
+typedef struct {
+    const uint32_t *data;
+    size_t size;
+} mlsdk_decoder_block_shape;
 
 /**
  * @brief Gets the library version
@@ -953,6 +969,38 @@ MLSDKAPI uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_address_
 MLSDKAPI uint32_t mlsdk_decoder_model_resource_table_sampler_config_get_border_color(
     const mlsdk_decoder_model_resource_table_decoder *modelResourceTableDecoder,
     mlsdk_decoder_sampler_config_handle handle);
+
+/**
+ * @brief Returns a scaled tensor config handle for a model resource
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param mrtIdx The index for the entry in the model resource table
+ * @return Handle to scaled tensor config, or nullptr when absent
+ */
+MLSDKAPI mlsdk_decoder_scaled_tensor_config_handle mlsdk_decoder_model_resource_table_get_scaled_tensor_config_handle(
+    const mlsdk_decoder_model_resource_table_decoder *modelResourceTableDecoder, uint32_t mrtIdx);
+
+/**
+ * @brief Returns the block dimensions from a scaled tensor config handle
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param handle Handle to scaled tensor config. Must not be nullptr.
+ * @param blockShape The view to receive the block dimensions
+ */
+MLSDKAPI void mlsdk_decoder_model_resource_table_scaled_tensor_config_get_block_shape(
+    const mlsdk_decoder_model_resource_table_decoder *modelResourceTableDecoder,
+    mlsdk_decoder_scaled_tensor_config_handle handle, mlsdk_decoder_block_shape *blockShape);
+
+/**
+ * @brief Returns the scale format from a scaled tensor config handle
+ *
+ * @param modelResourceTableDecoder The pointer to the model resource table decoder
+ * @param handle Handle to scaled tensor config. Must not be nullptr.
+ * @return Scale format
+ */
+MLSDKAPI mlsdk_decoder_scale_format mlsdk_decoder_model_resource_table_scaled_tensor_config_get_scale_format(
+    const mlsdk_decoder_model_resource_table_decoder *modelResourceTableDecoder,
+    mlsdk_decoder_scaled_tensor_config_handle handle);
 
 /**********************************************************************************************************************/
 

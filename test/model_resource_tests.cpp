@@ -29,8 +29,10 @@ const uint16_t pretendVulkanHeaderVersion = 123;
 
 constexpr DescriptorType VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3;
 constexpr DescriptorType VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1;
+constexpr DescriptorType VK_DESCRIPTOR_TYPE_TENSOR_ARM = 1000460000;
 constexpr FormatType VK_FORMAT_R4G4_UNORM_PACK8 = 1;
 constexpr FormatType VK_FORMAT_R4G4B4A4_UNORM_PACK16 = 12;
+constexpr FormatType VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM = 1000460002;
 
 constexpr bool DataViewTests() {
     static_assert(DataView<uint8_t>().empty(), "Default constructor should create an empty view");
@@ -252,6 +254,41 @@ TEST(CppModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
 
     const SamplerConfigHandle defaultHandle = mrtDecoder->getSamplerConfigHandle(defaultResource.reference);
     EXPECT_EQ(defaultHandle, nullptr);
+}
+
+TEST(CppModelResourceTable, ScaledTensorRoundTripAndDefaults) {
+    std::stringstream buffer;
+    auto encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    const std::vector<int64_t> shape{2, 32};
+    const auto scaled = encoder->AddInputResource(VK_DESCRIPTOR_TYPE_TENSOR_ARM,
+                                                  VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM, shape, {});
+    const auto ordinary = encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_TENSOR_ARM,
+                                                     VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM, shape, {});
+    const auto scaledConstant = encoder->AddConstantResource(VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM, shape, {});
+    encoder->AddScaledTensorConfig(scaled, {32}, ScaleFormat::E8M0);
+    encoder->AddScaledTensorConfig(scaledConstant, {32}, ScaleFormat::E8M0);
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    const std::string data = buffer.str();
+    const auto header = CreateHeaderDecoder(data.data(), HeaderSize(), data.size());
+    ASSERT_NE(header, nullptr);
+    const auto decoder = CreateModelResourceTableDecoder(data.data() + header->GetModelResourceTableOffset(),
+                                                         header->GetModelResourceTableSize());
+    ASSERT_NE(decoder, nullptr);
+
+    const auto *const handle = decoder->getScaledTensorConfigHandle(scaled.reference);
+    ASSERT_NE(handle, nullptr);
+    const std::array<uint32_t, 1> blockShape{32};
+    EXPECT_EQ(decoder->getScaledTensorConfigBlockShape(handle),
+              DataView<uint32_t>(blockShape.data(), blockShape.size()));
+    EXPECT_EQ(decoder->getScaledTensorConfigScaleFormat(handle), ScaleFormat::E8M0);
+    EXPECT_EQ(decoder->getScaledTensorConfigHandle(ordinary.reference), nullptr);
+    const auto *const constantHandle = decoder->getScaledTensorConfigHandle(scaledConstant.reference);
+    ASSERT_NE(constantHandle, nullptr);
+    EXPECT_EQ(decoder->getScaledTensorConfigBlockShape(constantHandle),
+              DataView<uint32_t>(blockShape.data(), blockShape.size()));
+    EXPECT_EQ(decoder->getScaledTensorConfigScaleFormat(constantHandle), ScaleFormat::E8M0);
 }
 
 TEST(CppModelResourceTable, AliasGroupRoundTripAndLateAssignment) {
@@ -613,6 +650,44 @@ TEST(CModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
     mlsdk_decoder_sampler_config_handle defaultHandle =
         mlsdk_decoder_model_resource_table_get_sampler_config_handle(resourceTableDecoder, defaultResource.reference);
     ASSERT_TRUE(defaultHandle == nullptr);
+}
+
+TEST(CModelResourceTable, ScaledTensorRoundTripAndDefaults) {
+    mlsdk_encoder *encoder = mlsdk_encoder_create(pretendVulkanHeaderVersion);
+    const std::array<int64_t, 2> shape{2, 32};
+    const std::array<uint32_t, 1> blockShape{16};
+    const auto scaled = mlsdk_encoder_add_input_resource(encoder, VK_DESCRIPTOR_TYPE_TENSOR_ARM,
+                                                         VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM, shape.data(),
+                                                         shape.size(), nullptr, 0);
+    const auto ordinary = mlsdk_encoder_add_output_resource(encoder, VK_DESCRIPTOR_TYPE_TENSOR_ARM,
+                                                            VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM, shape.data(),
+                                                            shape.size(), nullptr, 0);
+    mlsdk_encoder_add_scaled_tensor_config(encoder, scaled, blockShape.data(), blockShape.size(),
+                                           mlsdk_encoder_scale_format_e8m0);
+    const std::string data = testutils::FinishAndWriteCEncoder(encoder);
+    ASSERT_FALSE(data.empty());
+
+    std::vector<uint8_t> headerDecoderMemory(mlsdk_decoder_header_decoder_mem_reqs());
+    auto *headerDecoder = mlsdk_decoder_create_header_decoder(data.data(), mlsdk_decoder_header_size(), data.size(),
+                                                              headerDecoderMemory.data());
+    ASSERT_NE(headerDecoder, nullptr);
+    mlsdk_decoder_vgf_section_info section{};
+    mlsdk_decoder_get_header_section_info(headerDecoder, mlsdk_decoder_section_resources, &section);
+
+    std::vector<uint8_t> resourceDecoderMemory(mlsdk_decoder_model_resource_table_decoder_mem_reqs());
+    auto *decoder = mlsdk_decoder_create_model_resource_table_decoder(data.data() + section.offset, section.size,
+                                                                      resourceDecoderMemory.data());
+    ASSERT_NE(decoder, nullptr);
+    const auto *const handle =
+        mlsdk_decoder_model_resource_table_get_scaled_tensor_config_handle(decoder, scaled.reference);
+    ASSERT_NE(handle, nullptr);
+
+    mlsdk_decoder_block_shape decoded{};
+    mlsdk_decoder_model_resource_table_scaled_tensor_config_get_block_shape(decoder, handle, &decoded);
+    EXPECT_EQ(DataView<uint32_t>(decoded.data, decoded.size), DataView<uint32_t>(blockShape.data(), blockShape.size()));
+    EXPECT_EQ(mlsdk_decoder_model_resource_table_scaled_tensor_config_get_scale_format(decoder, handle),
+              mlsdk_decoder_scale_format_e8m0);
+    EXPECT_EQ(mlsdk_decoder_model_resource_table_get_scaled_tensor_config_handle(decoder, ordinary.reference), nullptr);
 }
 
 TEST(CModelResourceTable, AliasGroupRoundTripAndLateAssignment) {

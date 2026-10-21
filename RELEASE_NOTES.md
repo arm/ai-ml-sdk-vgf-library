@@ -9,10 +9,16 @@
 - Fixed VGF encoding reporting success when writing an empty constant section
   fails.
 
+### Highlights
+
+- Added experimental support for block-scaled tensor resource metadata in the
+  C, C++, and Python APIs, `vgf_dump` scenario templates, and `vgf_updater`.
+- New files use VGF 0.6.0.
+
 ### Breaking Changes
 
 - Changed resource `ExtraConfig` from a union to a table of optional metadata.
-  New files use VGF 0.6.0; the decoder still reads sampler metadata from older files.
+  The decoder still reads sampler metadata from older files.
 - Removed support for directly constructing or subclassing the abstract Python
   encoder and decoder classes. Create instances with `CreateEncoder()` and the
   corresponding `Create*Decoder()` factory functions instead.

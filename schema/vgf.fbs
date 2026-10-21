@@ -52,6 +52,15 @@ table SamplerConfig {
     border_color: uint32;
 }
 
+enum ScaleFormat:uint8 {
+    E8M0,
+}
+
+table ScaledTensorConfig {
+    block_shape: [uint32];
+    scale_format: ScaleFormat;
+}
+
 // This union is deprecated and is kept for backward compatibility.
 union LegacyExtraConfig {
     SamplerConfig
@@ -59,6 +68,7 @@ union LegacyExtraConfig {
 
 table ExtraConfig {
     sampler_config: SamplerConfig;
+    scaled_tensor_config: ScaledTensorConfig;
 }
 
 enum ResourceCategory:uint8 {

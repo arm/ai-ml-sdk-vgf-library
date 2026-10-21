@@ -77,6 +77,14 @@ std::string resourceCategoryToString(ResourceCategory category) {
         throw std::runtime_error("Unknown ResourceCategory");
     }
 }
+std::string ScaleFormatToString(ScaleFormat format) {
+    switch (format) {
+    case ScaleFormat::E8M0:
+        return "E8M0";
+    default:
+        throw std::runtime_error("Unknown ScaleFormat");
+    }
+}
 
 std::string DescriptorTypeToString(std::optional<DescriptorType> type) {
     if (!type.has_value()) {
@@ -215,10 +223,16 @@ void writeOutputJSON(const std::string &path, json &json) {
     writeOutputText(path, jsonContents);
 }
 
+struct ScenarioBlockScaling {
+    vgfutils::ResourceScaledTensorConfig mConfig;
+    std::string mPath;
+};
+
 struct ScenarioTensorResource {
     ScenarioTensorResource(std::string uid, std::string path, bool isSrc, VkFormat format,
-                           const DataView<int64_t> &dims)
-        : mUid(std::move(uid)), mPath(std::move(path)), mIsSrc(isSrc), mFormat(format) {
+                           const DataView<int64_t> &dims, std::optional<ScenarioBlockScaling> blockScaling)
+        : mUid(std::move(uid)), mPath(std::move(path)), mIsSrc(isSrc), mFormat(format),
+          mBlockScaling(std::move(blockScaling)) {
         // dynamic dimensions are represented as the lowest int64_t value in LLVM
         mDims.reserve(dims.size());
         std::transform(dims.begin(), dims.end(), std::back_inserter(mDims),
@@ -230,17 +244,38 @@ struct ScenarioTensorResource {
     bool mIsSrc;
     VkFormat mFormat;
     std::vector<json> mDims;
+    std::optional<ScenarioBlockScaling> mBlockScaling;
 };
 
 void to_json(json &j, const ScenarioTensorResource &tensor) {
-    j = json{{"tensor",
-              {
-                  {"uid", tensor.mUid},
-                  {tensor.mIsSrc ? "src" : "dst", tensor.mPath},
-                  {"shader_access", tensor.mIsSrc ? "readonly" : "writeonly"},
-                  {"format", FormatTypeToString(tensor.mFormat)},
-                  {"dims", tensor.mDims},
-              }}};
+    json tensorJson = {
+        {"uid", tensor.mUid},
+        {tensor.mIsSrc ? "src" : "dst", tensor.mPath},
+        {"shader_access", tensor.mIsSrc ? "readonly" : "writeonly"},
+        {"format", FormatTypeToString(tensor.mFormat)},
+        {"dims", tensor.mDims},
+    };
+    if (tensor.mBlockScaling.has_value()) {
+        tensorJson["block_scaling"] = {
+            {"block_shape", tensor.mBlockScaling->mConfig.mBlockShape},
+            {"format", ScaleFormatToString(tensor.mBlockScaling->mConfig.mScaleFormat)},
+            {tensor.mIsSrc ? "src" : "dst", tensor.mBlockScaling->mPath},
+        };
+    }
+    j = json{{"tensor", std::move(tensorJson)}};
+}
+
+std::optional<ScenarioBlockScaling> getScenarioBlockScaling(const ModelResourceTableDecoder &decoder,
+                                                            uint32_t resourceIndex, std::string_view scalePathPrefix,
+                                                            uint32_t tensorIndex) {
+    const ScaledTensorConfigHandle handle = decoder.getScaledTensorConfigHandle(resourceIndex);
+    if (handle == nullptr) {
+        return std::nullopt;
+    }
+    const auto blockShape = decoder.getScaledTensorConfigBlockShape(handle);
+    return ScenarioBlockScaling{vgfutils::ResourceScaledTensorConfig{{blockShape.begin(), blockShape.end()},
+                                                                     decoder.getScaledTensorConfigScaleFormat(handle)},
+                                std::string(scalePathPrefix) + std::to_string(tensorIndex)};
 }
 
 uint32_t bufferElementCount(const DataView<int64_t> &shape) {
@@ -456,6 +491,11 @@ void to_json(nlohmann::json &j, const ResourceSamplerConfig &samplerConfig) {
                        {"border_color", samplerBorderColorToString(samplerConfig.mBorderColor)}};
 }
 
+void to_json(nlohmann::json &j, const ResourceScaledTensorConfig &scaledConfig) {
+    j = nlohmann::json{{"block_shape", scaledConfig.mBlockShape},
+                       {"scale_format", ScaleFormatToString(scaledConfig.mScaleFormat)}};
+}
+
 void to_json(nlohmann::json &j, const Resource &resource) {
     j = json{
         {"index", resource.mIndex},
@@ -467,6 +507,9 @@ void to_json(nlohmann::json &j, const Resource &resource) {
     };
     if (resource.mSamplerConfig.has_value()) {
         j["sampler_config"] = *resource.mSamplerConfig;
+    }
+    if (resource.mScaledTensorConfig.has_value()) {
+        j["scaled_tensor_config"] = *resource.mScaledTensorConfig;
     }
     if (resource.mAliasGroupId.has_value()) {
         j["alias_group_id"] = *resource.mAliasGroupId;
@@ -714,9 +757,12 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
         std::string descTypeName = DescriptorTypeToString(modelResourceDecoder->getDescriptorType(mrtIndex));
         if (descTypeName == "VK_DESCRIPTOR_TYPE_TENSOR_ARM") {
-            tensorResources.emplace_back(uid, "TEMPLATE_PATH_TENSOR_INPUT_" + std::to_string(tensorInputIndex++), true,
-                                         modelResourceDecoder->getVkFormat(mrtIndex),
-                                         modelResourceDecoder->getTensorShape(mrtIndex));
+            tensorResources.emplace_back(
+                uid, "TEMPLATE_PATH_TENSOR_INPUT_" + std::to_string(tensorInputIndex), true,
+                modelResourceDecoder->getVkFormat(mrtIndex), modelResourceDecoder->getTensorShape(mrtIndex),
+                getScenarioBlockScaling(*modelResourceDecoder, mrtIndex, "TEMPLATE_PATH_TENSOR_INPUT_SCALE_",
+                                        tensorInputIndex));
+            ++tensorInputIndex;
         } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
                    descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
             bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_INPUT_" + std::to_string(bufferInputIndex++), true,
@@ -747,9 +793,12 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
 
         std::string descTypeName = DescriptorTypeToString(modelResourceDecoder->getDescriptorType(mrtIndex));
         if (descTypeName == "VK_DESCRIPTOR_TYPE_TENSOR_ARM") {
-            tensorResources.emplace_back(uid, "TEMPLATE_PATH_TENSOR_OUTPUT_" + std::to_string(tensorOutputIndex++),
-                                         false, modelResourceDecoder->getVkFormat(mrtIndex),
-                                         modelResourceDecoder->getTensorShape(mrtIndex));
+            tensorResources.emplace_back(
+                uid, "TEMPLATE_PATH_TENSOR_OUTPUT_" + std::to_string(tensorOutputIndex), false,
+                modelResourceDecoder->getVkFormat(mrtIndex), modelResourceDecoder->getTensorShape(mrtIndex),
+                getScenarioBlockScaling(*modelResourceDecoder, mrtIndex, "TEMPLATE_PATH_TENSOR_OUTPUT_SCALE_",
+                                        tensorOutputIndex));
+            ++tensorOutputIndex;
         } else if (descTypeName == "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER" ||
                    descTypeName == "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER") {
             bufferResources.emplace_back(uid, "TEMPLATE_PATH_BUFFER_OUTPUT_" + std::to_string(bufferOutputIndex++),

@@ -88,6 +88,12 @@
       Set sampler metadata for a model resource.
 
 
+   .. py:method:: Encoder.AddScaledTensorConfig(self: vgfpy.Encoder, resource: vgfpy.ResourceRef, blockShape: collections.abc.Sequence[typing.SupportsInt | typing.SupportsIndex], scaleFormat: vgfpy.ScaleFormat) -> None
+      :module: vgfpy
+
+      Set block scaling metadata for a tensor resource.
+
+
    .. py:method:: Encoder.AddSegmentInfo
       :module: vgfpy
 
@@ -837,6 +843,24 @@
       Return the Vulkan minimum filter value.
 
 
+   .. py:method:: ModelResourceTableDecoder.getScaledTensorConfigBlockShape(self: vgfpy.ModelResourceTableDecoder, handle: vgfpy.ScaledTensorConfigHandle_s) -> object
+      :module: vgfpy
+
+      Return block dimensions as a memoryview.
+
+
+   .. py:method:: ModelResourceTableDecoder.getScaledTensorConfigHandle(self: vgfpy.ModelResourceTableDecoder, id: typing.SupportsInt | typing.SupportsIndex) -> vgfpy.ScaledTensorConfigHandle_s
+      :module: vgfpy
+
+      Return block scaling metadata as an opaque handle, or None when absent.
+
+
+   .. py:method:: ModelResourceTableDecoder.getScaledTensorConfigScaleFormat(self: vgfpy.ModelResourceTableDecoder, handle: vgfpy.ScaledTensorConfigHandle_s) -> vgfpy.ScaleFormat
+      :module: vgfpy
+
+      Return the symbolic scale format.
+
+
    .. py:method:: ModelResourceTableDecoder.getTensorShape(self: vgfpy.ModelResourceTableDecoder, id: typing.SupportsInt | typing.SupportsIndex) -> object
       :module: vgfpy
 
@@ -870,6 +894,15 @@
    Opaque sampler configuration handle.
 
 .. end-api: [SamplerConfigHandle_s]
+
+.. begin-api: [ScaledTensorConfigHandle_s]
+
+.. py:class:: ScaledTensorConfigHandle_s
+   :module: vgfpy
+
+   Opaque block scaling configuration handle.
+
+.. end-api: [ScaledTensorConfigHandle_s]
 
 .. begin-api: [ConstantDecoder]
 
@@ -1226,6 +1259,41 @@
 
 
    .. py:property:: ResourceCategory.value
+      :module: vgfpy
+
+      :type: int
+
+
+
+      Read-only.
+
+
+.. py:class:: ScaleFormat(value: typing.SupportsInt | typing.SupportsIndex)
+   :module: vgfpy
+
+   Format of a block-scaled tensor's scale values.
+
+   Members:
+
+     E8M0
+
+
+   .. py:attribute:: ScaleFormat.E8M0
+      :module: vgfpy
+      :value: <ScaleFormat.E8M0: 0>
+
+
+   .. py:property:: ScaleFormat.name
+      :module: vgfpy
+
+      :type: str
+
+
+
+      Read-only.
+
+
+   .. py:property:: ScaleFormat.value
       :module: vgfpy
 
       :type: int

@@ -13,11 +13,15 @@
 #include "utils.hpp"
 #include "vgf_generated.h"
 
+#define VGFLIB_VK_HELPERS // Avoid need to include Vulkan headers
+#include <vgf/vulkan_helpers.generated.hpp>
+
 #include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <limits>
 #include <list>
+#include <stdexcept>
 
 namespace mlsdk::vgflib {
 
@@ -60,6 +64,16 @@ VGF::ResourceCategory toVGF(ResourceCategory category) {
     default:
         assert(false && "unknown ResourceCategory");
         return VGF::ResourceCategory::ResourceCategory_MAX;
+    }
+}
+
+VGF::ScaleFormat toVGF(ScaleFormat format) {
+    switch (format) {
+    case ScaleFormat::E8M0:
+        return VGF::ScaleFormat_E8M0;
+    default:
+        assert(false && "unknown ScaleFormat");
+        return VGF::ScaleFormat_E8M0;
     }
 }
 
@@ -244,6 +258,7 @@ class EncoderImpl : public Encoder {
             strides,
             aliasGroupId,
             std::nullopt,
+            std::nullopt,
         });
         return {static_cast<uint32_t>(resourceRecords_.size() - 1)};
     }
@@ -282,6 +297,40 @@ class EncoderImpl : public Encoder {
         resourceRecords_[resource.reference].samplerConfig = SamplerConfigRecord{
             samplerMinFilter, samplerMagFilter, samplerAddressModeU, samplerAddressModeV, samplerBorderColor,
         };
+    }
+
+    void AddScaledTensorConfig(ResourceRef resource, const std::vector<uint32_t> &blockShape,
+                               ScaleFormat scaleFormat) override {
+        assert(!finished_ && "cannot add scaled tensor config when marked as finished");
+        assert(resource.reference < resourceRecords_.size() && "resource reference out of range");
+
+        const auto reject = [this](const std::string &message) {
+            logging::error(message);
+            encodingFailed_ = true;
+        };
+        auto &record = resourceRecords_[resource.reference];
+        if (record.category != ResourceCategory::CONSTANT &&
+            record.vkDescriptorType != NameToDescriptorType("VK_DESCRIPTOR_TYPE_TENSOR_ARM")) {
+            reject("Scaled tensor metadata requires a tensor resource");
+            return;
+        }
+        if (blockShape.empty() ||
+            std::any_of(blockShape.begin(), blockShape.end(), [](uint32_t dim) { return dim == 0; })) {
+            reject("Scaled tensor block shape must contain positive dimensions");
+            return;
+        }
+        if (blockShape.size() > record.shape.size()) {
+            reject("Scaled tensor block shape has more dimensions than the tensor");
+            return;
+        }
+        for (size_t i = 0; i < blockShape.size(); ++i) {
+            const int64_t tensorDim = record.shape[record.shape.size() - blockShape.size() + i];
+            if (tensorDim != -1 && (tensorDim <= 0 || static_cast<uint64_t>(tensorDim) % blockShape[i] != 0)) {
+                reject("Scaled tensor block shape must divide the innermost tensor dimensions");
+                return;
+            }
+        }
+        record.scaledTensorConfig = ScaledTensorConfigRecord{blockShape, scaleFormat};
     }
 
     void SetAliasGroup(ResourceRef resource, AliasGroupId aliasGroupId) override {
@@ -358,13 +407,23 @@ class EncoderImpl : public Encoder {
                     const uint32_t encodedAliasGroupId = resource.aliasGroupId.value_or(INVALID_ALIAS_GROUP_ID);
                     auto description =
                         VGF::CreateDescriptionDirect(modelResourceBuilder_, &resource.shape, &resource.strides);
-                    flatbuffers::Offset<VGF::ExtraConfig> extraConfig{};
+                    flatbuffers::Offset<VGF::SamplerConfig> samplerConfig{};
                     if (resource.samplerConfig.has_value()) {
                         const SamplerConfigRecord &config = *resource.samplerConfig;
-                        auto samplerConfig =
+                        samplerConfig =
                             VGF::CreateSamplerConfig(modelResourceBuilder_, config.minFilter, config.magFilter,
                                                      config.addressModeU, config.addressModeV, config.borderColor);
-                        extraConfig = VGF::CreateExtraConfig(modelResourceBuilder_, samplerConfig);
+                    }
+                    flatbuffers::Offset<VGF::ScaledTensorConfig> scaledTensorConfig{};
+                    if (resource.scaledTensorConfig.has_value()) {
+                        const ScaledTensorConfigRecord &config = *resource.scaledTensorConfig;
+                        scaledTensorConfig = VGF::CreateScaledTensorConfig(
+                            modelResourceBuilder_, modelResourceBuilder_.CreateVector(config.blockShape),
+                            toVGF(config.scaleFormat));
+                    }
+                    flatbuffers::Offset<VGF::ExtraConfig> extraConfig{};
+                    if (resource.samplerConfig.has_value() || resource.scaledTensorConfig.has_value()) {
+                        extraConfig = VGF::CreateExtraConfig(modelResourceBuilder_, samplerConfig, scaledTensorConfig);
                     }
                     return VGF::CreateModelResourceTableEntry(
                         modelResourceBuilder_, encodedDescType, static_cast<uint32_t>(resource.vkFormat),
@@ -482,6 +541,11 @@ class EncoderImpl : public Encoder {
         uint32_t borderColor;
     };
 
+    struct ScaledTensorConfigRecord {
+        std::vector<uint32_t> blockShape;
+        ScaleFormat scaleFormat;
+    };
+
     struct ResourceRecord {
         ResourceCategory category;
         std::optional<DescriptorType> vkDescriptorType;
@@ -490,6 +554,7 @@ class EncoderImpl : public Encoder {
         std::vector<int64_t> strides;
         std::optional<AliasGroupId> aliasGroupId;
         std::optional<SamplerConfigRecord> samplerConfig;
+        std::optional<ScaledTensorConfigRecord> scaledTensorConfig;
     };
 
     bool finished_ = false;

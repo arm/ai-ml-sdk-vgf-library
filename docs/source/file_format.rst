@@ -24,8 +24,8 @@ The current section order is:
    :alt: VGF file structure
    :align: center
 
-   Current VGF file layout and cross-references between the header, FlatBuffers metadata tables, resources, segments,
-   descriptor bindings, and constants.
+   Illustrative VGF layout, showing cross-references between the header, metadata tables, resources, segments,
+   bindings, and constants.
 
 Header Layout
 -------------
@@ -125,7 +125,8 @@ The Model Resource Table stores ``ModelResourceTableEntry`` records:
   ``UINT32_MAX`` as the on-disk "not present" sentinel for resources such as constants.
 * ``category`` is ``INPUT``, ``OUTPUT``, ``INTERMEDIATE``, or ``CONSTANT``.
 * ``description`` stores tensor ``shape`` and ``strides`` arrays.
-* ``extra_config`` is a container for optional resource metadata. Its ``sampler_config`` field stores sampler settings.
+* ``extra_config`` is a container for optional resource metadata. Its ``sampler_config`` and
+  ``scaled_tensor_config`` fields store sampler and block scaling settings, respectively.
 * ``legacy_extra_config`` preserves sampler metadata written by older VGF files. New files leave it empty.
 * ``alias_group_id`` uses ``UINT32_MAX`` as the "no alias group" sentinel. Non-constant resources may share a group id
   to indicate shared storage.

@@ -50,6 +50,16 @@ ShaderType convert_shader_type(mlsdk_encoder_shader_type type) {
     }
 }
 
+ScaleFormat convert_scale_format(mlsdk_encoder_scale_format format) {
+    switch (format) {
+    case mlsdk_encoder_scale_format_e8m0:
+        return ScaleFormat::E8M0;
+    default:
+        assert(false && "unknown scale format");
+        return ScaleFormat::E8M0;
+    }
+}
+
 std::vector<int64_t> to_vector(const int64_t *data, size_t size) {
     if (data == nullptr || size == 0) {
         return {};
@@ -222,6 +232,14 @@ void mlsdk_encoder_add_sampler_config(mlsdk_encoder *encoder, mlsdk_encoder_reso
     assert(encoder != nullptr && "encoder is null");
     encoder->encoder->AddSamplerConfig(ResourceRef{resource.reference}, samplerMinFilter, samplerMagFilter,
                                        samplerAddressModeU, samplerAddressModeV, samplerBorderColor);
+}
+
+void mlsdk_encoder_add_scaled_tensor_config(mlsdk_encoder *encoder, mlsdk_encoder_resource_ref resource,
+                                            const uint32_t *blockShape, size_t blockShapeSize,
+                                            mlsdk_encoder_scale_format scaleFormat) {
+    assert(encoder != nullptr && "encoder is null");
+    encoder->encoder->AddScaledTensorConfig(ResourceRef{resource.reference}, to_vector(blockShape, blockShapeSize),
+                                            convert_scale_format(scaleFormat));
 }
 
 void mlsdk_encoder_set_alias_group(mlsdk_encoder *encoder, mlsdk_encoder_resource_ref resource,

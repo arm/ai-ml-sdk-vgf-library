@@ -228,6 +228,13 @@ configuration accessors on :py:class:`~vgfpy.ModelResourceTableDecoder`.
    :start-after: .. begin-api: [SamplerConfigHandle_s]
    :end-before: .. end-api: [SamplerConfigHandle_s]
 
+Scaled tensor configuration handles are opaque. Pass them unchanged to the
+block scaling accessors on :py:class:`~vgfpy.ModelResourceTableDecoder`.
+
+.. include:: _python_api/api.rst.inc
+   :start-after: .. begin-api: [ScaledTensorConfigHandle_s]
+   :end-before: .. end-api: [ScaledTensorConfigHandle_s]
+
 Constant decoder
 ----------------
 
