@@ -31,6 +31,11 @@ SPDX-FileCopyrightText = "Copyright 2026 Arm Limited and/or its affiliates <open
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
+path = ["docs/source/_python_api/api.rst.inc", "docs/python_api.json"]
+SPDX-FileCopyrightText = "Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
 path = "vgf_updater/test/test_data/*.vgf"
 SPDX-FileCopyrightText = "Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>"
 SPDX-License-Identifier = "Apache-2.0"
