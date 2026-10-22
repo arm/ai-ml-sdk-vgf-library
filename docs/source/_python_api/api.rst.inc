@@ -1355,7 +1355,7 @@
 
 .. py:data:: HEADER_MINOR_VERSION_VALUE
    :module: vgfpy
-   :annotation: = 5
+   :annotation: = 6
 
 
 .. py:data:: HEADER_PATCH_VERSION_VALUE

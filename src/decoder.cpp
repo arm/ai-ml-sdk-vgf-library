@@ -824,10 +824,11 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
   private:
     [[nodiscard]] const VGF::SamplerConfig *getSamplerConfigAt(uint32_t index) const {
         const auto *entry = getEntryAt(index);
-        if (entry->extra_config_type() != VGF::ExtraConfig_SamplerConfig) {
-            return nullptr;
+        const auto *extraConfig = entry->extra_config();
+        if (extraConfig != nullptr && extraConfig->sampler_config() != nullptr) {
+            return extraConfig->sampler_config();
         }
-        return entry->extra_config_as_SamplerConfig();
+        return entry->legacy_extra_config_as_SamplerConfig();
     }
 
     [[nodiscard]] const VGF::ModelResourceTableEntry *getEntryAt(uint32_t index) const {

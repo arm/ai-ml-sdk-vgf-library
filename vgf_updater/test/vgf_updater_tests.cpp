@@ -57,24 +57,30 @@ class VGFUpdaterTest : public ::testing::Test {
   protected:
     const fs::path dataDirectory = TEST_DATA_DIR;
     const fs::path singleMaxpoolVgfOutdated = dataDirectory / "single_maxpool_graph_pre_v0_4_0.vgf";
-    const fs::path singleMaxpoolVgfLatest = dataDirectory / "single_maxpool_graph_v0_5_0.vgf";
+    const fs::path singleMaxpoolVgfV0_5_0 = dataDirectory / "single_maxpool_graph_v0_5_0.vgf";
+    const fs::path singleMaxpoolVgfLatest = dataDirectory / "single_maxpool_graph_v0_6_0.vgf";
 
     const fs::path simpleConv2dVgfOutdated = dataDirectory / "simple_conv2d_rescale_graph_outdated.vgf";
-    const fs::path simpleConv2dVgfLatest = dataDirectory / "simple_conv2d_rescale_graph_v0_5_0.vgf";
+    const fs::path simpleConv2dVgfLatest = dataDirectory / "simple_conv2d_rescale_graph_v0_6_0.vgf";
 };
 
 TEST_F(VGFUpdaterTest, fileOfLatestVersion) {
-
+    ASSERT_TRUE(fs::exists(singleMaxpoolVgfV0_5_0));
     ASSERT_TRUE(fs::exists(singleMaxpoolVgfLatest));
 
     TempFolder tempFolder("fileOfLatestVersion");
-    const fs::path outputPath = tempFolder.relative("single_maxpool_graph_noconversion.vgf");
+    const fs::path latestPath = tempFolder.relative("latest.vgf");
+    const fs::path outputPath = tempFolder.relative("no_conversion.vgf");
+
+    ASSERT_NO_THROW({ mlsdk::vgf_updater::update(singleMaxpoolVgfV0_5_0.string(), latestPath.string()); });
+    ASSERT_TRUE(fs::exists(latestPath));
+    EXPECT_TRUE(compareFiles(singleMaxpoolVgfLatest, latestPath));
 
     testing::internal::CaptureStdout();
-    mlsdk::vgf_updater::update(singleMaxpoolVgfLatest.string(), outputPath.string());
+    EXPECT_NO_THROW({ mlsdk::vgf_updater::update(latestPath.string(), outputPath.string()); });
     const auto out = testing::internal::GetCapturedStdout();
     EXPECT_FALSE(fs::exists(outputPath));
-    EXPECT_EQ(out, "VGF file is already at the latest version: 0.5.0\n");
+    EXPECT_EQ(out, "VGF file is already at the latest version: 0.6.0\n");
 }
 
 TEST_F(VGFUpdaterTest, simpleMaxpoolGraph) {

@@ -358,19 +358,18 @@ class EncoderImpl : public Encoder {
                     const uint32_t encodedAliasGroupId = resource.aliasGroupId.value_or(INVALID_ALIAS_GROUP_ID);
                     auto description =
                         VGF::CreateDescriptionDirect(modelResourceBuilder_, &resource.shape, &resource.strides);
-                    VGF::ExtraConfig extraConfigType = VGF::ExtraConfig_NONE;
-                    flatbuffers::Offset<void> extraConfig{};
+                    flatbuffers::Offset<VGF::ExtraConfig> extraConfig{};
                     if (resource.samplerConfig.has_value()) {
                         const SamplerConfigRecord &config = *resource.samplerConfig;
                         auto samplerConfig =
                             VGF::CreateSamplerConfig(modelResourceBuilder_, config.minFilter, config.magFilter,
                                                      config.addressModeU, config.addressModeV, config.borderColor);
-                        extraConfigType = VGF::ExtraConfig_SamplerConfig;
-                        extraConfig = samplerConfig.Union();
+                        extraConfig = VGF::CreateExtraConfig(modelResourceBuilder_, samplerConfig);
                     }
                     return VGF::CreateModelResourceTableEntry(
                         modelResourceBuilder_, encodedDescType, static_cast<uint32_t>(resource.vkFormat),
-                        toVGF(resource.category), description, extraConfigType, extraConfig, encodedAliasGroupId);
+                        toVGF(resource.category), description, VGF::LegacyExtraConfig_NONE, {}, encodedAliasGroupId,
+                        extraConfig);
                 });
         auto modelResourceTable = VGF::CreateModelResourceTable(modelResourceBuilder_, modelResourceTableEntries);
         modelResourceBuilder_.Finish(modelResourceTable);

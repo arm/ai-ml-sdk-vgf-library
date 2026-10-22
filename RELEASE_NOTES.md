@@ -11,6 +11,8 @@
 
 ### Breaking Changes
 
+- Changed resource `ExtraConfig` from a union to a table of optional metadata.
+  New files use VGF 0.6.0; the decoder still reads sampler metadata from older files.
 - Removed support for directly constructing or subclassing the abstract Python
   encoder and decoder classes. Create instances with `CreateEncoder()` and the
   corresponding `Create*Decoder()` factory functions instead.

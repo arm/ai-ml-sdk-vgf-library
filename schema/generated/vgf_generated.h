@@ -36,6 +36,9 @@ struct DescriptionBuilder;
 struct SamplerConfig;
 struct SamplerConfigBuilder;
 
+struct ExtraConfig;
+struct ExtraConfigBuilder;
+
 struct ModelResourceTableEntry;
 struct ModelResourceTableEntryBuilder;
 
@@ -151,22 +154,22 @@ inline const char *EnumNameModuleType(ModuleType e) {
   return EnumNamesModuleType()[index];
 }
 
-enum ExtraConfig : uint8_t {
-  ExtraConfig_NONE = 0,
-  ExtraConfig_SamplerConfig = 1,
-  ExtraConfig_MIN = ExtraConfig_NONE,
-  ExtraConfig_MAX = ExtraConfig_SamplerConfig
+enum LegacyExtraConfig : uint8_t {
+  LegacyExtraConfig_NONE = 0,
+  LegacyExtraConfig_SamplerConfig = 1,
+  LegacyExtraConfig_MIN = LegacyExtraConfig_NONE,
+  LegacyExtraConfig_MAX = LegacyExtraConfig_SamplerConfig
 };
 
-inline const ExtraConfig (&EnumValuesExtraConfig())[2] {
-  static const ExtraConfig values[] = {
-    ExtraConfig_NONE,
-    ExtraConfig_SamplerConfig
+inline const LegacyExtraConfig (&EnumValuesLegacyExtraConfig())[2] {
+  static const LegacyExtraConfig values[] = {
+    LegacyExtraConfig_NONE,
+    LegacyExtraConfig_SamplerConfig
   };
   return values;
 }
 
-inline const char * const *EnumNamesExtraConfig() {
+inline const char * const *EnumNamesLegacyExtraConfig() {
   static const char * const names[3] = {
     "NONE",
     "SamplerConfig",
@@ -175,22 +178,22 @@ inline const char * const *EnumNamesExtraConfig() {
   return names;
 }
 
-inline const char *EnumNameExtraConfig(ExtraConfig e) {
-  if (::flatbuffers::IsOutRange(e, ExtraConfig_NONE, ExtraConfig_SamplerConfig)) return "";
+inline const char *EnumNameLegacyExtraConfig(LegacyExtraConfig e) {
+  if (::flatbuffers::IsOutRange(e, LegacyExtraConfig_NONE, LegacyExtraConfig_SamplerConfig)) return "";
   const size_t index = static_cast<size_t>(e);
-  return EnumNamesExtraConfig()[index];
+  return EnumNamesLegacyExtraConfig()[index];
 }
 
-template<typename T> struct ExtraConfigTraits {
-  static const ExtraConfig enum_value = ExtraConfig_NONE;
+template<typename T> struct LegacyExtraConfigTraits {
+  static const LegacyExtraConfig enum_value = LegacyExtraConfig_NONE;
 };
 
-template<> struct ExtraConfigTraits<VGF::SamplerConfig> {
-  static const ExtraConfig enum_value = ExtraConfig_SamplerConfig;
+template<> struct LegacyExtraConfigTraits<VGF::SamplerConfig> {
+  static const LegacyExtraConfig enum_value = LegacyExtraConfig_SamplerConfig;
 };
 
-bool VerifyExtraConfig(::flatbuffers::Verifier &verifier, const void *obj, ExtraConfig type);
-bool VerifyExtraConfigVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
+bool VerifyLegacyExtraConfig(::flatbuffers::Verifier &verifier, const void *obj, LegacyExtraConfig type);
+bool VerifyLegacyExtraConfigVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
 
 enum ResourceCategory : uint8_t {
   ResourceCategory_INPUT = 0,
@@ -703,6 +706,48 @@ inline ::flatbuffers::Offset<SamplerConfig> CreateSamplerConfig(
   return builder_.Finish();
 }
 
+struct ExtraConfig FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef ExtraConfigBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SAMPLER_CONFIG = 4
+  };
+  const VGF::SamplerConfig *sampler_config() const {
+    return GetPointer<const VGF::SamplerConfig *>(VT_SAMPLER_CONFIG);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_SAMPLER_CONFIG) &&
+           verifier.VerifyTable(sampler_config()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ExtraConfigBuilder {
+  typedef ExtraConfig Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_sampler_config(::flatbuffers::Offset<VGF::SamplerConfig> sampler_config) {
+    fbb_.AddOffset(ExtraConfig::VT_SAMPLER_CONFIG, sampler_config);
+  }
+  explicit ExtraConfigBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<ExtraConfig> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<ExtraConfig>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<ExtraConfig> CreateExtraConfig(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<VGF::SamplerConfig> sampler_config = 0) {
+  ExtraConfigBuilder builder_(_fbb);
+  builder_.add_sampler_config(sampler_config);
+  return builder_.Finish();
+}
+
 struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ModelResourceTableEntryBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -710,9 +755,10 @@ struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
     VT_VK_FORMAT = 6,
     VT_CATEGORY = 8,
     VT_DESCRIPTION = 10,
-    VT_EXTRA_CONFIG_TYPE = 12,
-    VT_EXTRA_CONFIG = 14,
-    VT_ALIAS_GROUP_ID = 16
+    VT_LEGACY_EXTRA_CONFIG_TYPE = 12,
+    VT_LEGACY_EXTRA_CONFIG = 14,
+    VT_ALIAS_GROUP_ID = 16,
+    VT_EXTRA_CONFIG = 18
   };
   uint32_t vk_descriptor_type() const {
     return GetField<uint32_t>(VT_VK_DESCRIPTOR_TYPE, 0);
@@ -726,18 +772,21 @@ struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
   const VGF::Description *description() const {
     return GetPointer<const VGF::Description *>(VT_DESCRIPTION);
   }
-  VGF::ExtraConfig extra_config_type() const {
-    return static_cast<VGF::ExtraConfig>(GetField<uint8_t>(VT_EXTRA_CONFIG_TYPE, 0));
+  VGF::LegacyExtraConfig legacy_extra_config_type() const {
+    return static_cast<VGF::LegacyExtraConfig>(GetField<uint8_t>(VT_LEGACY_EXTRA_CONFIG_TYPE, 0));
   }
-  const void *extra_config() const {
-    return GetPointer<const void *>(VT_EXTRA_CONFIG);
+  const void *legacy_extra_config() const {
+    return GetPointer<const void *>(VT_LEGACY_EXTRA_CONFIG);
   }
-  template<typename T> const T *extra_config_as() const;
-  const VGF::SamplerConfig *extra_config_as_SamplerConfig() const {
-    return extra_config_type() == VGF::ExtraConfig_SamplerConfig ? static_cast<const VGF::SamplerConfig *>(extra_config()) : nullptr;
+  template<typename T> const T *legacy_extra_config_as() const;
+  const VGF::SamplerConfig *legacy_extra_config_as_SamplerConfig() const {
+    return legacy_extra_config_type() == VGF::LegacyExtraConfig_SamplerConfig ? static_cast<const VGF::SamplerConfig *>(legacy_extra_config()) : nullptr;
   }
   uint32_t alias_group_id() const {
     return GetField<uint32_t>(VT_ALIAS_GROUP_ID, 4294967295);
+  }
+  const VGF::ExtraConfig *extra_config() const {
+    return GetPointer<const VGF::ExtraConfig *>(VT_EXTRA_CONFIG);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -746,16 +795,18 @@ struct ModelResourceTableEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
            VerifyField<uint8_t>(verifier, VT_CATEGORY, 1) &&
            VerifyOffset(verifier, VT_DESCRIPTION) &&
            verifier.VerifyTable(description()) &&
-           VerifyField<uint8_t>(verifier, VT_EXTRA_CONFIG_TYPE, 1) &&
-           VerifyOffset(verifier, VT_EXTRA_CONFIG) &&
-           VerifyExtraConfig(verifier, extra_config(), extra_config_type()) &&
+           VerifyField<uint8_t>(verifier, VT_LEGACY_EXTRA_CONFIG_TYPE, 1) &&
+           VerifyOffset(verifier, VT_LEGACY_EXTRA_CONFIG) &&
+           VerifyLegacyExtraConfig(verifier, legacy_extra_config(), legacy_extra_config_type()) &&
            VerifyField<uint32_t>(verifier, VT_ALIAS_GROUP_ID, 4) &&
+           VerifyOffset(verifier, VT_EXTRA_CONFIG) &&
+           verifier.VerifyTable(extra_config()) &&
            verifier.EndTable();
   }
 };
 
-template<> inline const VGF::SamplerConfig *ModelResourceTableEntry::extra_config_as<VGF::SamplerConfig>() const {
-  return extra_config_as_SamplerConfig();
+template<> inline const VGF::SamplerConfig *ModelResourceTableEntry::legacy_extra_config_as<VGF::SamplerConfig>() const {
+  return legacy_extra_config_as_SamplerConfig();
 }
 
 struct ModelResourceTableEntryBuilder {
@@ -774,14 +825,17 @@ struct ModelResourceTableEntryBuilder {
   void add_description(::flatbuffers::Offset<VGF::Description> description) {
     fbb_.AddOffset(ModelResourceTableEntry::VT_DESCRIPTION, description);
   }
-  void add_extra_config_type(VGF::ExtraConfig extra_config_type) {
-    fbb_.AddElement<uint8_t>(ModelResourceTableEntry::VT_EXTRA_CONFIG_TYPE, static_cast<uint8_t>(extra_config_type), 0);
+  void add_legacy_extra_config_type(VGF::LegacyExtraConfig legacy_extra_config_type) {
+    fbb_.AddElement<uint8_t>(ModelResourceTableEntry::VT_LEGACY_EXTRA_CONFIG_TYPE, static_cast<uint8_t>(legacy_extra_config_type), 0);
   }
-  void add_extra_config(::flatbuffers::Offset<void> extra_config) {
-    fbb_.AddOffset(ModelResourceTableEntry::VT_EXTRA_CONFIG, extra_config);
+  void add_legacy_extra_config(::flatbuffers::Offset<void> legacy_extra_config) {
+    fbb_.AddOffset(ModelResourceTableEntry::VT_LEGACY_EXTRA_CONFIG, legacy_extra_config);
   }
   void add_alias_group_id(uint32_t alias_group_id) {
     fbb_.AddElement<uint32_t>(ModelResourceTableEntry::VT_ALIAS_GROUP_ID, alias_group_id, 4294967295);
+  }
+  void add_extra_config(::flatbuffers::Offset<VGF::ExtraConfig> extra_config) {
+    fbb_.AddOffset(ModelResourceTableEntry::VT_EXTRA_CONFIG, extra_config);
   }
   explicit ModelResourceTableEntryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -800,16 +854,18 @@ inline ::flatbuffers::Offset<ModelResourceTableEntry> CreateModelResourceTableEn
     uint32_t vk_format = 0,
     VGF::ResourceCategory category = VGF::ResourceCategory_INPUT,
     ::flatbuffers::Offset<VGF::Description> description = 0,
-    VGF::ExtraConfig extra_config_type = VGF::ExtraConfig_NONE,
-    ::flatbuffers::Offset<void> extra_config = 0,
-    uint32_t alias_group_id = 4294967295) {
+    VGF::LegacyExtraConfig legacy_extra_config_type = VGF::LegacyExtraConfig_NONE,
+    ::flatbuffers::Offset<void> legacy_extra_config = 0,
+    uint32_t alias_group_id = 4294967295,
+    ::flatbuffers::Offset<VGF::ExtraConfig> extra_config = 0) {
   ModelResourceTableEntryBuilder builder_(_fbb);
-  builder_.add_alias_group_id(alias_group_id);
   builder_.add_extra_config(extra_config);
+  builder_.add_alias_group_id(alias_group_id);
+  builder_.add_legacy_extra_config(legacy_extra_config);
   builder_.add_description(description);
   builder_.add_vk_format(vk_format);
   builder_.add_vk_descriptor_type(vk_descriptor_type);
-  builder_.add_extra_config_type(extra_config_type);
+  builder_.add_legacy_extra_config_type(legacy_extra_config_type);
   builder_.add_category(category);
   return builder_.Finish();
 }
@@ -1544,12 +1600,12 @@ inline bool VerifyModuleCodeVector(::flatbuffers::Verifier &verifier, const ::fl
   return true;
 }
 
-inline bool VerifyExtraConfig(::flatbuffers::Verifier &verifier, const void *obj, ExtraConfig type) {
+inline bool VerifyLegacyExtraConfig(::flatbuffers::Verifier &verifier, const void *obj, LegacyExtraConfig type) {
   switch (type) {
-    case ExtraConfig_NONE: {
+    case LegacyExtraConfig_NONE: {
       return true;
     }
-    case ExtraConfig_SamplerConfig: {
+    case LegacyExtraConfig_SamplerConfig: {
       auto ptr = reinterpret_cast<const VGF::SamplerConfig *>(obj);
       return verifier.VerifyTable(ptr);
     }
@@ -1557,12 +1613,12 @@ inline bool VerifyExtraConfig(::flatbuffers::Verifier &verifier, const void *obj
   }
 }
 
-inline bool VerifyExtraConfigVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
+inline bool VerifyLegacyExtraConfigVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
   if (!values || !types) return !values && !types;
   if (values->size() != types->size()) return false;
   for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
-    if (!VerifyExtraConfig(
-        verifier,  values->Get(i), types->GetEnum<ExtraConfig>(i))) {
+    if (!VerifyLegacyExtraConfig(
+        verifier,  values->Get(i), types->GetEnum<LegacyExtraConfig>(i))) {
       return false;
     }
   }
