@@ -4,7 +4,7 @@
 #
 
 [build-system]
-requires = ["setuptools>=68", "setuptools-scm>=8", "wheel", "pybind11", "cmake>=3.25", "ninja>=1.8.2"]
+requires = ["setuptools>=77.0.3", "setuptools-scm>=8", "wheel", "pybind11", "cmake>=3.25", "ninja>=1.8.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,7 +12,8 @@ name = "ai_ml_sdk_vgf_library"
 description = "ML SDK VGF Library"
 readme = "README.md"
 dynamic = ["version"]
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSES/*.txt"]
 authors = [
     { name = "Arm Limited" }
 ]
@@ -23,7 +24,6 @@ vgf_dump = "vgf_lib.cli:main"
 vgf_updater = "vgf_lib.updater_cli:main"
 
 [tool.setuptools]
-license-files = ["LICENSES/*.txt"]
 include-package-data = true
 package-dir = {"" = "pip_package"}
 
@@ -61,7 +61,7 @@ tooling = [
     "gcovr==7.0; sys_platform == 'linux'",
     "myst_parser==4.0.1",
     "pre-commit==4.5.1",
-    "setuptools==68.0.0",
+    "setuptools==84.2.1",
     "sphinx==8.1.3",
     "sphinx_rtd_theme==3.0.2",
     "wheel==0.41.2",
