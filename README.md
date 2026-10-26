@@ -144,8 +144,8 @@ uv sync --locked --no-install-project --no-default-groups --group test --group t
 ```
 
 Run build commands with `uv run --no-sync python scripts/build.py` to use the
-locked environment. To build documentation, pass `--doc`; Doxygen must also be
-installed on your machine.
+locked environment. To build the documentation, add `--doc`. Documentation
+builds also require Doxygen, PlantUML, a Java runtime, and Graphviz.
 
 You can install the build artifacts for this project into a specified location.
 To install the build artifacts, pass the `--install` option with the required

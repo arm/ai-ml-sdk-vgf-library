@@ -1,0 +1,25 @@
+' SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+' SPDX-License-Identifier: Apache-2.0
+@startuml
+top to bottom direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+skinparam ArrowColor #334155
+skinparam componentBackgroundColor #EFF6FF
+skinparam linetype polyline
+
+component "Python bindings\nvgfpy / pybind11" as python
+
+package "vgf library" {
+  component "C API wrappers" as c_api
+  component "C++ encoder and decoders" as core
+  component "FlatBuffers metadata\nSchema and generated definitions" as schema
+  component "Header and raw\nconstant layouts" as layouts
+  core --> schema : uses
+  core --> layouts : uses
+}
+
+c_api --> core : calls
+python --> core : calls
+@enduml

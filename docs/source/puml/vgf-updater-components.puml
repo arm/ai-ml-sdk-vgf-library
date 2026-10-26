@@ -1,0 +1,21 @@
+' SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+' SPDX-License-Identifier: Apache-2.0
+@startuml
+top to bottom direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+skinparam ArrowColor #334155
+skinparam componentBackgroundColor #EFF6FF
+skinparam linetype polyline
+
+component "vgf_updater" as updater
+component "argparse" as args
+component "vgf-utils\nFile handling and decoded records" as utils
+component "VGF Library\nEncoder and decoders" as core
+
+updater -right-> args : CLI parsing
+updater -down-> utils : uses
+updater --> core : decodes / encodes
+utils -down-> core : reads metadata
+@enduml

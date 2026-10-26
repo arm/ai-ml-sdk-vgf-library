@@ -12,6 +12,7 @@ ML SDK VGF Library
 
    cloning.rst
    building.rst
+   architecture.rst
    encoder_api.rst
    encoder_c_api.rst
    decoder_api.rst
