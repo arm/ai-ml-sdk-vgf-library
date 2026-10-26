@@ -6,8 +6,6 @@ encoding VGF files and decoding their header, module, model-sequence,
 model-resource, and constant sections. Array data is accepted through the
 Python buffer protocol and decoded array data is returned as a ``memoryview``.
 
-.. py:module:: vgfpy
-
 Build and import the bindings
 -----------------------------
 
@@ -84,13 +82,10 @@ Python entry points
 Encoder
 -------
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [CreateEncoder]
-   :end-before: .. end-api: [CreateEncoder]
+.. autofunction:: vgfpy.CreateEncoder
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [Encoder]
-   :end-before: .. end-api: [Encoder]
+.. autoclass:: vgfpy.Encoder
+   :members:
 
 Encoder references
 ------------------
@@ -98,37 +93,29 @@ Encoder references
 Encoder methods return reference objects that identify entries while the VGF
 file is being constructed.
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ModuleRef]
-   :end-before: .. end-api: [ModuleRef]
+.. autoclass:: vgfpy.ModuleRef
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ResourceRef]
-   :end-before: .. end-api: [ResourceRef]
+.. autoclass:: vgfpy.ResourceRef
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ConstantRef]
-   :end-before: .. end-api: [ConstantRef]
+.. autoclass:: vgfpy.ConstantRef
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [GraphConstantBindingRef]
-   :end-before: .. end-api: [GraphConstantBindingRef]
+.. autoclass:: vgfpy.GraphConstantBindingRef
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [BindingSlotRef]
-   :end-before: .. end-api: [BindingSlotRef]
+.. autoclass:: vgfpy.BindingSlotRef
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [DescriptorSetInfoRef]
-   :end-before: .. end-api: [DescriptorSetInfoRef]
+.. autoclass:: vgfpy.DescriptorSetInfoRef
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [SegmentInfoRef]
-   :end-before: .. end-api: [SegmentInfoRef]
+.. autoclass:: vgfpy.SegmentInfoRef
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [PushConstRangeRef]
-   :end-before: .. end-api: [PushConstRangeRef]
+.. autoclass:: vgfpy.PushConstRangeRef
+   :members:
 
 Header decoder
 --------------
@@ -136,136 +123,92 @@ Header decoder
 Decoder factory functions retain a reference to their input buffer. Keep the
 buffer unchanged for the lifetime of the returned decoder.
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [HeaderSize]
-   :end-before: .. end-api: [HeaderSize]
+.. autofunction:: vgfpy.HeaderSize
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [HeaderDecoderSize]
-   :end-before: .. end-api: [HeaderDecoderSize]
+.. autofunction:: vgfpy.HeaderDecoderSize
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [CreateHeaderDecoder]
-   :end-before: .. end-api: [CreateHeaderDecoder]
+.. autofunction:: vgfpy.CreateHeaderDecoder
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [FormatVersion]
-   :end-before: .. end-api: [FormatVersion]
+.. autoclass:: vgfpy.FormatVersion
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [HeaderDecoder]
-   :end-before: .. end-api: [HeaderDecoder]
+.. autoclass:: vgfpy.HeaderDecoder
+   :members:
 
 Module-table decoder
 --------------------
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ModuleTableDecoderSize]
-   :end-before: .. end-api: [ModuleTableDecoderSize]
+.. autofunction:: vgfpy.ModuleTableDecoderSize
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [CreateModuleTableDecoder]
-   :end-before: .. end-api: [CreateModuleTableDecoder]
+.. autofunction:: vgfpy.CreateModuleTableDecoder
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ModuleTableDecoder]
-   :end-before: .. end-api: [ModuleTableDecoder]
+.. autoclass:: vgfpy.ModuleTableDecoder
+   :members:
 
 Model-sequence-table decoder
 ----------------------------
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ModelSequenceTableDecoderSize]
-   :end-before: .. end-api: [ModelSequenceTableDecoderSize]
+.. autofunction:: vgfpy.ModelSequenceTableDecoderSize
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [CreateModelSequenceTableDecoder]
-   :end-before: .. end-api: [CreateModelSequenceTableDecoder]
+.. autofunction:: vgfpy.CreateModelSequenceTableDecoder
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [GraphConstantBinding]
-   :end-before: .. end-api: [GraphConstantBinding]
+.. autoclass:: vgfpy.GraphConstantBinding
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ModelSequenceTableDecoder]
-   :end-before: .. end-api: [ModelSequenceTableDecoder]
+.. autoclass:: vgfpy.ModelSequenceTableDecoder
+   :members:
 
 The binding-slot, name, and push-constant-range handle objects are opaque.
 Pass them unchanged to the corresponding methods on
 :py:class:`~vgfpy.ModelSequenceTableDecoder`.
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [BindingSlotArrayHandle_s]
-   :end-before: .. end-api: [BindingSlotArrayHandle_s]
+.. autoclass:: vgfpy.BindingSlotArrayHandle_s
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [NameArrayHandle_s]
-   :end-before: .. end-api: [NameArrayHandle_s]
+.. autoclass:: vgfpy.NameArrayHandle_s
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [PushConstantRangeHandle_s]
-   :end-before: .. end-api: [PushConstantRangeHandle_s]
+.. autoclass:: vgfpy.PushConstantRangeHandle_s
 
 Model-resource-table decoder
 ----------------------------
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ModelResourceTableDecoderSize]
-   :end-before: .. end-api: [ModelResourceTableDecoderSize]
+.. autofunction:: vgfpy.ModelResourceTableDecoderSize
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [CreateModelResourceTableDecoder]
-   :end-before: .. end-api: [CreateModelResourceTableDecoder]
+.. autofunction:: vgfpy.CreateModelResourceTableDecoder
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ModelResourceTableDecoder]
-   :end-before: .. end-api: [ModelResourceTableDecoder]
+.. autoclass:: vgfpy.ModelResourceTableDecoder
+   :members:
 
 Sampler configuration handles are opaque. Pass them unchanged to the sampler
 configuration accessors on :py:class:`~vgfpy.ModelResourceTableDecoder`.
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [SamplerConfigHandle_s]
-   :end-before: .. end-api: [SamplerConfigHandle_s]
+.. autoclass:: vgfpy.SamplerConfigHandle_s
 
 Constant decoder
 ----------------
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ConstantDecoderSize]
-   :end-before: .. end-api: [ConstantDecoderSize]
+.. autofunction:: vgfpy.ConstantDecoderSize
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [CreateConstantDecoder]
-   :end-before: .. end-api: [CreateConstantDecoder]
+.. autofunction:: vgfpy.CreateConstantDecoder
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [ConstantDecoder]
-   :end-before: .. end-api: [ConstantDecoder]
+.. autoclass:: vgfpy.ConstantDecoder
+   :members:
 
 Common types and functions
 --------------------------
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [FourCC]
-   :end-before: .. end-api: [FourCC]
+.. autofunction:: vgfpy.FourCC
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [FourCCValue]
-   :end-before: .. end-api: [FourCCValue]
+.. autoclass:: vgfpy.FourCCValue
+   :members:
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [UndefinedFormat]
-   :end-before: .. end-api: [UndefinedFormat]
+.. autofunction:: vgfpy.UndefinedFormat
 
 Enumerations
 ------------
 
-The following reference is generated from the exported Python enumerations.
+The following table is generated from the exported Python enumerations.
 
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [enums]
-   :end-before: .. end-api: [enums]
+.. py-enum-table::
 
 Header constants
 ----------------
@@ -305,7 +248,3 @@ model-resource, and constant sections.
      - ``HEADER_CONSTANT_SECTION_OFFSET``,
        ``HEADER_CONSTANT_SECTION_OFFSET_OFFSET``,
        ``HEADER_CONSTANT_SECTION_SIZE_OFFSET``
-
-.. include:: _python_api/api.rst.inc
-   :start-after: .. begin-api: [constants]
-   :end-before: .. end-api: [constants]
