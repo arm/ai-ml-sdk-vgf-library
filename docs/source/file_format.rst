@@ -30,7 +30,7 @@ The current section order is:
 Header Layout
 -------------
 
-New files use format version ``0.4.3`` and write the ``VGF1`` FourCC magic. The decoder still accepts the deprecated
+New files use format version ``0.5.0`` and write the ``VGF1`` FourCC magic. The decoder still accepts the deprecated
 pre-FourCC magic value for backward compatibility.
 
 .. list-table::
@@ -55,7 +55,7 @@ pre-FourCC magic value for backward compatibility.
    * - 8
      - 3
      - ``version``
-     - ``major``, ``minor``, and ``patch`` bytes. The current writer emits ``0.4.3``.
+     - ``major``, ``minor``, and ``patch`` bytes. The current writer emits ``0.5.0``.
    * - 11
      - 1
      - ``reserved1``
@@ -86,7 +86,7 @@ pre-FourCC magic value for backward compatibility.
      - Reserved; written as zero.
 
 The decoder validates that the magic and major/minor version are supported and that every section range is contained
-inside the file. ``IsLatestVersion`` additionally checks for an exact ``0.4.3`` match.
+inside the file. ``IsLatestVersion`` additionally checks for an exact ``0.5.0`` match.
 
 Section Alignment
 -----------------
