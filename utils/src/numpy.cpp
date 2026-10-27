@@ -262,6 +262,7 @@ void write(const std::string &filename, const DataPtr &dataPtr) {
     if (!file.is_open()) {
         throw std::runtime_error("cannot open " + filename);
     }
+    file.exceptions(std::ios::badbit | std::ios::failbit);
 
     // write npy header to file
     writeHeader(file, dataPtr.shape, dtypeToStr(dataPtr.dtype));
@@ -277,6 +278,7 @@ void write(const std::string &filename, const std::vector<int64_t> &shape, const
     if (!file.is_open()) {
         throw std::runtime_error("cannot open " + filename);
     }
+    file.exceptions(std::ios::badbit | std::ios::failbit);
 
     // write npy header to file
     writeHeader(file, shape, dtypeToStr(dtype));
@@ -298,6 +300,7 @@ void write(const std::string &filename, const char *ptr, const std::vector<int64
     if (!file.is_open()) {
         throw std::runtime_error("cannot open " + filename);
     }
+    file.exceptions(std::ios::badbit | std::ios::failbit);
 
     // write npy header to file
     writeHeader(file, shape, dtypeToStr(dtype));

@@ -8,6 +8,8 @@
 
 - Fixed VGF encoding reporting success when writing an empty constant section
   fails.
+- Report NumPy output write failures, including buffered writes that fail when
+  closing the file, instead of silently leaving incomplete output files.
 
 ### Breaking Changes
 
