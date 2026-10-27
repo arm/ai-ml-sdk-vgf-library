@@ -4,6 +4,11 @@
 
 ## Unreleased
 
+### Bug Fixes
+
+- Fixed VGF encoding reporting success when writing an empty constant section
+  fails.
+
 ### Breaking Changes
 
 - Removed support for directly constructing or subclassing the abstract Python

@@ -452,6 +452,12 @@ class EncoderImpl : public Encoder {
         output.write(reinterpret_cast<const char *>(&numConsts), CONSTANT_SECTION_COUNT_SIZE);
         output.write(reinterpret_cast<const char *>(constsMetaData_.data()),
                      static_cast<std::streamsize>(numConsts * sizeof(ConstantMetaDataV00)));
+
+        if (output.fail()) {
+            logging::error("Failed to write constant section, rdstate: " + std::string(rdStateToStr(output.rdstate())));
+            return false;
+        }
+
         for (auto &constsData : constsData_) {
             output.write(reinterpret_cast<const char *>(constsData.data()),
                          static_cast<std::streamsize>(constsData.size()));
