@@ -25,7 +25,11 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx.ext.autosectionlabel",
     "myst_parser",
+    "sphinxcontrib.plantuml",
 ]
+
+# Match the SDK documentation's scalable HTML diagrams.
+plantuml_output_format = "svg_img"
 
 # Disable converting double-dash to typographical en-dash
 smartquotes_action = "qe"

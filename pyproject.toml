@@ -64,6 +64,7 @@ tooling = [
     "setuptools==84.2.1",
     "sphinx==8.2.3",
     "sphinx_rtd_theme==3.1.0",
+    "sphinxcontrib.plantuml==0.31",
     "wheel==0.48.0",
 ]
 

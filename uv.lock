@@ -29,6 +29,7 @@ tooling = [
     { name = "setuptools" },
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
+    { name = "sphinxcontrib-plantuml" },
     { name = "wheel" },
 ]
 
@@ -52,6 +53,7 @@ tooling = [
     { name = "setuptools", specifier = "==84.2.1" },
     { name = "sphinx", specifier = "==8.2.3" },
     { name = "sphinx-rtd-theme", specifier = "==3.1.0" },
+    { name = "sphinxcontrib-plantuml", specifier = "==0.31" },
     { name = "wheel", specifier = "==0.48.0" },
 ]
 
@@ -1172,6 +1174,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/59/02/4f334c7fc3e54c51d
 wheels = [
     { url = "https://files.pythonhosted.org/packages/da/c2/2965c35b39587d4b7a397f65a9c7d4b942b031061e7ac1ce91782f394a0d/sphinxcontrib_jsmath-2.0.0-py3-none-any.whl", hash = "sha256:15ca92fe0eec82f0baf91a7efcc51ffacdb605924be6327683a52ebdacb6744c", size = 78095, upload-time = "2026-10-20T18:22:04.42Z" },
 ]
+
+[[package]]
+name = "sphinxcontrib-plantuml"
+version = "0.31"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/08/8f/f26dd61b92176c4cba6b7898ca2875e7dfc29263d8e1b3b63d6acf81434f/sphinxcontrib_plantuml-0.31.tar.gz", hash = "sha256:fd74752f8ea070e641c3f8a402fccfa1d4a4056e0967b56033d2a76282d9f956", size = 15736, upload-time = "2025-09-03T11:11:35.028Z" }
 
 [[package]]
 name = "sphinxcontrib-qthelp"
