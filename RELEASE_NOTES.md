@@ -29,6 +29,7 @@
 - Reused native libraries and tools across Python wheel builds in the same
   platform and build configuration, keeping binding objects separate per ABI.
   Preserved the object paths used by ordinary source and coverage builds.
+- Raised the minimum supported Python version from 3.10 to 3.11.
 
 ## Version 0.11.0 – *VGF 0.5.0, Constant Bindings & Decoder Hardening*
 
