@@ -11,6 +11,7 @@
 #include "vgf/types.hpp"
 
 #include "header.hpp"
+#include "vgf_generated.h"
 
 #include <gtest/gtest.h>
 
@@ -233,6 +234,13 @@ TEST(CppModelResourceTable, SamplerFieldsRoundTripAndDefaults) {
     std::unique_ptr<ModelResourceTableDecoder> mrtDecoder = CreateModelResourceTableDecoder(
         vgfData.c_str() + headerDecoder->GetModelResourceTableOffset(), headerDecoder->GetModelResourceTableSize());
     ASSERT_NE(mrtDecoder, nullptr);
+
+    const auto *table =
+        flatbuffers::GetRoot<VGF::ModelResourceTable>(vgfData.c_str() + headerDecoder->GetModelResourceTableOffset());
+    const auto *sampledEntry = table->mrt_entry()->Get(sampledResource.reference);
+    ASSERT_NE(sampledEntry->extra_config(), nullptr);
+    ASSERT_NE(sampledEntry->extra_config()->sampler_config(), nullptr);
+    EXPECT_EQ(sampledEntry->legacy_extra_config_type(), VGF::LegacyExtraConfig_NONE);
 
     const SamplerConfigHandle sampledHandle = mrtDecoder->getSamplerConfigHandle(sampledResource.reference);
     ASSERT_NE(sampledHandle, nullptr);

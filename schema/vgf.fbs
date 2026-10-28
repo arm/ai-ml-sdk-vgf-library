@@ -52,8 +52,13 @@ table SamplerConfig {
     border_color: uint32;
 }
 
-union ExtraConfig {
+// This union is deprecated and is kept for backward compatibility.
+union LegacyExtraConfig {
     SamplerConfig
+}
+
+table ExtraConfig {
+    sampler_config: SamplerConfig;
 }
 
 enum ResourceCategory:uint8 {
@@ -68,12 +73,12 @@ table ModelResourceTableEntry {
     vk_format: uint32; // make the format opaque on disk
     category: ResourceCategory;
     description: Description;
-    // Optional config extension point for resource-specific metadata.
-    // NONE indicates no extra config is present.
-    extra_config: ExtraConfig;
+    legacy_extra_config: LegacyExtraConfig;
     // Optional symmetric alias group identifier shared by MRT entries that use
     // the same storage. When omitted, the MRT entry does not alias peers.
     alias_group_id: uint = 4294967295;
+    // Optional resource metadata.
+    extra_config: ExtraConfig;
 }
 
 table ModelResourceTable {
