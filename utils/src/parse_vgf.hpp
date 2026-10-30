@@ -44,6 +44,14 @@ struct ResourceSamplerConfig {
     uint32_t mBorderColor{0};
 };
 
+struct ResourceScaledTensorConfig {
+    ResourceScaledTensorConfig(std::vector<uint32_t> blockShape, mlsdk::vgflib::ScaleFormat scaleFormat)
+        : mBlockShape(std::move(blockShape)), mScaleFormat(scaleFormat) {}
+
+    std::vector<uint32_t> mBlockShape;
+    mlsdk::vgflib::ScaleFormat mScaleFormat;
+};
+
 struct Resource {
     Resource() = default;
     Resource(uint32_t index, const mlsdk::vgflib::ModelResourceTableDecoder &decoder);
@@ -55,6 +63,7 @@ struct Resource {
     std::vector<int64_t> mShape;
     std::vector<int64_t> mStride;
     std::optional<ResourceSamplerConfig> mSamplerConfig{std::nullopt};
+    std::optional<ResourceScaledTensorConfig> mScaledTensorConfig{std::nullopt};
     std::optional<mlsdk::vgflib::AliasGroupId> mAliasGroupId{std::nullopt};
 };
 

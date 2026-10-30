@@ -292,7 +292,18 @@ void pyInitModelResourceTableDecoder(py::module_ &m) {
         .def("getSamplerConfigAddressModeV", &ModelResourceTableDecoder::getSamplerConfigAddressModeV,
              "Return the Vulkan V-axis address mode.", py::arg("handle"))
         .def("getSamplerConfigBorderColor", &ModelResourceTableDecoder::getSamplerConfigBorderColor,
-             "Return the Vulkan border color value.", py::arg("handle"));
+             "Return the Vulkan border color value.", py::arg("handle"))
+        .def("getScaledTensorConfigHandle", &ModelResourceTableDecoder::getScaledTensorConfigHandle,
+             "Return block scaling metadata as an opaque handle, or None when absent.", py::arg("id"),
+             py::return_value_policy::reference)
+        .def(
+            "getScaledTensorConfigBlockShape",
+            [](const ModelResourceTableDecoder &decoder, ScaledTensorConfigHandle handle) {
+                return pyDataView<uint32_t>(decoder.getScaledTensorConfigBlockShape(handle));
+            },
+            "Return block dimensions as a memoryview.", py::keep_alive<0, 1>(), py::arg("handle"))
+        .def("getScaledTensorConfigScaleFormat", &ModelResourceTableDecoder::getScaledTensorConfigScaleFormat,
+             "Return the symbolic scale format.", py::arg("handle"));
 
     m.def("ModelResourceTableDecoderSize", &ModelResourceTableDecoderSize,
           "Return the native model-resource-table decoder size in bytes.");
@@ -340,6 +351,8 @@ void pyInitDecoder(py::module_ &m) {
     py::class_<PushConstantRangeHandle_s>(m, "PushConstantRangeHandle_s", "Opaque push-constant-range array handle.")
         .def(py::init<>());
     py::class_<SamplerConfigHandle_s>(m, "SamplerConfigHandle_s", "Opaque sampler configuration handle.");
+    py::class_<ScaledTensorConfigHandle_s>(m, "ScaledTensorConfigHandle_s",
+                                           "Opaque block scaling configuration handle.");
 
     pyInitHeaderDecoder(m);
     pyInitModuleTableDecoder(m);

@@ -115,6 +115,9 @@ void pyInitEncoder(py::module_ &m) {
         .def("AddSamplerConfig", &Encoder::AddSamplerConfig, "Set sampler metadata for a model resource.",
              py::arg("resource"), py::arg("samplerMinFilter"), py::arg("samplerMagFilter"),
              py::arg("samplerAddressModeU"), py::arg("samplerAddressModeV"), py::arg("samplerBorderColor"))
+        .def("AddScaledTensorConfig", &Encoder::AddScaledTensorConfig,
+             "Set block scaling metadata for a tensor resource.", py::arg("resource"), py::arg("blockShape"),
+             py::arg("scaleFormat"))
         .def("SetAliasGroup", &Encoder::SetAliasGroup, "Assign an alias group to a non-constant model resource.",
              py::arg("resource"), py::arg("aliasGroupId"))
         .def(

@@ -12,6 +12,9 @@
 #include "utils.hpp"
 #include "vgf_generated.h"
 
+#define VGFLIB_VK_HELPERS
+#include <vgf/vulkan_helpers.generated.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -127,6 +130,16 @@ ResourceCategory fromVGF(VGF::ResourceCategory category) {
     }
 }
 
+ScaleFormat fromVGF(VGF::ScaleFormat format) {
+    switch (format) {
+    case VGF::ScaleFormat_E8M0:
+        return ScaleFormat::E8M0;
+    default:
+        assert(false && "unknown ScaleFormat");
+        return ScaleFormat::E8M0;
+    }
+}
+
 constexpr FourCCValue OldMagicAsFourCC() {
     auto v = HEADER_MAGIC_VALUE_OLD;
 
@@ -196,6 +209,61 @@ template <> bool VerifySemantic<VGF::ModelSequenceTable>(const VGF::ModelSequenc
         const auto *dispatchShape = segment->dispatch_shape();
         if (dispatchShape != nullptr && dispatchShape->size() != 3) {
             logging::error("VerifyModelSequenceTable: SegmentInfo.dispatch_shape must contain 3 elements at index " +
+                           std::to_string(i));
+            return false;
+        }
+    }
+
+    return true;
+}
+
+template <> bool VerifySemantic<VGF::ModelResourceTable>(const VGF::ModelResourceTable *modelResourceTable) {
+    const auto *entries = modelResourceTable->mrt_entry();
+    if (entries == nullptr) {
+        return true;
+    }
+
+    for (flatbuffers::uoffset_t i = 0; i < entries->size(); ++i) {
+        const auto *entry = entries->Get(i);
+        const auto *extraConfig = entry == nullptr ? nullptr : entry->extra_config();
+        const auto *scaledConfig = extraConfig == nullptr ? nullptr : extraConfig->scaled_tensor_config();
+        if (scaledConfig == nullptr) {
+            continue;
+        }
+        if (entry->category() != VGF::ResourceCategory_CONSTANT &&
+            entry->vk_descriptor_type() !=
+                static_cast<EncodedDescriptorType>(NameToDescriptorType("VK_DESCRIPTOR_TYPE_TENSOR_ARM"))) {
+            logging::error("VerifyModelResourceTable: scaled tensor config requires a tensor resource at index " +
+                           std::to_string(i));
+            return false;
+        }
+        const auto *blockShape = scaledConfig->block_shape();
+        if (blockShape == nullptr || blockShape->empty() ||
+            std::any_of(blockShape->begin(), blockShape->end(), [](uint32_t dim) { return dim == 0; })) {
+            logging::error("VerifyModelResourceTable: scaled tensor block shape must contain positive dimensions at "
+                           "index " +
+                           std::to_string(i));
+            return false;
+        }
+        const auto *tensorShape = entry->description() == nullptr ? nullptr : entry->description()->shape();
+        if (tensorShape == nullptr || blockShape->size() > tensorShape->size()) {
+            logging::error("VerifyModelResourceTable: scaled tensor block shape has more dimensions than the tensor "
+                           "at index " +
+                           std::to_string(i));
+            return false;
+        }
+        for (flatbuffers::uoffset_t blockIndex = 0; blockIndex < blockShape->size(); ++blockIndex) {
+            const int64_t tensorDim = tensorShape->Get(tensorShape->size() - blockShape->size() + blockIndex);
+            if (tensorDim != -1 &&
+                (tensorDim <= 0 || static_cast<uint64_t>(tensorDim) % blockShape->Get(blockIndex) != 0)) {
+                logging::error("VerifyModelResourceTable: scaled tensor block shape must divide the innermost tensor "
+                               "dimensions at index " +
+                               std::to_string(i));
+                return false;
+            }
+        }
+        if (scaledConfig->scale_format() != VGF::ScaleFormat_E8M0) {
+            logging::error("VerifyModelResourceTable: unsupported scaled tensor scale format at index " +
                            std::to_string(i));
             return false;
         }
@@ -502,6 +570,14 @@ const VGF::SamplerConfig *FromHandle(SamplerConfigHandle handle) {
 }
 
 SamplerConfigHandle ToHandle(const VGF::SamplerConfig *ptr) { return reinterpret_cast<SamplerConfigHandle>(ptr); }
+
+const VGF::ScaledTensorConfig *FromHandle(ScaledTensorConfigHandle handle) {
+    return reinterpret_cast<const VGF::ScaledTensorConfig *>(handle);
+}
+
+ScaledTensorConfigHandle ToHandle(const VGF::ScaledTensorConfig *ptr) {
+    return reinterpret_cast<ScaledTensorConfigHandle>(ptr);
+}
 
 } // namespace
 
@@ -821,6 +897,24 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
         return FromHandle(handle)->border_color();
     }
 
+    [[nodiscard]] ScaledTensorConfigHandle getScaledTensorConfigHandle(uint32_t id) const override {
+        return ToHandle(getScaledTensorConfigAt(id));
+    }
+
+    [[nodiscard]] DataView<uint32_t> getScaledTensorConfigBlockShape(ScaledTensorConfigHandle handle) const override {
+        assert(handle != nullptr && "scaled tensor config handle is null");
+        const auto *blockShape = FromHandle(handle)->block_shape();
+        if (blockShape == nullptr) {
+            return {};
+        }
+        return {blockShape->data(), blockShape->size()};
+    }
+
+    [[nodiscard]] ScaleFormat getScaledTensorConfigScaleFormat(ScaledTensorConfigHandle handle) const override {
+        assert(handle != nullptr && "scaled tensor config handle is null");
+        return fromVGF(FromHandle(handle)->scale_format());
+    }
+
   private:
     [[nodiscard]] const VGF::SamplerConfig *getSamplerConfigAt(uint32_t index) const {
         const auto *entry = getEntryAt(index);
@@ -829,6 +923,12 @@ class ModelResourceTableDecoderImpl : public ModelResourceTableDecoder {
             return extraConfig->sampler_config();
         }
         return entry->legacy_extra_config_as_SamplerConfig();
+    }
+
+    [[nodiscard]] const VGF::ScaledTensorConfig *getScaledTensorConfigAt(uint32_t index) const {
+        const auto *entry = getEntryAt(index);
+        const auto *extraConfig = entry->extra_config();
+        return extraConfig != nullptr ? extraConfig->scaled_tensor_config() : nullptr;
     }
 
     [[nodiscard]] const VGF::ModelResourceTableEntry *getEntryAt(uint32_t index) const {
@@ -848,6 +948,9 @@ std::unique_ptr<ModelResourceTableDecoder> CreateModelResourceTableDecoder(const
         logging::error("Model resource table could not be decoded safely");
         return nullptr;
     }
+    if (!VerifySemantic(flatbuffers::GetRoot<const VGF::ModelResourceTable>(data))) {
+        return nullptr;
+    }
     return std::make_unique<ModelResourceTableDecoderImpl>(data, size);
 }
 
@@ -857,6 +960,9 @@ ModelResourceTableDecoder *CreateModelResourceTableDecoderInPlace(const void *co
     assert(decoderMem != nullptr && "decoderMem is null");
     if (!VerifyImpl<VGF::ModelResourceTable>(data, size)) {
         logging::error("Model resource table could not be decoded safely");
+        return nullptr;
+    }
+    if (!VerifySemantic(flatbuffers::GetRoot<const VGF::ModelResourceTable>(data))) {
         return nullptr;
     }
     return new (decoderMem) ModelResourceTableDecoderImpl(data, size);

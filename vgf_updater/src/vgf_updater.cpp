@@ -39,12 +39,16 @@ void requireIndexInBounds(uint32_t referencedValue, size_t entryCount, std::stri
 }
 
 ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
-    auto maybeAddSamplerConfig = [&resource, &encoder](ResourceRef resourceRef) {
+    auto maybeAddExtraConfig = [&resource, &encoder](ResourceRef resourceRef) {
         if (resource.mSamplerConfig.has_value()) {
             const auto &samplerConfig = *resource.mSamplerConfig;
             encoder.AddSamplerConfig(resourceRef, samplerConfig.mMinFilter, samplerConfig.mMagFilter,
                                      samplerConfig.mAddressModeU, samplerConfig.mAddressModeV,
                                      samplerConfig.mBorderColor);
+        }
+        if (resource.mScaledTensorConfig.has_value()) {
+            const auto &scaledConfig = *resource.mScaledTensorConfig;
+            encoder.AddScaledTensorConfig(resourceRef, scaledConfig.mBlockShape, scaledConfig.mScaleFormat);
         }
     };
 
@@ -57,7 +61,7 @@ ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
             const auto resourceRef =
                 encoder.AddInputResource(resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape,
                                          resource.mStride, resource.mAliasGroupId);
-            maybeAddSamplerConfig(resourceRef);
+            maybeAddExtraConfig(resourceRef);
             return resourceRef;
         }
     case ResourceCategory::OUTPUT:
@@ -68,7 +72,7 @@ ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
             const auto resourceRef =
                 encoder.AddOutputResource(resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape,
                                           resource.mStride, resource.mAliasGroupId);
-            maybeAddSamplerConfig(resourceRef);
+            maybeAddExtraConfig(resourceRef);
             return resourceRef;
         }
     case ResourceCategory::INTERMEDIATE:
@@ -79,11 +83,14 @@ ResourceRef encodeResource(const Resource &resource, Encoder &encoder) {
             const auto resourceRef =
                 encoder.AddIntermediateResource(resource.mDescriptorType.value(), resource.mVkFormat, resource.mShape,
                                                 resource.mStride, resource.mAliasGroupId);
-            maybeAddSamplerConfig(resourceRef);
+            maybeAddExtraConfig(resourceRef);
             return resourceRef;
         }
-    case ResourceCategory::CONSTANT:
-        return encoder.AddConstantResource(resource.mVkFormat, resource.mShape, resource.mStride);
+    case ResourceCategory::CONSTANT: {
+        const auto resourceRef = encoder.AddConstantResource(resource.mVkFormat, resource.mShape, resource.mStride);
+        maybeAddExtraConfig(resourceRef);
+        return resourceRef;
+    }
     }
 
     throw std::runtime_error("Unsupported resource category");

@@ -64,6 +64,11 @@ enum class ResourceCategory {
     CONSTANT,
 };
 
+/// \brief Format of the scale values in a block-scaled tensor.
+enum class ScaleFormat {
+    E8M0,
+};
+
 /**
  * \brief VGF type that corresponds to a VkDescriptorType enum of the Vulkan API
  *

@@ -36,6 +36,9 @@ struct DescriptionBuilder;
 struct SamplerConfig;
 struct SamplerConfigBuilder;
 
+struct ScaledTensorConfig;
+struct ScaledTensorConfigBuilder;
+
 struct ExtraConfig;
 struct ExtraConfigBuilder;
 
@@ -152,6 +155,33 @@ inline const char *EnumNameModuleType(ModuleType e) {
   if (::flatbuffers::IsOutRange(e, ModuleType_COMPUTE, ModuleType_GRAPH)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesModuleType()[index];
+}
+
+enum ScaleFormat : uint8_t {
+  ScaleFormat_E8M0 = 0,
+  ScaleFormat_MIN = ScaleFormat_E8M0,
+  ScaleFormat_MAX = ScaleFormat_E8M0
+};
+
+inline const ScaleFormat (&EnumValuesScaleFormat())[1] {
+  static const ScaleFormat values[] = {
+    ScaleFormat_E8M0
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesScaleFormat() {
+  static const char * const names[2] = {
+    "E8M0",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameScaleFormat(ScaleFormat e) {
+  if (::flatbuffers::IsOutRange(e, ScaleFormat_E8M0, ScaleFormat_E8M0)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesScaleFormat()[index];
 }
 
 enum LegacyExtraConfig : uint8_t {
@@ -706,18 +736,87 @@ inline ::flatbuffers::Offset<SamplerConfig> CreateSamplerConfig(
   return builder_.Finish();
 }
 
+struct ScaledTensorConfig FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef ScaledTensorConfigBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_BLOCK_SHAPE = 4,
+    VT_SCALE_FORMAT = 6
+  };
+  const ::flatbuffers::Vector<uint32_t> *block_shape() const {
+    return GetPointer<const ::flatbuffers::Vector<uint32_t> *>(VT_BLOCK_SHAPE);
+  }
+  VGF::ScaleFormat scale_format() const {
+    return static_cast<VGF::ScaleFormat>(GetField<uint8_t>(VT_SCALE_FORMAT, 0));
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_BLOCK_SHAPE) &&
+           verifier.VerifyVector(block_shape()) &&
+           VerifyField<uint8_t>(verifier, VT_SCALE_FORMAT, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct ScaledTensorConfigBuilder {
+  typedef ScaledTensorConfig Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_block_shape(::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> block_shape) {
+    fbb_.AddOffset(ScaledTensorConfig::VT_BLOCK_SHAPE, block_shape);
+  }
+  void add_scale_format(VGF::ScaleFormat scale_format) {
+    fbb_.AddElement<uint8_t>(ScaledTensorConfig::VT_SCALE_FORMAT, static_cast<uint8_t>(scale_format), 0);
+  }
+  explicit ScaledTensorConfigBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<ScaledTensorConfig> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<ScaledTensorConfig>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<ScaledTensorConfig> CreateScaledTensorConfig(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> block_shape = 0,
+    VGF::ScaleFormat scale_format = VGF::ScaleFormat_E8M0) {
+  ScaledTensorConfigBuilder builder_(_fbb);
+  builder_.add_block_shape(block_shape);
+  builder_.add_scale_format(scale_format);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<ScaledTensorConfig> CreateScaledTensorConfigDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<uint32_t> *block_shape = nullptr,
+    VGF::ScaleFormat scale_format = VGF::ScaleFormat_E8M0) {
+  auto block_shape__ = block_shape ? _fbb.CreateVector<uint32_t>(*block_shape) : 0;
+  return VGF::CreateScaledTensorConfig(
+      _fbb,
+      block_shape__,
+      scale_format);
+}
+
 struct ExtraConfig FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ExtraConfigBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_SAMPLER_CONFIG = 4
+    VT_SAMPLER_CONFIG = 4,
+    VT_SCALED_TENSOR_CONFIG = 6
   };
   const VGF::SamplerConfig *sampler_config() const {
     return GetPointer<const VGF::SamplerConfig *>(VT_SAMPLER_CONFIG);
+  }
+  const VGF::ScaledTensorConfig *scaled_tensor_config() const {
+    return GetPointer<const VGF::ScaledTensorConfig *>(VT_SCALED_TENSOR_CONFIG);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_SAMPLER_CONFIG) &&
            verifier.VerifyTable(sampler_config()) &&
+           VerifyOffset(verifier, VT_SCALED_TENSOR_CONFIG) &&
+           verifier.VerifyTable(scaled_tensor_config()) &&
            verifier.EndTable();
   }
 };
@@ -728,6 +827,9 @@ struct ExtraConfigBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_sampler_config(::flatbuffers::Offset<VGF::SamplerConfig> sampler_config) {
     fbb_.AddOffset(ExtraConfig::VT_SAMPLER_CONFIG, sampler_config);
+  }
+  void add_scaled_tensor_config(::flatbuffers::Offset<VGF::ScaledTensorConfig> scaled_tensor_config) {
+    fbb_.AddOffset(ExtraConfig::VT_SCALED_TENSOR_CONFIG, scaled_tensor_config);
   }
   explicit ExtraConfigBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -742,8 +844,10 @@ struct ExtraConfigBuilder {
 
 inline ::flatbuffers::Offset<ExtraConfig> CreateExtraConfig(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<VGF::SamplerConfig> sampler_config = 0) {
+    ::flatbuffers::Offset<VGF::SamplerConfig> sampler_config = 0,
+    ::flatbuffers::Offset<VGF::ScaledTensorConfig> scaled_tensor_config = 0) {
   ExtraConfigBuilder builder_(_fbb);
+  builder_.add_scaled_tensor_config(scaled_tensor_config);
   builder_.add_sampler_config(sampler_config);
   return builder_.Finish();
 }

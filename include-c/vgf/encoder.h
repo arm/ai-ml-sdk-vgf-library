@@ -94,6 +94,13 @@ typedef enum {
 } mlsdk_encoder_shader_type;
 
 /**
+ * @brief Format of block scale values for a scaled tensor.
+ */
+typedef enum {
+    mlsdk_encoder_scale_format_e8m0 = 0,
+} mlsdk_encoder_scale_format;
+
+/**
  * @brief Reference to an encoded module table entry.
  */
 typedef struct {
@@ -343,6 +350,19 @@ MLSDKAPI void mlsdk_encoder_add_sampler_config(mlsdk_encoder *encoder, mlsdk_enc
                                                uint32_t samplerMinFilter, uint32_t samplerMagFilter,
                                                uint32_t samplerAddressModeU, uint32_t samplerAddressModeV,
                                                uint32_t samplerBorderColor);
+
+/**
+ * @brief Sets block scaling metadata for an existing tensor resource.
+ *
+ * @param encoder Encoder handle.
+ * @param resource Reference to a tensor resource to update.
+ * @param blockShape Pointer to the nonzero block shape dimensions.
+ * @param blockShapeSize Number of block dimensions; must be nonzero.
+ * @param scaleFormat Symbolic format of the scale values.
+ */
+MLSDKAPI void mlsdk_encoder_add_scaled_tensor_config(mlsdk_encoder *encoder, mlsdk_encoder_resource_ref resource,
+                                                     const uint32_t *blockShape, size_t blockShapeSize,
+                                                     mlsdk_encoder_scale_format scaleFormat);
 
 /**
  * @brief Assigns an alias group to an existing non-constant model resource table entry.

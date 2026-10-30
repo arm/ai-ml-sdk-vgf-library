@@ -96,6 +96,13 @@ Resource::Resource(uint32_t index, const ModelResourceTableDecoder &decoder)
                                decoder.getSamplerConfigBorderColor(samplerConfigHandle));
     }
 
+    const ScaledTensorConfigHandle scaledTensorConfigHandle = decoder.getScaledTensorConfigHandle(index);
+    if (scaledTensorConfigHandle != nullptr) {
+        const auto blockShape = decoder.getScaledTensorConfigBlockShape(scaledTensorConfigHandle);
+        mScaledTensorConfig.emplace(std::vector<uint32_t>(blockShape.begin(), blockShape.end()),
+                                    decoder.getScaledTensorConfigScaleFormat(scaledTensorConfigHandle));
+    }
+
     const auto shape = decoder.getTensorShape(index);
     mShape.assign(shape.begin(), shape.end());
 

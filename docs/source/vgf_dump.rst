@@ -122,3 +122,15 @@ This option outputs a template scenario file. The ML SDK Scenario Runner uses th
           }
       ]
   }
+
+For a block-scaled tensor, the tensor's ``src`` path is for values and its ``block_scaling``'s ``src`` path is for scales:
+
+.. code-block:: json
+
+  "block_scaling": {
+      "block_shape": [32],
+      "format": "E8M0",
+      "src": "TEMPLATE_PATH_TENSOR_INPUT_SCALE_0"
+  }
+
+For a block-scaled output, both paths use ``dst``.

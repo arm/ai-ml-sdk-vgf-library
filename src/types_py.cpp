@@ -28,6 +28,9 @@ void pyInitTypes(py::module_ &m) {
         .value("Intermediate", ResourceCategory::INTERMEDIATE)
         .value("Constant", ResourceCategory::CONSTANT);
 
+    py::enum_<ScaleFormat>(m, "ScaleFormat", "Format of a block-scaled tensor's scale values.")
+        .value("E8M0", ScaleFormat::E8M0);
+
     py::class_<FourCCValue>(m, "FourCCValue", "A four-character code value.")
         .def(py::init<char, char, char, char>())
         .def(py::self == py::self) // NOLINT(misc-redundant-expression)
