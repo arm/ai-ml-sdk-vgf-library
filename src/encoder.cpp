@@ -138,6 +138,16 @@ class EncoderImpl : public Encoder {
         return {moduleRef};
     }
 
+    ModuleRef DeclareExternalDataGraphBinaryModule(const std::string &name) override {
+        assert(!finished_ && "cannot add modules when marked finished");
+        const auto binary = VGF::CreateExternalDataGraphBinary(moduleBuilder_);
+        modules_.emplace_back(VGF::CreateModuleDirect(moduleBuilder_, VGF::ModuleType_GRAPH, name.c_str(), "",
+                                                      VGF::ModuleCode_ExternalDataGraphBinary, binary.Union()));
+        const auto moduleRef = static_cast<ModuleRef::RefType>(modules_.size() - 1);
+        moduleRefToType_.push_back(ModuleType::GRAPH);
+        return {moduleRef};
+    }
+
     ModuleRef AddPlaceholderModule(ModuleType type, const std::string &name, const std::string &entryPoint) override {
         logging::warning("AddPlaceholderModule is deprecated use AddModule instead");
         return AddModule(type, name, entryPoint, {});

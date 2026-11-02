@@ -105,7 +105,8 @@ The Module Table stores ``Module`` entries:
 
 * ``type`` is ``COMPUTE`` or ``GRAPH``.
 * ``name`` and ``entry_point`` are strings.
-* ``code`` is a ``ModuleCode`` union. Current code variants are SPIR-V™ ``uint32`` words, GLSL source, and HLSL source.
+* ``code`` is a ``ModuleCode`` union. Variants are SPIR-V™ ``uint32`` words, GLSL source, HLSL source, and an external
+  data-graph binary marker (``ExternalDataGraphBinary``). The marker contains no binary bytes.
 
 The Model Sequence Table stores model-level inputs and outputs plus ordered ``SegmentInfo`` entries. Segment metadata
 links runtime execution state together:

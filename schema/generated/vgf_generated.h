@@ -24,6 +24,9 @@ struct GLSLBuilder;
 struct HLSL;
 struct HLSLBuilder;
 
+struct ExternalDataGraphBinary;
+struct ExternalDataGraphBinaryBuilder;
+
 struct Module;
 struct ModuleBuilder;
 
@@ -77,33 +80,36 @@ enum ModuleCode : uint8_t {
   ModuleCode_SPIRV = 1,
   ModuleCode_GLSL = 2,
   ModuleCode_HLSL = 3,
+  ModuleCode_ExternalDataGraphBinary = 4,
   ModuleCode_MIN = ModuleCode_NONE,
-  ModuleCode_MAX = ModuleCode_HLSL
+  ModuleCode_MAX = ModuleCode_ExternalDataGraphBinary
 };
 
-inline const ModuleCode (&EnumValuesModuleCode())[4] {
+inline const ModuleCode (&EnumValuesModuleCode())[5] {
   static const ModuleCode values[] = {
     ModuleCode_NONE,
     ModuleCode_SPIRV,
     ModuleCode_GLSL,
-    ModuleCode_HLSL
+    ModuleCode_HLSL,
+    ModuleCode_ExternalDataGraphBinary
   };
   return values;
 }
 
 inline const char * const *EnumNamesModuleCode() {
-  static const char * const names[5] = {
+  static const char * const names[6] = {
     "NONE",
     "SPIRV",
     "GLSL",
     "HLSL",
+    "ExternalDataGraphBinary",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameModuleCode(ModuleCode e) {
-  if (::flatbuffers::IsOutRange(e, ModuleCode_NONE, ModuleCode_HLSL)) return "";
+  if (::flatbuffers::IsOutRange(e, ModuleCode_NONE, ModuleCode_ExternalDataGraphBinary)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesModuleCode()[index];
 }
@@ -122,6 +128,10 @@ template<> struct ModuleCodeTraits<VGF::GLSL> {
 
 template<> struct ModuleCodeTraits<VGF::HLSL> {
   static const ModuleCode enum_value = ModuleCode_HLSL;
+};
+
+template<> struct ModuleCodeTraits<VGF::ExternalDataGraphBinary> {
+  static const ModuleCode enum_value = ModuleCode_ExternalDataGraphBinary;
 };
 
 bool VerifyModuleCode(::flatbuffers::Verifier &verifier, const void *obj, ModuleCode type);
@@ -414,6 +424,35 @@ inline ::flatbuffers::Offset<HLSL> CreateHLSLDirect(
       code__);
 }
 
+struct ExternalDataGraphBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef ExternalDataGraphBinaryBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct ExternalDataGraphBinaryBuilder {
+  typedef ExternalDataGraphBinary Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit ExternalDataGraphBinaryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<ExternalDataGraphBinary> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<ExternalDataGraphBinary>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<ExternalDataGraphBinary> CreateExternalDataGraphBinary(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  ExternalDataGraphBinaryBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
 struct Module FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ModuleBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -448,6 +487,9 @@ struct Module FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const VGF::HLSL *code_as_HLSL() const {
     return code_type() == VGF::ModuleCode_HLSL ? static_cast<const VGF::HLSL *>(code()) : nullptr;
   }
+  const VGF::ExternalDataGraphBinary *code_as_ExternalDataGraphBinary() const {
+    return code_type() == VGF::ModuleCode_ExternalDataGraphBinary ? static_cast<const VGF::ExternalDataGraphBinary *>(code()) : nullptr;
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_TYPE, 1) &&
@@ -472,6 +514,10 @@ template<> inline const VGF::GLSL *Module::code_as<VGF::GLSL>() const {
 
 template<> inline const VGF::HLSL *Module::code_as<VGF::HLSL>() const {
   return code_as_HLSL();
+}
+
+template<> inline const VGF::ExternalDataGraphBinary *Module::code_as<VGF::ExternalDataGraphBinary>() const {
+  return code_as_ExternalDataGraphBinary();
 }
 
 struct ModuleBuilder {
@@ -1686,6 +1732,10 @@ inline bool VerifyModuleCode(::flatbuffers::Verifier &verifier, const void *obj,
     }
     case ModuleCode_HLSL: {
       auto ptr = reinterpret_cast<const VGF::HLSL *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ModuleCode_ExternalDataGraphBinary: {
+      auto ptr = reinterpret_cast<const VGF::ExternalDataGraphBinary *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

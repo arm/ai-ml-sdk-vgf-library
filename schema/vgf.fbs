@@ -17,10 +17,13 @@ table HLSL {
     code: string;
 }
 
+table ExternalDataGraphBinary {}
+
 union ModuleCode {
     SPIRV,
     GLSL,
-    HLSL
+    HLSL,
+    ExternalDataGraphBinary
 }
 
 enum ModuleType:uint8 {

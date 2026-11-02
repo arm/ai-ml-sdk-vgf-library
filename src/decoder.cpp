@@ -465,6 +465,10 @@ class ModuleTableDecoderImpl : public ModuleTableDecoder {
         return hlsl != nullptr && hlsl->code() != nullptr && !hlsl->code()->empty();
     }
 
+    [[nodiscard]] bool isExternalDataGraphBinary(uint32_t idx) const override {
+        return VGF::ModuleCode_ExternalDataGraphBinary == getModuleAt(idx)->code_type();
+    }
+
     [[nodiscard]] std::string_view getModuleEntryPoint(uint32_t idx) const override {
         return ToStringView(getModuleAt(idx)->entry_point());
     }

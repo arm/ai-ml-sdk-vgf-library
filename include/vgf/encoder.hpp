@@ -276,6 +276,9 @@ class Encoder {
     /// \param output Output destination of the .vgf file
     /// \return Bool True if write successful
     virtual bool WriteTo(std::ostream &output) = 0;
+
+    /// \brief Declares a graph module whose binary is supplied separately.
+    virtual ModuleRef DeclareExternalDataGraphBinaryModule(const std::string &name) = 0;
 };
 
 /// \brief Create an Encoder object

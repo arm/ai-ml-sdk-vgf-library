@@ -124,6 +124,8 @@ std::vector<ModuleRef> extractModules(const HeaderDecoder &headerDecoder, const 
             moduleRefs.push_back(encoder.AddModule(moduleType, moduleName, entryPoint, moduleCodeData));
         } else if (moduleDecoder->isSPIRV(i)) {
             moduleRefs.push_back(encoder.AddModule(moduleType, moduleName, entryPoint));
+        } else if (moduleDecoder->isExternalDataGraphBinary(i)) {
+            moduleRefs.push_back(encoder.DeclareExternalDataGraphBinaryModule(moduleName));
         }
     }
     return moduleRefs;

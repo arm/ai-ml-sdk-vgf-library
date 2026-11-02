@@ -302,6 +302,9 @@ class ModuleTableDecoder {
      * If no HLSL source is stored in the module an empty string view is returned.
      */
     virtual std::string_view getHLSLModuleCode(uint32_t idx) const = 0;
+
+    /** @brief Returns whether the module refers to an external data-graph binary. */
+    virtual bool isExternalDataGraphBinary(uint32_t idx) const = 0;
 };
 
 /**
