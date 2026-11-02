@@ -816,7 +816,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     std::vector<ScenarioShaderResource> shaderResources;
     for (const auto &m :
          parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
-        if (m.mType == ModuleType::COMPUTE) {
+        if (m.mType == ModuleType::COMPUTE && !m.mCodeAvailable) {
             std::string shaderRef = "shader_" + std::to_string(m.mIndex) + "_ref";
             shaderSubstitutions.emplace_back(shaderRef, std::string(m.mName));
             const std::string shaderType = m.mShaderType;

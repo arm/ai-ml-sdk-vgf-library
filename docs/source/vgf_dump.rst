@@ -59,6 +59,7 @@ If the `--output <file.npy>` option is provided, the contents will be saved to t
 ---------------------
 
 This option outputs a template scenario file. The ML SDK Scenario Runner uses the template scenario file as an input file. The template scenario file describes what the scenario runner must execute. You must manually edit some file paths in the template scenario file.
+Shader resources and substitutions with placeholder paths are generated only for compute modules without embedded shader code.
 
 `--scenario-template` is incompatible with `--dump-spirv`, `--dump-glsl`, `--dump-hlsl`, and `--dump-constant` options. For example, after creating a simple VGF file, the `--scenario-template` option produces:
 
