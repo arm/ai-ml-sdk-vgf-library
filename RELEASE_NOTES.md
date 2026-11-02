@@ -19,6 +19,8 @@
   C, C++, and Python APIs, `vgf_dump` scenario templates, and `vgf_updater`.
 - New files use VGF 0.6.0.
 - Added an experimental module-code marker for external data-graph binaries.
+- Added experimental external data-graph binary entries to `vgf_dump`
+  scenario templates.
 
 ### Breaking Changes
 
