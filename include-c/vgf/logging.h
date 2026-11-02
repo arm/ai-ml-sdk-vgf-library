@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -49,12 +49,17 @@ typedef enum {
 } mlsdk_logging_log_level;
 
 /**
- * @brief Type definition for the logging callback
+ * @brief Function signature for the logging callback
  *
  * @param logLevel Log level of the message
  * @param message Log message
  */
-typedef void (*mlsdk_logging_callback)(mlsdk_logging_log_level logLevel, const char *message);
+typedef void mlsdk_logging_callback_fn(mlsdk_logging_log_level logLevel, const char *message);
+
+/**
+ * @brief Type definition for the logging callback
+ */
+typedef mlsdk_logging_callback_fn *mlsdk_logging_callback;
 
 /**
  * @brief Enables logging functionality

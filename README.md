@@ -147,6 +147,22 @@ Run build commands with `uv run --no-sync python scripts/build.py` to use the
 locked environment. To build the documentation, add `--doc`. Documentation
 builds also require Doxygen, PlantUML, a Java runtime, and Graphviz.
 
+To build only the documentation without configuring or compiling VGF Library,
+use a separate CMake build directory. This requires CMake 3.25 or later,
+Ninja, Doxygen 1.9.1 or later, the locked Python tooling, PlantUML, Java,
+and Graphviz:
+
+```bash
+uv sync --locked --no-install-project --no-default-groups --group tooling
+uv run --no-sync cmake -S docs -B build-docs -G Ninja
+cmake --build build-docs
+```
+
+Open `build-docs/docs/out/index.html` to view the result. Use a different
+directory with `-B` if needed, and keep native and documentation CMake caches
+separate. The existing `scripts/build.py --doc` path still builds native code
+and documentation.
+
 You can install the build artifacts for this project into a specified location.
 To install the build artifacts, pass the `--install` option with the required
 path.
