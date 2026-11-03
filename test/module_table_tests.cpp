@@ -196,6 +196,30 @@ TEST(CppModuleTable, SingleHLSLModule) {
     ASSERT_TRUE(decoder->getSPIRVModuleCode(module.reference).empty());
 }
 
+TEST(CppModuleTable, ExternalDataGraphBinary) {
+    std::stringstream buffer;
+    auto encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    const auto binary = encoder->DeclareExternalDataGraphBinaryModule("binary_graph");
+    const auto shader = encoder->AddModule(ModuleType::GRAPH, "shader_graph", "main");
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    const std::string data = buffer.str();
+    const auto header = CreateHeaderDecoder(data.data(), HeaderSize(), data.size());
+    ASSERT_NE(header, nullptr);
+    const auto decoder =
+        CreateModuleTableDecoder(data.data() + header->GetModuleTableOffset(), header->GetModuleTableSize());
+    ASSERT_NE(decoder, nullptr);
+    ASSERT_EQ(decoder->size(), 2);
+    EXPECT_EQ(decoder->getModuleType(binary.reference), ModuleType::GRAPH);
+    EXPECT_EQ(decoder->getModuleName(binary.reference), "binary_graph");
+    EXPECT_TRUE(decoder->getModuleEntryPoint(binary.reference).empty());
+    EXPECT_TRUE(decoder->isExternalDataGraphBinary(binary.reference));
+    EXPECT_FALSE(decoder->isSPIRV(binary.reference));
+    EXPECT_FALSE(decoder->isExternalDataGraphBinary(shader.reference));
+    EXPECT_TRUE(decoder->isSPIRV(shader.reference));
+}
+
 TEST(CppVerify, ModuleSizeWrapRejected) {
     Logger logger;
     const uint64_t moduleOffset = 157;
