@@ -204,6 +204,24 @@ Install:
 pip install ai-ml-sdk-vgf-library
 ```
 
+The package installs the `vgf_dump` and `vgf_updater` commands:
+
+```bash
+vgf_dump --help
+vgf_updater --help
+```
+
+These commands forward their arguments to the bundled native executables and
+return their exit codes.
+
+Wheels with Python bindings support standard CPython builds only; free-threaded
+builds such as `cp314t` are not currently supported. Use a standard CPython
+environment, or use the native release archive if you only need the CLI tools.
+On an unsupported interpreter, pip may select an older compatible release.
+Specify the required version with
+`python -m pip install "ai-ml-sdk-vgf-library==<required-version>"` to prevent
+this fallback. Replace `<required-version>` with the release you intend to install.
+
 ## Install from source with pip
 
 From the repository root, install the package with:
