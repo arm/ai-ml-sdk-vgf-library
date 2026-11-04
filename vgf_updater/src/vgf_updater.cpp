@@ -110,11 +110,11 @@ std::vector<ModuleRef> extractModules(const HeaderDecoder &headerDecoder, const 
         const std::string moduleName = std::string(moduleDecoder->getModuleName(i));
         const std::string entryPoint = std::string(moduleDecoder->getModuleEntryPoint(i));
 
-        if (moduleDecoder->hasHLSLCode(i)) {
+        if (moduleDecoder->isHLSL(i)) {
             const std::string_view moduleCode = moduleDecoder->getHLSLModuleCode(i);
             moduleRefs.push_back(
                 encoder.AddModule(moduleType, moduleName, entryPoint, ShaderType::HLSL, std::string(moduleCode)));
-        } else if (moduleDecoder->hasGLSLCode(i)) {
+        } else if (moduleDecoder->isGLSL(i)) {
             const std::string_view moduleCode = moduleDecoder->getGLSLModuleCode(i);
             moduleRefs.push_back(
                 encoder.AddModule(moduleType, moduleName, entryPoint, ShaderType::GLSL, std::string(moduleCode)));
