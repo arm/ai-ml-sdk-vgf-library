@@ -135,3 +135,7 @@ For a block-scaled tensor, the tensor's ``src`` path is for values and its ``blo
   }
 
 For a block-scaled output, both paths use ``dst``.
+
+Every graph segment marked as an external data-graph binary adds a ``raw_data`` path placeholder and a
+``dispatch_graph.data_graph_binaries`` entry to the scenario template. Supply the binary paths and any pipeline
+selectors in the scenario.

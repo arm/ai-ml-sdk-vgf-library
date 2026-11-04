@@ -124,9 +124,9 @@ void to_json(json &j, const Header &header) {
 struct Module {
     Module() = default;
     Module(uint32_t index, ModuleType type, const std::string_view &name, const std::string_view &entryPoint,
-           const std::string_view &shaderType, bool codeAvailable)
+           const std::string_view &shaderType, bool codeAvailable, bool externalDataGraphBinary)
         : mIndex(index), mType(type), mName(name), mEntryPoint(entryPoint), mShaderType(shaderType),
-          mCodeAvailable(codeAvailable) {}
+          mCodeAvailable(codeAvailable), mExternalDataGraphBinary(externalDataGraphBinary) {}
 
     uint32_t mIndex{0};
     ModuleType mType{ModuleType::COMPUTE};
@@ -134,6 +134,7 @@ struct Module {
     std::string mEntryPoint;
     std::string mShaderType;
     bool mCodeAvailable{false};
+    bool mExternalDataGraphBinary{false};
 };
 
 void to_json(json &j, const Module &m) {
@@ -145,6 +146,9 @@ void to_json(json &j, const Module &m) {
         {"shader_type", m.mShaderType},
         {"shader_code_available", m.mCodeAvailable},
     };
+    if (m.mExternalDataGraphBinary) {
+        j["external_data_graph_binary"] = true;
+    }
 }
 
 std::unique_ptr<HeaderDecoder> parseHeader(const void *const headerData, uint64_t size) {
@@ -183,7 +187,7 @@ std::vector<Module> parseModuleTable(const void *const data, uint64_t size) {
         }
 
         modules.emplace_back(i, decoder->getModuleType(i), decoder->getModuleName(i), decoder->getModuleEntryPoint(i),
-                             shaderType, codeAvailable);
+                             shaderType, codeAvailable, decoder->isExternalDataGraphBinary(i));
     }
     return modules;
 }
@@ -812,10 +816,11 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         }
     }
 
+    const auto modules =
+        parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize());
     std::vector<ScenarioShaderSubstitutions> shaderSubstitutions;
     std::vector<ScenarioShaderResource> shaderResources;
-    for (const auto &m :
-         parseModuleTable(mapped.ptr(headerDecoder->GetModuleTableOffset()), headerDecoder->GetModuleTableSize())) {
+    for (const auto &m : modules) {
         if (m.mType == ModuleType::COMPUTE && !m.mCodeAvailable) {
             std::string shaderRef = "shader_" + std::to_string(m.mIndex) + "_ref";
             shaderSubstitutions.emplace_back(shaderRef, std::string(m.mName));
@@ -826,17 +831,38 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         }
     }
 
+    std::vector<json> binaryResources;
+    std::vector<json> dataGraphBinaries;
+    for (uint32_t index = 0; index < modelSequenceDecoder->modelSequenceTableSize(); ++index) {
+        const auto moduleIndex = modelSequenceDecoder->getSegmentModuleIndex(index);
+        requireIndexInBounds(moduleIndex, modules.size(), "Segment", "module index", index);
+        const auto &module = modules[moduleIndex];
+        if (!module.mExternalDataGraphBinary) {
+            continue;
+        }
+        if (modelSequenceDecoder->getSegmentType(index) != ModuleType::GRAPH || module.mType != ModuleType::GRAPH) {
+            throw std::runtime_error("External data-graph binary segment must select a graph: " +
+                                     std::to_string(index));
+        }
+        const std::string uid = "data_graph_binary_" + std::to_string(index) + "_ref";
+        binaryResources.emplace_back(
+            json{{"raw_data", {{"uid", uid}, {"src", "TEMPLATE_PATH_DATA_GRAPH_BINARY_" + std::to_string(index)}}}});
+        dataGraphBinaries.emplace_back(json{{"segment_id", index}, {"binary_ref", uid}});
+    }
     std::vector<json> commands;
     if (add_boundaries) {
         const Boundary boundary({});
         commands.emplace_back(boundary);
     }
-    commands.push_back(json{{"dispatch_graph",
-                             {
-                                 {"bindings", bindings},
-                                 {"shader_substitutions", shaderSubstitutions},
-                                 {"graph_ref", "vgf_graph_ref"},
-                             }}});
+    json dispatch = {
+        {"bindings", bindings},
+        {"shader_substitutions", shaderSubstitutions},
+        {"graph_ref", "vgf_graph_ref"},
+    };
+    if (!dataGraphBinaries.empty()) {
+        dispatch["data_graph_binaries"] = dataGraphBinaries;
+    }
+    commands.push_back(json{{"dispatch_graph", dispatch}});
     if (add_boundaries) {
         const Boundary boundary(outputs);
         commands.emplace_back(boundary);
@@ -855,6 +881,9 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     }
     for (auto &shaderResource : shaderResources) {
         json["resources"].push_back(shaderResource);
+    }
+    for (auto &binaryResource : binaryResources) {
+        json["resources"].push_back(binaryResource);
     }
     json["commands"] = commands;
 
