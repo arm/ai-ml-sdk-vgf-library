@@ -13,12 +13,17 @@
 #include "header.hpp"
 #include "vgf_generated.h"
 
+#define VGFLIB_VK_HELPERS
+#include "vgf/vulkan_helpers.generated.hpp"
+
 #include <gtest/gtest.h>
 
 #include <array>
 #include <optional>
 #include <sstream>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 using namespace mlsdk::vgflib;
@@ -289,6 +294,86 @@ TEST(CppModelResourceTable, ScaledTensorRoundTripAndDefaults) {
     EXPECT_EQ(decoder->getScaledTensorConfigBlockShape(constantHandle),
               DataView<uint32_t>(blockShape.data(), blockShape.size()));
     EXPECT_EQ(decoder->getScaledTensorConfigScaleFormat(constantHandle), ScaleFormat::E8M0);
+}
+
+TEST(CppModelResourceTable, ScaledTensorFormatsRoundTrip) {
+    EXPECT_EQ(blockSize(1000729000), 24);
+    EXPECT_EQ(blockSize(1000729001), 24);
+    EXPECT_EQ(blockSize(1000729002), 16);
+    EXPECT_EQ(NameToFormatType("VK_FORMAT_R8_UFLOAT_FPENCODING_FLOAT8UNSIGNEDE8M0_ARM"), 1000729003);
+    EXPECT_EQ(blockSize(1000729003), 1);
+    struct FormatCase {
+        FormatType format;
+        const char *name;
+        size_t payloadSize;
+    };
+    const std::array<FormatCase, 7> formats{{
+        {1000460002, "VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM", 64},
+        {1000460003, "VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E5M2_ARM", 64},
+        {1000729000, "VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E2M3_ARM", 48},
+        {1000729001, "VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E3M2_ARM", 48},
+        {1000729002, "VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT4E2M1_ARM", 32},
+        {1000729004, "VK_FORMAT_R8_SFLOAT_FPENCODING_MXINT8_ARM", 64},
+        {100, "VK_FORMAT_R32_SFLOAT", 256},
+    }};
+    auto encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    std::vector<BindingSlotRef> inputs;
+    std::vector<BindingSlotRef> outputs;
+    for (const auto &[format, name, payloadSize] : formats) {
+        EXPECT_EQ(FormatTypeToName(format), name);
+        EXPECT_EQ(NameToFormatType(name), format);
+        const auto input = encoder->AddInputResource(VK_DESCRIPTOR_TYPE_TENSOR_ARM, format, {64}, {});
+        const auto output = encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_TENSOR_ARM, format, {64}, {});
+        const auto constant = encoder->AddConstantResource(format, {64}, {});
+        if (format != 100) {
+            for (const auto resource : {input, output, constant}) {
+                encoder->AddScaledTensorConfig(resource, {32}, ScaleFormat::E8M0);
+            }
+        }
+        const std::vector<uint8_t> payload(payloadSize, 0x5a);
+        encoder->AddConstant(constant, payload.data(), payload.size());
+        inputs.push_back(encoder->AddBindingSlot(static_cast<uint32_t>(inputs.size()), input));
+        outputs.push_back(encoder->AddBindingSlot(static_cast<uint32_t>(formats.size() + outputs.size()), output));
+    }
+    encoder->AddModelSequenceInputsOutputs(inputs, {}, outputs, {});
+    encoder->Finish();
+    std::stringstream buffer;
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    const std::string data = buffer.str();
+    const auto header = CreateHeaderDecoder(data.data(), HeaderSize(), data.size());
+    ASSERT_NE(header, nullptr);
+    const auto decoder = CreateModelResourceTableDecoder(data.data() + header->GetModelResourceTableOffset(),
+                                                         header->GetModelResourceTableSize());
+    ASSERT_NE(decoder, nullptr);
+    ASSERT_EQ(decoder->size(), formats.size() * 3);
+    const auto constants =
+        CreateConstantDecoder(data.data() + header->GetConstantsOffset(), header->GetConstantsSize());
+    ASSERT_NE(constants, nullptr);
+    ASSERT_EQ(constants->size(), formats.size());
+    const std::array<uint32_t, 1> blockShape{32};
+    const std::array<ResourceCategory, 3> categories{ResourceCategory::INPUT, ResourceCategory::OUTPUT,
+                                                     ResourceCategory::CONSTANT};
+    for (uint32_t i = 0; i < formats.size(); ++i) {
+        SCOPED_TRACE(formats[i].name);
+        for (uint32_t j = 0; j < categories.size(); ++j) {
+            const uint32_t resourceIndex = (i * 3) + j;
+            EXPECT_EQ(decoder->getCategory(resourceIndex), categories[j]);
+            EXPECT_EQ(decoder->getVkFormat(resourceIndex), formats[i].format);
+            const auto *const handle = decoder->getScaledTensorConfigHandle(resourceIndex);
+            if (formats[i].format == 100) {
+                EXPECT_EQ(handle, nullptr);
+            } else {
+                ASSERT_NE(handle, nullptr);
+                EXPECT_EQ(decoder->getScaledTensorConfigBlockShape(handle),
+                          DataView<uint32_t>(blockShape.data(), blockShape.size()));
+                EXPECT_EQ(decoder->getScaledTensorConfigScaleFormat(handle), ScaleFormat::E8M0);
+            }
+        }
+        const std::vector<uint8_t> payload(formats[i].payloadSize, 0x5a);
+        EXPECT_EQ(constants->getConstantMrtIndex(i), (i * 3) + 2);
+        EXPECT_EQ(constants->getConstant(i), DataView<uint8_t>(payload.data(), payload.size()));
+    }
 }
 
 TEST(CppModelResourceTable, AliasGroupRoundTripAndLateAssignment) {

@@ -26,7 +26,7 @@
 namespace mlsdk::vgflib {
 
 // Record the VK_HEADER_VERSION from the vulkan_core.h used to generate this file
-const int32_t HEADER_VERSION_USED_FOR_HELPER_GENERATION = 345;
+const int32_t HEADER_VERSION_USED_FOR_HELPER_GENERATION = 354;
 
 #if defined(VGFLIB_VK_HELPERS)
 using VkDescriptorType = int32_t;
@@ -80,6 +80,10 @@ inline std::string DescriptorTypeToName(DescriptorType e) {
         return "VK_DESCRIPTOR_TYPE_TENSOR_ARM";
     case 1000351000:
         return "VK_DESCRIPTOR_TYPE_MUTABLE_EXT / VK_DESCRIPTOR_TYPE_MUTABLE_VALVE";
+    case 1000570000:
+        return "VK_DESCRIPTOR_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_NV";
+    case 1000658000:
+        return "VK_DESCRIPTOR_TYPE_NEURAL_ACCELERATOR_WEIGHTS_ARM";
     case 0x7FFFFFFF:
         return "VK_DESCRIPTOR_TYPE_MAX_ENUM";
     default: {
@@ -146,6 +150,18 @@ inline DescriptorType NameToDescriptorType(const std::string &str) {
     if (str == "VK_DESCRIPTOR_TYPE_MUTABLE_EXT") {
         return 1000351000;
     }
+    if (str == "VK_DESCRIPTOR_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_NV") {
+        return 1000570000;
+    }
+    if (str == "VK_DESCRIPTOR_TYPE_NEURAL_ACCELERATOR_WEIGHTS_ARM") {
+        return 1000658000;
+    }
+    if (str == "VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT") {
+        return 1000138000;
+    }
+    if (str == "VK_DESCRIPTOR_TYPE_MUTABLE_VALVE") {
+        return 1000351000;
+    }
     if (str == "VK_DESCRIPTOR_TYPE_MAX_ENUM") {
         return 0x7FFFFFFF;
     }
@@ -177,6 +193,8 @@ inline bool ValidateDecodedDescriptorType(DescriptorType e) {
     case 1000440001: // VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM
     case 1000460000: // VK_DESCRIPTOR_TYPE_TENSOR_ARM
     case 1000351000: // VK_DESCRIPTOR_TYPE_MUTABLE_EXT / VK_DESCRIPTOR_TYPE_MUTABLE_VALVE
+    case 1000570000: // VK_DESCRIPTOR_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_NV
+    case 1000658000: // VK_DESCRIPTOR_TYPE_NEURAL_ACCELERATOR_WEIGHTS_ARM
     case 0x7FFFFFFF: // VK_DESCRIPTOR_TYPE_MAX_ENUM
         return true;
     default:
@@ -829,6 +847,16 @@ inline std::string FormatTypeToName(FormatType e) {
         return "VK_FORMAT_G14X2_B14X2R14X2_2PLANE_422_UNORM_3PACK16_ARM";
     case 1000658000:
         return "VK_FORMAT_SBS80_ARM";
+    case 1000729000:
+        return "VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E2M3_ARM";
+    case 1000729001:
+        return "VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E3M2_ARM";
+    case 1000729002:
+        return "VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT4E2M1_ARM";
+    case 1000729003:
+        return "VK_FORMAT_R8_UFLOAT_FPENCODING_FLOAT8UNSIGNEDE8M0_ARM";
+    case 1000729004:
+        return "VK_FORMAT_R8_SFLOAT_FPENCODING_MXINT8_ARM";
     case 0x7FFFFFFF:
         return "VK_FORMAT_MAX_ENUM";
     default: {
@@ -1738,6 +1766,192 @@ inline FormatType NameToFormatType(const std::string &str) {
     if (str == "VK_FORMAT_SBS80_ARM") {
         return 1000658000;
     }
+    if (str == "VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E2M3_ARM") {
+        return 1000729000;
+    }
+    if (str == "VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E3M2_ARM") {
+        return 1000729001;
+    }
+    if (str == "VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT4E2M1_ARM") {
+        return 1000729002;
+    }
+    if (str == "VK_FORMAT_R8_UFLOAT_FPENCODING_FLOAT8UNSIGNEDE8M0_ARM") {
+        return 1000729003;
+    }
+    if (str == "VK_FORMAT_R8_SFLOAT_FPENCODING_MXINT8_ARM") {
+        return 1000729004;
+    }
+    if (str == "VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK_EXT") {
+        return 1000066000;
+    }
+    if (str == "VK_FORMAT_ASTC_5x4_SFLOAT_BLOCK_EXT") {
+        return 1000066001;
+    }
+    if (str == "VK_FORMAT_ASTC_5x5_SFLOAT_BLOCK_EXT") {
+        return 1000066002;
+    }
+    if (str == "VK_FORMAT_ASTC_6x5_SFLOAT_BLOCK_EXT") {
+        return 1000066003;
+    }
+    if (str == "VK_FORMAT_ASTC_6x6_SFLOAT_BLOCK_EXT") {
+        return 1000066004;
+    }
+    if (str == "VK_FORMAT_ASTC_8x5_SFLOAT_BLOCK_EXT") {
+        return 1000066005;
+    }
+    if (str == "VK_FORMAT_ASTC_8x6_SFLOAT_BLOCK_EXT") {
+        return 1000066006;
+    }
+    if (str == "VK_FORMAT_ASTC_8x8_SFLOAT_BLOCK_EXT") {
+        return 1000066007;
+    }
+    if (str == "VK_FORMAT_ASTC_10x5_SFLOAT_BLOCK_EXT") {
+        return 1000066008;
+    }
+    if (str == "VK_FORMAT_ASTC_10x6_SFLOAT_BLOCK_EXT") {
+        return 1000066009;
+    }
+    if (str == "VK_FORMAT_ASTC_10x8_SFLOAT_BLOCK_EXT") {
+        return 1000066010;
+    }
+    if (str == "VK_FORMAT_ASTC_10x10_SFLOAT_BLOCK_EXT") {
+        return 1000066011;
+    }
+    if (str == "VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK_EXT") {
+        return 1000066012;
+    }
+    if (str == "VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK_EXT") {
+        return 1000066013;
+    }
+    if (str == "VK_FORMAT_G8B8G8R8_422_UNORM_KHR") {
+        return 1000156000;
+    }
+    if (str == "VK_FORMAT_B8G8R8G8_422_UNORM_KHR") {
+        return 1000156001;
+    }
+    if (str == "VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM_KHR") {
+        return 1000156002;
+    }
+    if (str == "VK_FORMAT_G8_B8R8_2PLANE_420_UNORM_KHR") {
+        return 1000156003;
+    }
+    if (str == "VK_FORMAT_G8_B8_R8_3PLANE_422_UNORM_KHR") {
+        return 1000156004;
+    }
+    if (str == "VK_FORMAT_G8_B8R8_2PLANE_422_UNORM_KHR") {
+        return 1000156005;
+    }
+    if (str == "VK_FORMAT_G8_B8_R8_3PLANE_444_UNORM_KHR") {
+        return 1000156006;
+    }
+    if (str == "VK_FORMAT_R10X6_UNORM_PACK16_KHR") {
+        return 1000156007;
+    }
+    if (str == "VK_FORMAT_R10X6G10X6_UNORM_2PACK16_KHR") {
+        return 1000156008;
+    }
+    if (str == "VK_FORMAT_R10X6G10X6B10X6A10X6_UNORM_4PACK16_KHR") {
+        return 1000156009;
+    }
+    if (str == "VK_FORMAT_G10X6B10X6G10X6R10X6_422_UNORM_4PACK16_KHR") {
+        return 1000156010;
+    }
+    if (str == "VK_FORMAT_B10X6G10X6R10X6G10X6_422_UNORM_4PACK16_KHR") {
+        return 1000156011;
+    }
+    if (str == "VK_FORMAT_G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16_KHR") {
+        return 1000156012;
+    }
+    if (str == "VK_FORMAT_G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16_KHR") {
+        return 1000156013;
+    }
+    if (str == "VK_FORMAT_G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16_KHR") {
+        return 1000156014;
+    }
+    if (str == "VK_FORMAT_G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16_KHR") {
+        return 1000156015;
+    }
+    if (str == "VK_FORMAT_G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16_KHR") {
+        return 1000156016;
+    }
+    if (str == "VK_FORMAT_R12X4_UNORM_PACK16_KHR") {
+        return 1000156017;
+    }
+    if (str == "VK_FORMAT_R12X4G12X4_UNORM_2PACK16_KHR") {
+        return 1000156018;
+    }
+    if (str == "VK_FORMAT_R12X4G12X4B12X4A12X4_UNORM_4PACK16_KHR") {
+        return 1000156019;
+    }
+    if (str == "VK_FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16_KHR") {
+        return 1000156020;
+    }
+    if (str == "VK_FORMAT_B12X4G12X4R12X4G12X4_422_UNORM_4PACK16_KHR") {
+        return 1000156021;
+    }
+    if (str == "VK_FORMAT_G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16_KHR") {
+        return 1000156022;
+    }
+    if (str == "VK_FORMAT_G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16_KHR") {
+        return 1000156023;
+    }
+    if (str == "VK_FORMAT_G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16_KHR") {
+        return 1000156024;
+    }
+    if (str == "VK_FORMAT_G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16_KHR") {
+        return 1000156025;
+    }
+    if (str == "VK_FORMAT_G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16_KHR") {
+        return 1000156026;
+    }
+    if (str == "VK_FORMAT_G16B16G16R16_422_UNORM_KHR") {
+        return 1000156027;
+    }
+    if (str == "VK_FORMAT_B16G16R16G16_422_UNORM_KHR") {
+        return 1000156028;
+    }
+    if (str == "VK_FORMAT_G16_B16_R16_3PLANE_420_UNORM_KHR") {
+        return 1000156029;
+    }
+    if (str == "VK_FORMAT_G16_B16R16_2PLANE_420_UNORM_KHR") {
+        return 1000156030;
+    }
+    if (str == "VK_FORMAT_G16_B16_R16_3PLANE_422_UNORM_KHR") {
+        return 1000156031;
+    }
+    if (str == "VK_FORMAT_G16_B16R16_2PLANE_422_UNORM_KHR") {
+        return 1000156032;
+    }
+    if (str == "VK_FORMAT_G16_B16_R16_3PLANE_444_UNORM_KHR") {
+        return 1000156033;
+    }
+    if (str == "VK_FORMAT_G8_B8R8_2PLANE_444_UNORM_EXT") {
+        return 1000330000;
+    }
+    if (str == "VK_FORMAT_G10X6_B10X6R10X6_2PLANE_444_UNORM_3PACK16_EXT") {
+        return 1000330001;
+    }
+    if (str == "VK_FORMAT_G12X4_B12X4R12X4_2PLANE_444_UNORM_3PACK16_EXT") {
+        return 1000330002;
+    }
+    if (str == "VK_FORMAT_G16_B16R16_2PLANE_444_UNORM_EXT") {
+        return 1000330003;
+    }
+    if (str == "VK_FORMAT_A4R4G4B4_UNORM_PACK16_EXT") {
+        return 1000340000;
+    }
+    if (str == "VK_FORMAT_A4B4G4R4_UNORM_PACK16_EXT") {
+        return 1000340001;
+    }
+    if (str == "VK_FORMAT_R16G16_S10_5_NV") {
+        return 1000464000;
+    }
+    if (str == "VK_FORMAT_A1B5G5R5_UNORM_PACK16_KHR") {
+        return 1000470000;
+    }
+    if (str == "VK_FORMAT_A8_UNORM_KHR") {
+        return 1000470001;
+    }
     if (str == "VK_FORMAT_MAX_ENUM") {
         return 0x7FFFFFFF;
     }
@@ -2066,6 +2280,11 @@ inline bool ValidateDecodedFormatType(FormatType e) {
     case 1000609012: // VK_FORMAT_G14X2_B14X2R14X2_2PLANE_420_UNORM_3PACK16_ARM
     case 1000609013: // VK_FORMAT_G14X2_B14X2R14X2_2PLANE_422_UNORM_3PACK16_ARM
     case 1000658000: // VK_FORMAT_SBS80_ARM
+    case 1000729000: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E2M3_ARM
+    case 1000729001: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E3M2_ARM
+    case 1000729002: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT4E2M1_ARM
+    case 1000729003: // VK_FORMAT_R8_UFLOAT_FPENCODING_FLOAT8UNSIGNEDE8M0_ARM
+    case 1000729004: // VK_FORMAT_R8_SFLOAT_FPENCODING_MXINT8_ARM
     case 0x7FFFFFFF: // VK_FORMAT_MAX_ENUM
         return true;
     default:
@@ -2406,6 +2625,16 @@ inline uint8_t blockSize(FormatType e) {
         return 2;
     case 1000658000:
         return 10;
+    case 1000729000:
+        return 24;
+    case 1000729001:
+        return 24;
+    case 1000729002:
+        return 16;
+    case 1000729003:
+        return 1;
+    case 1000729004:
+        return 1;
 
     default:
         return 0;
@@ -2495,6 +2724,16 @@ inline std::string componentNumericFormat(FormatType e) {
         return "UNORM";
     case 1000658000:
         return "UINT";
+    case 1000729000:
+        return "SFLOAT";
+    case 1000729001:
+        return "SFLOAT";
+    case 1000729002:
+        return "SFLOAT";
+    case 1000729003:
+        return "UFLOAT";
+    case 1000729004:
+        return "SFLOAT";
 
     default:
         return "";
