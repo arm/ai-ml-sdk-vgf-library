@@ -6,6 +6,8 @@
 
 ### Bug Fixes
 
+- Fixed `vgf_updater` to preserve GLSL and HLSL shader placeholders when
+  upgrading files.
 - Fixed `vgf_dump --scenario-template` to generate shader placeholders only
   for compute modules without embedded code.
 - Fixed VGF encoding reporting success when writing an empty constant section
