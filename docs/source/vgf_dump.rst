@@ -50,7 +50,11 @@ This option outputs the HLSL module code at the given module index to stdout. `-
 -----------------
 
 This option outputs the contents of the constant at the given index to stdout.
-If the `--output <file.npy>` option is provided, the contents will be saved to the specified NumPy file.
+If the `--output <file.npy>` option is provided, the contents are saved to the specified NumPy file.
+For a block-scaled constant, `--output weights.npy` writes values to `weights.npy`
+and E8M0 scales to `weights_scale.npy` in the same directory.
+The files preserve encoded bytes. For FP4/FP6, the NumPy value shape describes the packed byte layout.
+Use `--output <file.bin>` to save raw bytes, or omit `--output` to write them to stdout.
 
 `--dump-constant` is incompatible with `--dump-spirv`, `--dump-glsl`, `--dump-hlsl`, and `--scenario-template` options.
 

@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
         outputGroup.add_argument("--dump-hlsl").help("Dump the HLSL module code at the given index").scan<'i', int>();
         outputGroup.add_argument("--dump-constant")
             .help("Dump the constant at the given index. Outputs NumPy file if output file is .npy, "
-                  "otherwise dumps as raw binary.")
+                  "otherwise dumps as raw binary. Block-scaled NumPy output also writes <stem>_scale.npy.")
             .scan<'i', int>();
         outputGroup.add_argument("--scenario-template")
             .help("Create a scenario template based on the VGF")

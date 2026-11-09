@@ -587,6 +587,63 @@ std::unique_ptr<ModuleTableDecoder> getModuleTableDecoder(MemoryMap &mapped, uin
     }
     return decoder;
 }
+
+size_t scaledPayloadSize(const std::vector<int64_t> &shape, size_t availableBytes) {
+    size_t size = 1;
+    for (const auto dimension : shape) {
+        if (dimension <= 0 || static_cast<uint64_t>(dimension) > availableBytes / size) {
+            throw std::runtime_error("Block-scaled constant payload size does not match its shape and format");
+        }
+        size *= static_cast<size_t>(dimension);
+    }
+    return size;
+}
+
+void dumpScaledNumpy(const std::string &outputFile, FormatType format, std::vector<int64_t> valueShape,
+                     DataView<uint32_t> blockShape, DataView<uint8_t> data) {
+    auto scaleShape = valueShape;
+    for (uint32_t i = 0; i < blockShape.size(); ++i) {
+        scaleShape[scaleShape.size() - blockShape.size() + i] /= blockShape[i];
+    }
+
+    vgfutils::numpy::DType valueType{'u', 1, '|'};
+    uint32_t valuesPerGroup = 1;
+    uint32_t bytesPerGroup = 1;
+    switch (format) {
+    case 1000460002: // VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E4M3_ARM
+        valueType = {'V', 1, '<'};
+        break;
+    case 1000460003: // VK_FORMAT_R8_SFLOAT_FPENCODING_FLOAT8E5M2_ARM
+    case 1000729004: // VK_FORMAT_R8_SFLOAT_FPENCODING_MXINT8_ARM
+        break;
+    case 1000729000: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E2M3_ARM
+    case 1000729001: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E3M2_ARM
+        valuesPerGroup = 4;
+        bytesPerGroup = 3;
+        break;
+    case 1000729002: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT4E2M1_ARM
+        valuesPerGroup = 2;
+        break;
+    default:
+        throw std::runtime_error("NumPy export does not support this block-scaled value format");
+    }
+    if (valueShape.back() % valuesPerGroup != 0) {
+        throw std::runtime_error("Block-scaled constant rows must contain whole packed value groups");
+    }
+    // TOSA NumPy files keep FP4/FP6 packed and describe the stored byte dimensions.
+    valueShape.back() = valueShape.back() / valuesPerGroup * bytesPerGroup;
+    const auto valueSize = scaledPayloadSize(valueShape, data.size());
+    const auto scaleSize = scaledPayloadSize(scaleShape, data.size() - valueSize);
+    if (scaleSize != data.size() - valueSize) {
+        throw std::runtime_error("Block-scaled constant payload size does not match its shape and format");
+    }
+
+    const std::filesystem::path valuePath(outputFile);
+    const auto scalePath = valuePath.parent_path() / (valuePath.stem().string() + "_scale.npy");
+    const auto *bytes = reinterpret_cast<const char *>(data.data());
+    vgfutils::numpy::write(outputFile, {bytes, valueShape, valueType});
+    vgfutils::numpy::write(scalePath.string(), {bytes + valueSize, scaleShape, {'V', 1, '<'}});
+}
 } // namespace
 
 namespace vgf_dump {
@@ -678,6 +735,13 @@ void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint
     const auto mrtIndex = constantDecoder->getConstantMrtIndex(index);
     requireIndexInBounds(mrtIndex, mrtDecoder->size(), "Constant", "MRT index", index);
     const auto format = mrtDecoder->getVkFormat(mrtIndex);
+    const auto shapeView = mrtDecoder->getTensorShape(mrtIndex);
+    const std::vector<int64_t> shape(shapeView.begin(), shapeView.end());
+    const auto data = constantDecoder->getConstant(index);
+    if (const auto *const scaledConfig = mrtDecoder->getScaledTensorConfigHandle(mrtIndex)) {
+        dumpScaledNumpy(outputFile, format, shape, mrtDecoder->getScaledTensorConfigBlockShape(scaledConfig), data);
+        return;
+    }
     switch (format) {
     case 1000729000: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E2M3_ARM
     case 1000729001: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E3M2_ARM
@@ -688,10 +752,6 @@ void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint
     default:
         break;
     }
-    const auto shapeView = mrtDecoder->getTensorShape(mrtIndex);
-    const std::vector<int64_t> shape(shapeView.begin(), shapeView.end());
-    const auto data = constantDecoder->getConstant(index);
-
     const auto numeric = componentNumericFormat(format);
     const auto encoding = vgfutils::numpy::numpyTypeEncoding(numeric);
     const auto itemsize = vgfutils::numpy::elementSizeFromBlockSize(blockSize(format));

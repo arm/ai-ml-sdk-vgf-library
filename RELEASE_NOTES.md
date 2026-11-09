@@ -17,6 +17,8 @@
 
 ### Highlights
 
+- Added paired NumPy export of block-scaled constant values and E8M0 scales
+  through `vgf_dump --dump-constant`.
 - Added `vgf_dump --scenario-template-no-placeholders` to omit tensor and buffer
   input/output file paths when generating a scenario template.
 - Added a VGF utility for mapping model-interface binding IDs to resource-table
