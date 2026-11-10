@@ -3,30 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-# Shared by the native project and the standalone documentation project.
 get_filename_component(VGF_REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set(VGF_DOCS_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(VGF_DOCS_DIR "${VGF_DOCS_BINARY_DIR}/docs")
 list(APPEND CMAKE_MODULE_PATH "${VGF_REPO_ROOT}/cmake")
 
-if(VGF_DOCS_STANDALONE)
-    find_package(Doxygen 1.9.1 REQUIRED)
-    find_package(Sphinx REQUIRED)
-else()
-    find_package(Doxygen)
-    find_package(Sphinx)
-    if(NOT DOXYGEN_FOUND OR NOT SPHINX_FOUND)
-        message(STATUS "Doxygen or Sphinx is not available. Cannot generate documentation.")
-        return()
-    endif()
-    if(CMAKE_CROSSCOMPILING)
-        message(WARNING "Cannot build the documentation when cross-compiling. Skipping.")
-        return()
-    endif()
-    if(NOT TARGET vgfpy)
-        message(FATAL_ERROR "Python API documentation requires ML_SDK_VGF_LIB_BUILD_PYLIB.")
-    endif()
-endif()
+find_package(Doxygen 1.9.1 REQUIRED)
+find_package(Sphinx REQUIRED)
 
 set(SPHINX_SRC_DIR_IN "${VGF_REPO_ROOT}/docs/source")
 set(SPHINX_SRC_DIR "${VGF_DOCS_DIR}/in")
@@ -55,10 +38,15 @@ foreach(SRC_IN IN LISTS DOC_SRC_FILES)
     list(APPEND DOC_STAGED_FILES "${DOC_SOURCE_FILE}")
 endforeach()
 
-file(GLOB_RECURSE DOC_CODE_FILES CONFIGURE_DEPENDS LIST_DIRECTORIES false
+# Stage public headers for the combined SDK reference and the four test
+# snippets rendered by literalinclude in the VGF API pages.
+file(GLOB DOC_CODE_FILES CONFIGURE_DEPENDS LIST_DIRECTORIES false
     RELATIVE "${VGF_REPO_ROOT}"
-    "${VGF_REPO_ROOT}/include/*" "${VGF_REPO_ROOT}/include-c/*"
-    "${VGF_REPO_ROOT}/test/*")
+    "${VGF_REPO_ROOT}/include/vgf/*.h" "${VGF_REPO_ROOT}/include/vgf/*.hpp"
+    "${VGF_REPO_ROOT}/include-c/vgf/*.h" "${VGF_REPO_ROOT}/include-c/vgf/*.hpp")
+list(APPEND DOC_CODE_FILES
+    test/header_tests.cpp test/model_sequence_tests.cpp
+    test/model_resource_tests.cpp test/module_table_tests.cpp)
 foreach(SRC_IN IN LISTS DOC_CODE_FILES)
     set(DOC_SOURCE_FILE "${SPHINX_SOURCES_DIR}/${SRC_IN}")
     configure_file("${VGF_REPO_ROOT}/${SRC_IN}" "${DOC_SOURCE_FILE}" COPYONLY)
@@ -70,7 +58,7 @@ file(GLOB DOC_CODE_FILES_DOXYGEN CONFIGURE_DEPENDS LIST_DIRECTORIES false
     "${VGF_REPO_ROOT}/include/vgf/*" "${VGF_REPO_ROOT}/include-c/vgf/*")
 set(DOC_DOXYGEN_FILES)
 foreach(DOC_SOURCE_FILE IN LISTS DOC_CODE_FILES_DOXYGEN)
-    if(DOC_SOURCE_FILE MATCHES "\\.(c|cpp|h|hpp|md|dox)$")
+    if(DOC_SOURCE_FILE MATCHES "\\.(h|hpp)$")
         list(APPEND DOC_DOXYGEN_FILES "${DOC_SOURCE_FILE}")
     endif()
 endforeach()
