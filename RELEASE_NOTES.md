@@ -17,6 +17,8 @@
 
 ### Highlights
 
+- Added `vgf_dump --scenario-template-no-placeholders` to omit tensor and buffer
+  input/output file paths when generating a scenario template.
 - Added experimental support for block-scaled tensor resource metadata in the
   C, C++, and Python APIs, `vgf_dump` scenario templates, and `vgf_updater`.
 - New files use VGF 0.6.0.

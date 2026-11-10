@@ -20,7 +20,8 @@ void dumpConstant(const std::string &inputFile, const std::string &outputFile, u
 
 void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint32_t index);
 
-void dumpScenario(const std::string &inputFile, const std::string &outputFile, bool add_boundaries);
+void dumpScenario(const std::string &inputFile, const std::string &outputFile, bool addBoundaries,
+                  bool noPlaceholders = false);
 
 void dumpFile(const std::string &inputFile, const std::string &outputFile);
 
@@ -32,7 +33,7 @@ void getHlsl(const std::string &inputFile, uint32_t index, const std::function<v
 void getConstant(const std::string &inputFile, uint32_t index,
                  const std::function<void(const uint8_t *, size_t)> &callback);
 
-nlohmann::json getScenario(const std::string &inputFile, bool add_boundaries);
+nlohmann::json getScenario(const std::string &inputFile, bool addBoundaries, bool noPlaceholders = false);
 
 nlohmann::json getFile(const std::string &inputFile);
 

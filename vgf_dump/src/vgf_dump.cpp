@@ -689,8 +689,9 @@ void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint
     vgfutils::numpy::write(outputFile, reinterpret_cast<const char *>(data.begin()), shape, encoding, itemsize);
 }
 
-void dumpScenario(const std::string &inputFile, const std::string &outputFile, bool add_boundaries) {
-    json json = getScenario(inputFile, add_boundaries);
+void dumpScenario(const std::string &inputFile, const std::string &outputFile, bool addBoundaries,
+                  bool noPlaceholders) {
+    json json = getScenario(inputFile, addBoundaries, noPlaceholders);
     writeOutputJSON(outputFile, json);
 }
 
@@ -720,7 +721,7 @@ void getConstant(const std::string &inputFile, uint32_t index,
     callback(data.data(), data.size());
 }
 
-json getScenario(const std::string &inputFile, bool add_boundaries) {
+json getScenario(const std::string &inputFile, bool addBoundaries, bool noPlaceholders) {
     MemoryMap mapped(inputFile);
 
     std::unique_ptr<HeaderDecoder> headerDecoder = parseHeader(mapped.ptr(), static_cast<uint64_t>(mapped.size()));
@@ -850,7 +851,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         dataGraphBinaries.emplace_back(json{{"segment_id", index}, {"binary_ref", uid}});
     }
     std::vector<json> commands;
-    if (add_boundaries) {
+    if (addBoundaries) {
         const Boundary boundary({});
         commands.emplace_back(boundary);
     }
@@ -863,7 +864,7 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
         dispatch["data_graph_binaries"] = dataGraphBinaries;
     }
     commands.push_back(json{{"dispatch_graph", dispatch}});
-    if (add_boundaries) {
+    if (addBoundaries) {
         const Boundary boundary(outputs);
         commands.emplace_back(boundary);
     }
@@ -873,11 +874,20 @@ json getScenario(const std::string &inputFile, bool add_boundaries) {
     for (auto &graphResource : graphResources) {
         json["resources"].push_back(graphResource);
     }
-    for (auto &tensorResource : tensorResources) {
-        json["resources"].push_back(tensorResource);
+    for (nlohmann::json resource : tensorResources) {
+        if (noPlaceholders) {
+            auto &tensor = resource["tensor"];
+            tensor.erase("src");
+            tensor.erase("dst");
+        }
+        json["resources"].push_back(std::move(resource));
     }
-    for (auto &bufferResource : bufferResources) {
-        json["resources"].push_back(bufferResource);
+    for (nlohmann::json resource : bufferResources) {
+        if (noPlaceholders) {
+            resource["buffer"].erase("src");
+            resource["buffer"].erase("dst");
+        }
+        json["resources"].push_back(std::move(resource));
     }
     for (auto &shaderResource : shaderResources) {
         json["resources"].push_back(shaderResource);
