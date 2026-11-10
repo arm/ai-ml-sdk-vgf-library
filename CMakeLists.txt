@@ -63,7 +63,6 @@ configure_file(
 
 #########################################################################################
 # Options
-option(ML_SDK_VGF_LIB_BUILD_DOCS "Build Documentation" OFF)
 option(ML_SDK_VGF_LIB_BUILD_PYLIB "Build VGF Python Lib" OFF)
 option(ML_SDK_VGF_LIB_BUILD_TESTS "Build Format unit tests" OFF)
 option(ML_SDK_VGF_LIB_BUILD_TOOLS "Build VGF tools" ON)
@@ -99,11 +98,6 @@ if(ANDROID)
     )
 endif()
 
-if((ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS) AND NOT CMAKE_CROSSCOMPILING)
-    # Sphinx autodoc imports vgfpy to generate the Python API reference.
-    set(ML_SDK_VGF_LIB_BUILD_PYLIB ON CACHE BOOL "Build VGF Python Lib" FORCE)
-endif()
-
 add_subdirectory(schema)
 add_subdirectory(utils)
 add_subdirectory(src)
@@ -116,16 +110,11 @@ if(ML_SDK_VGF_LIB_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
-if(ML_SDK_VGF_LIB_BUILD_TOOLS OR ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)
+if(ML_SDK_VGF_LIB_BUILD_TOOLS)
     add_subdirectory(vgf_dump)
     add_subdirectory(vgf_updater)
     add_subdirectory(vgf_fuzzer)
 endif()
-
-if(ML_SDK_BUILD_DOCS OR ML_SDK_VGF_LIB_BUILD_DOCS)
-    include(docs/docs.cmake)
-endif()
-unset(ML_SDK_VGF_LIB_BUILD_DOCS CACHE)
 
 ###############################################################################
 # Packaging

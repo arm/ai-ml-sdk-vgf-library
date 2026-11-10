@@ -76,8 +76,6 @@ class Builder:
         self.run_tests = args.test or self.coverage
         self.lint = args.lint
         self.build_type = args.build_type
-        self.doc_only = args.doc_only
-        self.doc = args.doc or self.doc_only
         self.target_platform = args.target_platform
         self.cmake_toolchain_for_android = args.cmake_toolchain_for_android
         self.argparse_path = args.argparse_path
@@ -99,7 +97,7 @@ class Builder:
         self.package_source_tgz = "source-tgz" in args.package_type
         self.package_source_zip = "source-zip" in args.package_type
 
-        self.build_pylib = args.build_pylib or self.run_tests or self.doc
+        self.build_pylib = args.build_pylib or self.run_tests
 
         if self.package_release_pip:
             self.package_pip = True
@@ -243,9 +241,6 @@ class Builder:
         if self.lint:
             cmake_setup_cmd.append("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
 
-        if self.doc:
-            cmake_setup_cmd.append("-DML_SDK_VGF_LIB_BUILD_DOCS=ON")
-
         cmake_setup_cmd.append(f"-DARGPARSE_PATH={self.argparse_path}")
         cmake_setup_cmd.append(f"-DJSON_PATH={self.json_path}")
         cmake_setup_cmd.append(f"-DGTEST_PATH={self.gtest_path}")
@@ -300,9 +295,6 @@ class Builder:
             "--config",
             self.build_type,
         ]
-        if self.doc_only:
-            cmake_build_cmd.extend(["--target", "vgf_doc"])
-
         try:
             subprocess.run(cmake_setup_cmd, check=True)
             subprocess.run(cmake_build_cmd, check=True)
@@ -565,19 +557,6 @@ def parse_arguments():
         "--build-type",
         help="Type of build to perform. Default: %(default)s",
         default="Release",
-    )
-    doc_group = parser.add_mutually_exclusive_group()
-    doc_group.add_argument(
-        "--doc",
-        help="Build documentation. Default: %(default)s",
-        action="store_true",
-        default=False,
-    )
-    doc_group.add_argument(
-        "--doc-only",
-        help="Only build documentation. Default: %(default)s",
-        action="store_true",
-        default=False,
     )
     parser.add_argument(
         "--target-platform",

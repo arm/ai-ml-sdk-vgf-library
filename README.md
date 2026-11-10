@@ -136,16 +136,14 @@ python3 $SDK_PATH/sw/vgf-lib/scripts/build.py -j $(nproc) --target-platform aarc
 ```
 
 To enable and run tests, use the `--test` option. To lint the tests, use the
-`--lint` option. To enable tests and documentation building python dependencies
-must be installed:
+`--lint` option. To enable test Python dependencies, run:
 
 ```bash
 uv sync --locked --no-install-project --no-default-groups --group test --group tooling
 ```
 
 Run build commands with `uv run --no-sync python scripts/build.py` to use the
-locked environment. To build the documentation, add `--doc`. Documentation
-builds also require Doxygen, PlantUML, a Java runtime, and Graphviz.
+locked environment.
 
 To build only the documentation without configuring or compiling VGF Library,
 use a separate CMake build directory. This requires CMake 3.25 or later,
@@ -160,8 +158,7 @@ cmake --build build-docs
 
 Open `build-docs/docs/out/index.html` to view the result. Use a different
 directory with `-B` if needed, and keep native and documentation CMake caches
-separate. The existing `scripts/build.py --doc` path still builds native code
-and documentation.
+separate.
 
 You can install the build artifacts for this project into a specified location.
 To install the build artifacts, pass the `--install` option with the required
