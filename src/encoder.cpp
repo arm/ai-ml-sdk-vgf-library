@@ -318,7 +318,15 @@ class EncoderImpl : public Encoder {
             logging::error(message);
             encodingFailed_ = true;
         };
+        if (scaleFormat != ScaleFormat::E8M0) {
+            reject("Unsupported scaled tensor scale format");
+            return;
+        }
         auto &record = resourceRecords_[resource.reference];
+        if (!isSupportedScaledTensorValueFormat(record.vkFormat)) {
+            reject("Unsupported scaled tensor value format: " + FormatTypeToName(record.vkFormat));
+            return;
+        }
         if (record.category != ResourceCategory::CONSTANT &&
             record.vkDescriptorType != NameToDescriptorType("VK_DESCRIPTOR_TYPE_TENSOR_ARM")) {
             reject("Scaled tensor metadata requires a tensor resource");

@@ -678,6 +678,16 @@ void dumpNumpy(const std::string &inputFile, const std::string &outputFile, uint
     const auto mrtIndex = constantDecoder->getConstantMrtIndex(index);
     requireIndexInBounds(mrtIndex, mrtDecoder->size(), "Constant", "MRT index", index);
     const auto format = mrtDecoder->getVkFormat(mrtIndex);
+    switch (format) {
+    case 1000729000: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E2M3_ARM
+    case 1000729001: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT6E3M2_ARM
+    case 1000729002: // VK_FORMAT_OCPMXFP_32_SFLOAT_BLOCK_FPENCODING_FLOAT4E2M1_ARM
+    case 1000729003: // VK_FORMAT_R8_UFLOAT_FPENCODING_FLOAT8UNSIGNEDE8M0_ARM
+    case 1000729004: // VK_FORMAT_R8_SFLOAT_FPENCODING_MXINT8_ARM
+        throw std::runtime_error("NumPy export does not support microscaled tensor formats");
+    default:
+        break;
+    }
     const auto shapeView = mrtDecoder->getTensorShape(mrtIndex);
     const std::vector<int64_t> shape(shapeView.begin(), shapeView.end());
     const auto data = constantDecoder->getConstant(index);

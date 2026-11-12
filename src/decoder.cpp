@@ -267,6 +267,12 @@ template <> bool VerifySemantic<VGF::ModelResourceTable>(const VGF::ModelResourc
                            std::to_string(i));
             return false;
         }
+        const auto valueFormat = static_cast<FormatType>(entry->vk_format());
+        if (!isSupportedScaledTensorValueFormat(valueFormat)) {
+            logging::error("VerifyModelResourceTable: unsupported scaled tensor value format: " +
+                           FormatTypeToName(valueFormat) + " with E8M0 at index " + std::to_string(i));
+            return false;
+        }
     }
 
     return true;
