@@ -38,6 +38,11 @@ int main(int argc, char *argv[]) {
             .default_value(false)
             .implicit_value(true);
 
+        parser.add_argument("--scenario-template-no-placeholders")
+            .help("If creating a scenario template, omit tensor and buffer input/output file paths")
+            .default_value(false)
+            .implicit_value(true);
+
         parser.parse_args(argc, argv);
 
         std::string input = parser.get("--input");
@@ -56,7 +61,8 @@ int main(int argc, char *argv[]) {
                 dumpConstant(input, output, uint32_t(parser.get<int>("--dump-constant")));
             }
         } else if (parser.get<bool>("--scenario-template")) {
-            dumpScenario(input, output, parser.get<bool>("--scenario-template-add-boundaries"));
+            dumpScenario(input, output, parser.get<bool>("--scenario-template-add-boundaries"),
+                         parser.get<bool>("--scenario-template-no-placeholders"));
         } else {
             dumpFile(input, output);
         }
