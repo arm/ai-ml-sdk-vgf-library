@@ -7,6 +7,7 @@
 add_library(vgf-utils STATIC)
 target_sources(vgf-utils PRIVATE
     src/memory_map.cpp
+    src/model_interface.cpp
     src/numpy.cpp
     src/temp_folder.cpp
     src/parse_vgf.cpp)

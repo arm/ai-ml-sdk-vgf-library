@@ -4,6 +4,7 @@
  */
 
 #include "common.hpp"
+#include "vgf-utils/model_interface.hpp"
 #include "vgf/decoder.h"
 #include "vgf/decoder.hpp"
 #include "vgf/encoder.hpp"
@@ -20,6 +21,7 @@
 #include <array>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -29,6 +31,8 @@ using logging::utils::Logger;
 namespace {
 
 const uint16_t pretendVulkanHeaderVersion = 123;
+constexpr DescriptorType VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7;
+constexpr FormatType VK_FORMAT_R32_SINT = 99;
 
 std::vector<GraphConstantBinding> getSegmentConstantBindings(const ModelSequenceTableDecoder &decoder,
                                                              uint32_t segmentIdx) {
@@ -354,6 +358,70 @@ TEST(CppModelSequenceTable, BindingSlot) {
     NameArrayHandle outputNames = seqTableDecoder->getModelSequenceOutputNamesHandle();
     ASSERT_TRUE(seqTableDecoder->getNamesSize(outputNames) == 1);
     ASSERT_TRUE(seqTableDecoder->getName(outputNames, 0) == "output_0");
+}
+
+TEST(CppModelSequenceTable, ModelInterfaceBindings) {
+    std::stringstream buffer;
+    auto encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    encoder->AddIntermediateResource(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_FORMAT_R32_SINT, {1}, {});
+    const auto input = encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_FORMAT_R32_SINT, {1}, {});
+    const auto output = encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_FORMAT_R32_SINT, {1}, {});
+    const auto unused = encoder->AddInputResource(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_FORMAT_R32_SINT, {1}, {});
+    encoder->AddModelSequenceInputsOutputs(
+        {encoder->AddBindingSlot(99, unused), encoder->AddBindingSlot(17, input), encoder->AddBindingSlot(18, input)},
+        {"unused", "first", "second"}, {encoder->AddBindingSlot(17, output)}, {"result"});
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    const auto data = buffer.str();
+    const auto header = CreateHeaderDecoder(data.data(), HeaderSize(), data.size());
+    ASSERT_NE(header, nullptr);
+    const auto sequence = CreateModelSequenceTableDecoder(data.data() + header->GetModelSequenceTableOffset(),
+                                                          header->GetModelSequenceTableSize());
+    const auto resources = CreateModelResourceTableDecoder(data.data() + header->GetModelResourceTableOffset(),
+                                                           header->GetModelResourceTableSize());
+    ASSERT_NE(sequence, nullptr);
+    ASSERT_NE(resources, nullptr);
+
+    const auto interface = mlsdk::vgfutils::parseModelInterface(*sequence, *resources);
+    ASSERT_EQ(interface.inputs.size(), 3);
+    EXPECT_EQ(interface.inputs[0].bindingSlot.mIndex, 0);
+    EXPECT_EQ(interface.inputs[0].bindingSlot.mBinding, 99);
+    EXPECT_EQ(interface.inputs[0].bindingSlot.mMrtIndex, 3);
+    EXPECT_EQ(interface.inputs[0].inputOutputIndex, 2);
+    EXPECT_EQ(interface.inputs[1].bindingSlot.mIndex, 1);
+    EXPECT_EQ(interface.inputs[1].bindingSlot.mBinding, 17);
+    EXPECT_EQ(interface.inputs[1].bindingSlot.mMrtIndex, 1);
+    EXPECT_EQ(interface.inputs[1].inputOutputIndex, 0);
+    EXPECT_EQ(interface.inputs[2].bindingSlot.mIndex, 2);
+    EXPECT_EQ(interface.inputs[2].bindingSlot.mBinding, 18);
+    EXPECT_EQ(interface.inputs[2].bindingSlot.mMrtIndex, 1);
+    EXPECT_EQ(interface.inputs[2].inputOutputIndex, 0);
+    ASSERT_EQ(interface.outputs.size(), 1);
+    EXPECT_EQ(interface.outputs[0].bindingSlot.mIndex, 0);
+    EXPECT_EQ(interface.outputs[0].bindingSlot.mBinding, 17);
+    EXPECT_EQ(interface.outputs[0].bindingSlot.mMrtIndex, 2);
+    EXPECT_EQ(interface.outputs[0].inputOutputIndex, 1);
+}
+
+TEST(CppModelSequenceTable, ModelInterfaceRejectsWrongResourceCategory) {
+    std::stringstream buffer;
+    auto encoder = CreateEncoder(pretendVulkanHeaderVersion);
+    const auto output = encoder->AddOutputResource(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_FORMAT_R32_SINT, {1}, {});
+    encoder->AddModelSequenceInputsOutputs({encoder->AddBindingSlot(17, output)}, {"invalid"}, {}, {});
+    encoder->Finish();
+    ASSERT_TRUE(encoder->WriteTo(buffer));
+
+    const auto data = buffer.str();
+    const auto header = CreateHeaderDecoder(data.data(), HeaderSize(), data.size());
+    ASSERT_NE(header, nullptr);
+    const auto sequence = CreateModelSequenceTableDecoder(data.data() + header->GetModelSequenceTableOffset(),
+                                                          header->GetModelSequenceTableSize());
+    const auto resources = CreateModelResourceTableDecoder(data.data() + header->GetModelResourceTableOffset(),
+                                                           header->GetModelResourceTableSize());
+    ASSERT_NE(sequence, nullptr);
+    ASSERT_NE(resources, nullptr);
+    EXPECT_THROW(mlsdk::vgfutils::parseModelInterface(*sequence, *resources), std::runtime_error);
 }
 
 TEST(CppModelSequenceTable, SegmentConstants) {
