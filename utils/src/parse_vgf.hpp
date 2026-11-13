@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "vgf-utils/binding_slot.hpp"
+
 #include "vgf/decoder.hpp"
 #include "vgf/types.hpp"
 
@@ -19,16 +21,6 @@
 #include <vgf/vulkan_helpers.generated.hpp>
 
 namespace mlsdk::vgfutils {
-
-struct BindingSlot {
-    BindingSlot() = default;
-    BindingSlot(uint32_t index, uint32_t binding, uint32_t mrtIndex)
-        : mIndex(index), mBinding(binding), mMrtIndex(mrtIndex) {}
-
-    uint32_t mIndex{0};
-    uint32_t mBinding{0};
-    uint32_t mMrtIndex{0};
-};
 
 struct ResourceSamplerConfig {
     ResourceSamplerConfig() = default;
