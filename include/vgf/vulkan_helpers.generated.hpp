@@ -82,8 +82,6 @@ inline std::string DescriptorTypeToName(DescriptorType e) {
         return "VK_DESCRIPTOR_TYPE_MUTABLE_EXT / VK_DESCRIPTOR_TYPE_MUTABLE_VALVE";
     case 1000570000:
         return "VK_DESCRIPTOR_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_NV";
-    case 1000658000:
-        return "VK_DESCRIPTOR_TYPE_NEURAL_ACCELERATOR_WEIGHTS_ARM";
     case 0x7FFFFFFF:
         return "VK_DESCRIPTOR_TYPE_MAX_ENUM";
     default: {
@@ -153,9 +151,6 @@ inline DescriptorType NameToDescriptorType(const std::string &str) {
     if (str == "VK_DESCRIPTOR_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_NV") {
         return 1000570000;
     }
-    if (str == "VK_DESCRIPTOR_TYPE_NEURAL_ACCELERATOR_WEIGHTS_ARM") {
-        return 1000658000;
-    }
     if (str == "VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT") {
         return 1000138000;
     }
@@ -194,7 +189,6 @@ inline bool ValidateDecodedDescriptorType(DescriptorType e) {
     case 1000460000: // VK_DESCRIPTOR_TYPE_TENSOR_ARM
     case 1000351000: // VK_DESCRIPTOR_TYPE_MUTABLE_EXT / VK_DESCRIPTOR_TYPE_MUTABLE_VALVE
     case 1000570000: // VK_DESCRIPTOR_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_NV
-    case 1000658000: // VK_DESCRIPTOR_TYPE_NEURAL_ACCELERATOR_WEIGHTS_ARM
     case 0x7FFFFFFF: // VK_DESCRIPTOR_TYPE_MAX_ENUM
         return true;
     default:
