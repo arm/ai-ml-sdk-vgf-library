@@ -12,7 +12,7 @@ Optional arguments:
   --dump-spirv                         Dump the SPIR-V™ module code at the given index
   --dump-glsl                          Dump the GLSL module code at the given index
   --dump-hlsl                          Dump the HLSL module code at the given index
-  --dump-constant                      Dump the constant at the given index. Outputs NumPy file if output file is .npy, otherwise dumps as raw binary.
+  --dump-constant                      Dump the constant at the given index. Outputs NumPy file if output file is .npy, otherwise dumps as raw binary. Block-scaled NumPy output also writes <stem>_scale.npy.
   --scenario-template                  Create a scenario template based on the VGF
   --scenario-template-add-boundaries   If creating a scenario template, add frame boundaries before and after
   --scenario-template-no-placeholders  If creating a scenario template, omit tensor and buffer input/output file paths
