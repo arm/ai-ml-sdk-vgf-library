@@ -35,6 +35,101 @@ not create a Vulkan® device or execute Vulkan® commands. Storing Vulkan® enum
 values and dispatch metadata does not introduce a dependency on the Vulkan®
 runtime.
 
+Creating and consuming a VGF file
+---------------------------------
+
+Producing an asset
+~~~~~~~~~~~~~~~~~~
+
+A producer starts with module implementations or placeholders, resource
+descriptions and constant payloads, then connects them into a workload. The
+independent declarations can be made in different valid orders; references must
+exist before calls that use them. The encoder copies constant bytes supplied to
+``AddConstant``. Bindings, ordered segments and model inputs/outputs describe how
+the declared records relate; they do not execute the workload.
+
+.. uml:: puml/vgf-producer-workflow.puml
+   :align: center
+   :caption: Build and connect records, finalize metadata, then write a VGF asset.
+   :alt: A producer creates an encoder, declares modules, resources and copied constants in a valid order, connects metadata and ordered segments, calls Finish, then WriteTo to produce a VGF artifact.
+
+Call ``Finish`` after completing the metadata, then ``WriteTo`` with the output
+stream. Check its result and handle stream errors. Writing consumes the encoder's
+constant buffers; do not rely on repeated writes or retrying a failed write with
+the same encoder. See :doc:`encoder_api` for the detailed construction sequence
+and :doc:`encoder_c_api` or :doc:`python_api` for language-specific interfaces.
+
+Consuming an asset
+~~~~~~~~~~~~~~~~~~
+
+A consumer owns, reads or maps the encoded bytes and selects the sections needed
+for its task. Header creation checks compatibility, declared section bounds and
+applicable alignment; it does not validate all section contents or relationships.
+Create the required section decoders and check the references and execution
+requirements needed by the consumer before using the records.
+
+.. uml:: puml/vgf-consumer-workflow.puml
+   :align: center
+   :caption: Checked decoding leads to inspection or an explicit runtime handoff.
+   :alt: A consumer retains VGF backing, creates a header decoder, decodes required sections and checks references, then chooses inspection and extraction or hands data to a runtime or application that records Vulkan® work.
+
+If a decoder cannot be created or a required check fails, the caller handles the
+error and stops that route. The inspection and execution choices above apply to
+successfully decoded and checked input; they are not automatic error fallbacks.
+A runtime consumer must resolve missing module implementations, compile supported
+textual code when needed, and manage Vulkan® resources, recording and execution.
+The VGF core only returns representation and borrowed views.
+
+Keep encoded backing alive and unchanged through the last decoder or borrowed-view
+use, including raw Python views that escape a decoder's lifetime. Retaining the
+backing independently can suffice after the decoder is released; copy bytes when
+independent ownership is needed. See :doc:`decoder_api`, :doc:`decoder_c_api` and
+:doc:`python_api` for validation, storage and lifetime details.
+
+Worked record relationships
+---------------------------
+
+This synthetic VGF asset illustrates independent identifier spaces. It is not
+an example of exact Model Converter output. Two ordered GRAPH segments, A and B,
+reuse module-table entry 0, with compatible input/output resource descriptions.
+
+.. uml:: puml/vgf-record-example.puml
+   :align: center
+   :caption: Two segment uses share a module and a graph constant.
+   :alt: Ordered GRAPH segments A and B both reference module 0. A reads MRT 0 and writes MRT 1; B reads MRT 1 and writes MRT 2. Both bind graph constant ID 5 to constant-table entry 0, whose resource is MRT 3.
+
+.. list-table:: Example references
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Record
+     - References
+   * - Model interface
+     - Input binding 40 → MRT 0; output binding 90 → MRT 2
+   * - Segment A (module 0)
+     - Input binding 40 → MRT 0; output binding 90 → MRT 1
+   * - Segment B (module 0)
+     - Input binding 40 → MRT 1; output binding 90 → MRT 2
+   * - A descriptors
+     - Set 2: binding 7 → MRT 0; binding 9 → MRT 1
+   * - B descriptors
+     - Set 2: binding 7 → MRT 1; binding 9 → MRT 2
+   * - Both graph constant bindings
+     - Graph constant ID 5 → constant-table entry 0 → MRT 3
+
+Binding numbers 40 and 90 identify logical interfaces. Descriptor locations
+(set 2, bindings 7 and 9) identify shader-visible locations; neither is an MRT
+index. Reusing logical numbers across segments does not make their resources
+identical: A's output and B's input share MRT 1 explicitly. Module index 0
+identifies the shared implementation, not a position in the execution sequence.
+
+Constant-table entry 0 owns the encoded payload metadata and refers to constant
+resource MRT 3. Each segment explicitly maps graph constant ID 5 to that same
+constant entry; graph constant IDs are not constant-table or MRT indices.
+The encoder's explicit ``GraphConstantBindingRef`` form expresses this mapping.
+The consumer prepares these resources and synchronizes A's output before B reads
+it; the record relationships do not execute commands or insert barriers.
+
 Public interfaces and implementation
 ------------------------------------
 
@@ -86,8 +181,8 @@ This division keeps the container layout and section interpretation inside the
 core while allowing producers and consumers to use the same public interfaces.
 See :doc:`file_format` for layout, alignment, and compatibility details.
 
-Tools and supporting dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Tools and shared utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 VGF Library provides two command-line tools: VGF Dump (``vgf_dump``) for
 inspection and extraction, and VGF Updater (``vgf_updater``) for format updates.
@@ -101,25 +196,28 @@ VGF Dump
 ^^^^^^^^
 
 ``vgf_dump`` uses the decoders to inspect a VGF file, extract module or constant
-data, and generate a Scenario Runner JSON template. It uses ``argparse`` for
-command-line parsing and ``nlohmann_json`` for JSON output.
+data, and generate a Scenario Runner JSON template. To explore execution,
+review and edit the generated template, supply its referenced resource, shader or
+binary files as needed, then run it with Scenario Runner. Dump itself does not
+execute the scenario.
 
 .. uml:: puml/vgf-dump-components.puml
    :align: center
-   :caption: VGF Dump and its supporting libraries.
-   :alt: VGF Dump uses argparse for command-line parsing, nlohmann_json for JSON output, vgf-utils for file handling and decoded records, and VGF Library for decoding.
+   :caption: VGF Dump and shared VGF libraries.
+   :alt: VGF Dump uses vgf-utils for file handling and decoded records, and VGF Library for decoding.
 
 See :doc:`vgf_dump` for usage and supported options.
 
 VGF Updater
 ^^^^^^^^^^^
 
-``vgf_updater`` decodes an older VGF file and re-encodes it in the current format.
-It uses ``argparse`` for command-line parsing.
+``vgf_updater`` decodes a supported older VGF file and re-encodes its supported
+records into a new output file in the current format. If the input is already at
+the exact latest version, it exits without writing output.
 
 .. uml:: puml/vgf-updater-components.puml
    :align: center
-   :caption: VGF Updater and its supporting libraries.
-   :alt: VGF Updater uses argparse for command-line parsing, vgf-utils for file handling and decoded records, and VGF Library for decoding and encoding.
+   :caption: VGF Updater and shared VGF libraries.
+   :alt: VGF Updater uses vgf-utils for file handling and decoded records, and VGF Library for decoding and encoding.
 
 See :doc:`vgf_updater` for usage and supported options.

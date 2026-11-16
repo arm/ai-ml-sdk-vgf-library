@@ -50,3 +50,7 @@ breathe_domain_by_extension = {"h": "c"}
 html_theme = "sphinx_rtd_theme"
 
 tags.add("WITH_BASE_MD")
+
+# Contain long API declarations and wrap inline identifiers.
+html_static_path = ["_static"]
+html_css_files = ["css/api-reference.css"]

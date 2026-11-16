@@ -16,11 +16,14 @@ The encoder provides a simple, high-level API for building up VGF files. It is
 designed for easy integration into offline tooling.
 
 The decoder is designed to be lightweight and to be included in high-performing
-programs, for example game engines. Therefore, the decoder does not allocate any
-dynamic memory on its own. To maintain full control, you must allocate the
-memory required and provide it to this library. To minimize copies and peak
-memory requirements, the format also supports mmap read operations on the
-contents.
+programs, for example game engines. The C API and C++ in-place factories use
+caller-provided decoder object storage; ordinary C++ factories allocate and own
+the decoder object. Encoded section data remains in caller-supplied backing
+memory, which must outlive its decoders and borrowed views. Caller-provided
+object storage is not a guarantee that every call avoids allocations or system
+calls: validation and logging can construct diagnostic strings. File I/O belongs
+to the caller. To minimize copies and peak memory requirements, the format also
+supports mmap read operations on the contents.
 
 VGF Library also provides a dumping tool which is called vgf_dump. vgf_dump
 prints the content of a VGF file into human-readable JSON format. You can also
@@ -68,7 +71,7 @@ repo sync --no-clone-bundle
 
 To ensure nested submodules do not exceed the maximum long path length, you must
 enable long paths on Windows®, and you must clone close to the root directory
-or use a symlink. Make sure to use Git for Windows.
+or use a symlink. Make sure to use Git for Windows®.
 
 Using **PowerShell**:
 

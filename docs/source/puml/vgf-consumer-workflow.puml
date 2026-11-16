@@ -1,0 +1,33 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 18
+skinparam ArrowColor #334155
+skinparam activity {
+  BackgroundColor #EFF6FF
+  BorderColor #334155
+  FontColor #172D3B
+  DiamondBackgroundColor #FFF3D9
+  DiamondBorderColor #334155
+}
+start
+:Read or map VGF backing
+Retain unchanged bytes;
+:Create header decoder
+Check compatibility and bounds;
+:Create required section decoders
+Check section contents;
+:Check references and requirements
+needed by the consumer;
+if (Consumer task?) then (inspect)
+  :Inspect / extract
+code and data;
+  stop
+else (execute)
+  :Runtime / application:
+resolve supported code,
+bind resources and
+record Vulkan® work;
+  stop
+endif
+@enduml

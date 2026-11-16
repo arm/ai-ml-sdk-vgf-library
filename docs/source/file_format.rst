@@ -23,9 +23,21 @@ The current section order is:
 .. figure:: assets/vgf_file_structure.svg
    :alt: VGF file structure
    :align: center
+   :width: 100%
 
    Illustrative VGF layout, showing cross-references between the header, metadata tables, resources, segments,
    bindings, and constants.
+
+The header's offsets address bytes from the start of the file. Metadata indexes
+instead select table entries: ``module_index`` selects a module, ``mrt_index``
+selects a resource, and ``constant_table_index`` selects a constant record.
+Descriptor set and binding numbers describe interface locations, not byte
+addresses or Model Resource Table indexes.
+
+For graph constants, ``constant_bindings`` explicitly pairs a graph constant ID
+with a constant-table index. When that field is absent, the decoder uses the
+legacy ``constants`` entries as both graph IDs and table indexes. A present but
+empty ``constant_bindings`` field does not take that fallback.
 
 Header Layout
 -------------

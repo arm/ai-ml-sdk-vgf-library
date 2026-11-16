@@ -134,7 +134,16 @@ Header decoder
 --------------
 
 Decoder factory functions retain a reference to their input buffer. Keep the
-buffer unchanged for the lifetime of the returned decoder.
+encoded backing memory unchanged while a decoder or any borrowed view uses it.
+Ordinary raw ``memoryview`` results, such as module code and constant data, borrow
+that memory and do not automatically retain its owner. Keep either the decoder
+(which retains its input) or the backing buffer alive until the last view use.
+The decoder itself need not remain alive if the backing memory is retained
+independently. Copy the view, for example with ``bytes(view)``, when independent
+ownership is needed.
+
+Some getters have an explicit lifetime policy: ``getScaledTensorConfigBlockShape()`` retains
+its model-resource-table decoder. This exception does not extend to all raw views.
 
 .. include:: _python_api/api.rst.inc
    :start-after: .. begin-api: [HeaderSize]

@@ -8,11 +8,9 @@ skinparam componentBackgroundColor #EFF6FF
 skinparam linetype polyline
 
 component "vgf_updater" as updater
-component "argparse" as args
 component "vgf-utils\nFile handling and decoded records" as utils
 component "VGF Library\nEncoder and decoders" as core
 
-updater -right-> args : CLI parsing
 updater -down-> utils : uses
 updater --> core : decodes / encodes
 utils -down-> core : reads metadata
