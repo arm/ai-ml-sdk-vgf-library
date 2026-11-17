@@ -12,7 +12,7 @@
 #include <cstdlib>
 
 using namespace mlsdk::vgflib;
-
+// test change
 void mlsdk_decoder_get_version(mlsdk_decoder_vgf_version *version) {
     assert(version != nullptr && "version is null");
     version->major = HEADER_MAJOR_VERSION_VALUE;
