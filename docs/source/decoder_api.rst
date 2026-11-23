@@ -7,8 +7,16 @@ The VGF Library decoder enables the parsing of VGF files. The VGF Library contai
 Header section decoding
 ```````````````````````
 
-The header decoder allows you to verify the validity of the VGF file and the file version.
-The header decoder also uses memory size and offset pairs to provide the location of the other sections within the VGF file.
+Header decoder creation checks the header size, magic, compatible format version,
+declared section bounds against the supplied file size, and section-offset
+alignment where required by the format version. Compatibility requires the same
+major version and a minor version no newer than the library supports.
+The header also provides size and offset pairs locating the other sections.
+
+Header success does not validate section contents or all cross-section references.
+Create each required section decoder to validate its representation and supported
+semantic checks; the consumer must also check references and execution
+requirements before using the decoded data.
 
 
 To parse the VGF file header, you must load the file into memory and then create a header decoder. To create a header decoder, you must provide the VGF data-pointer:
@@ -18,7 +26,10 @@ To parse the VGF file header, you must load the file into memory and then create
   :start-after: HeaderDecodingSample0 begin
   :end-before: HeaderDecodingSample0 end
 
-After creating a header decoder, you can verify the validity of the VGF file and its compatibility with the library. To verify the validity of the VGF file, check if their versions match:
+After successful creation, ``IsValid()`` checks the header magic and
+``CheckVersion()`` checks version compatibility. ``IsLatestVersion()`` instead
+requires exact major, minor and patch equality with the library's current format
+version; exact equality is not required for compatibility:
 
 .. literalinclude:: ../sources/test/header_tests.cpp
   :language: cpp

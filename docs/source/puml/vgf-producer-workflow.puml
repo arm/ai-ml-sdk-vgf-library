@@ -1,0 +1,30 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 18
+skinparam ArrowColor #334155
+skinparam activity {
+  BackgroundColor #EFF6FF
+  BorderColor #334155
+  FontColor #172D3B
+  DiamondBackgroundColor #FFF3D9
+  DiamondBorderColor #334155
+}
+start
+:Create encoder;
+:Declare modules / code
+or code-less placeholders,
+resources and constant payloads
+in a valid creation order;
+:Connect bindings, descriptors
+and push-constant metadata;
+:Add ordered segments
+and model inputs / outputs;
+:Finish
+Finalize metadata;
+:WriteTo an output stream
+Consume copied constant buffers;
+:VGF artifact
+for consumers;
+stop
+@enduml

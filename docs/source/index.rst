@@ -12,7 +12,10 @@ ML SDK VGF Library
 
    cloning.rst
    building.rst
+   VGF Dump usage <vgf_dump.rst>
+   VGF Updater usage <vgf_updater.rst>
    architecture.rst
+   file_format.rst
    encoder_api.rst
    encoder_c_api.rst
    decoder_api.rst
@@ -20,9 +23,6 @@ ML SDK VGF Library
    logging_api.rst
    logging_c_api.rst
    python_api.rst
-   file_format.rst
-   vgf_dump.rst
-   vgf_updater.rst
    license.rst
    contributing.rst
    security.rst

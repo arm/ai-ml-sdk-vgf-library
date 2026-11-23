@@ -1,0 +1,15 @@
+@startuml
+' Sources: schema/vgf.fbs; src/encoder.cpp AddSegmentInfo, AddConstant.
+' Synthetic example, not a claim about Model Converter output.
+top to bottom direction
+skinparam shadowing false
+rectangle "Module table 0\nGRAPH implementation" as m
+rectangle "Segment A\ninput 40: MRT 0\noutput 90: MRT 1" as a
+rectangle "Segment B\ninput 40: MRT 1\noutput 90: MRT 2" as b
+rectangle "Constant table 0\nresource: MRT 3" as c
+a --> b : sequence / shared MRT 1
+a ..> m : module 0
+b ..> m : module 0
+a --> c : graph constant ID 5
+b --> c : graph constant ID 5
+@enduml
