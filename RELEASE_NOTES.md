@@ -40,6 +40,8 @@
 
 ### Build, Packaging & Dependencies
 
+- Aligned CMake Python discovery with the interpreter running `scripts/build.py`
+  to prevent build and test Python version mismatches.
 - Windows® wheels no longer bundle `MSVCP140.dll`; they use the C++ runtime
   installed on the target system.
 - Locked development and test dependencies with `uv.lock` in place of the
